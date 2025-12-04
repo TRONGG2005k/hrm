@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
+import jakarta.persistence.PreUpdate;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -19,12 +20,24 @@ import java.time.LocalDateTime;
 
 public class Province {
     @Id
-    String id;       // mã tỉnh
-    String name;     // tên tỉnh
+    String id;
+
+    @Column(nullable = false)
+    String name;
+
+    @Builder.Default
+    LocalDateTime createdAt = LocalDateTime.now();
+
+    LocalDateTime updatedAt;
 
     @Builder.Default
     @Column(nullable = false)
     Boolean isDeleted = false;
 
     LocalDateTime deletedAt;
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

@@ -25,8 +25,8 @@ public class UserAccount {
     String username;
     String password;
 
-    @OneToOne
-    @JoinColumn(name = "employee_id")
+    @OneToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "employee_id", nullable = false)
     Employee employee;
 
     @ManyToMany

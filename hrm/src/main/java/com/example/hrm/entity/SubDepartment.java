@@ -12,7 +12,11 @@ import java.time.LocalDateTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
 @Entity
-@Table(name = "sub_department")
+@Table(name = "sub_department", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"department_id", "name"})
+}, indexes = {
+    @Index(columnList = "department_id")
+})
 public class SubDepartment {
 
     @Id
@@ -20,7 +24,7 @@ public class SubDepartment {
     String id;
 
     @Column(nullable = false)
-    String name; // tên bộ phận, ví dụ: Backend Team, Frontend Team
+    String name;
 
     String description;
 
@@ -29,8 +33,18 @@ public class SubDepartment {
     Department department;
 
     @Builder.Default
+    LocalDateTime createdAt = LocalDateTime.now();
+
+    LocalDateTime updatedAt;
+
+    @Builder.Default
     @Column(nullable = false)
     Boolean isDeleted = false;
 
     LocalDateTime deletedAt;
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

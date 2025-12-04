@@ -7,7 +7,9 @@ import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "districts")
+@Table(name = "districts", indexes = {
+    @Index(columnList = "province_id")
+})
 @Builder
 @Data
 @AllArgsConstructor
@@ -16,16 +18,28 @@ import java.time.LocalDateTime;
 
 public class District {
     @Id
-    String id;       // mã quận/huyện
-    String name;     // tên quận/huyện
+    String id;
+
+    @Column(nullable = false)
+    String name;
 
     @ManyToOne
     @JoinColumn(name = "province_id")
     Province province;
 
     @Builder.Default
+    LocalDateTime createdAt = LocalDateTime.now();
+
+    LocalDateTime updatedAt;
+
+    @Builder.Default
     @Column(nullable = false)
     Boolean isDeleted = false;
 
     LocalDateTime deletedAt;
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

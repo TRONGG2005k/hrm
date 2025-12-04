@@ -10,4 +10,5 @@ import org.springframework.stereotype.Repository;
 public interface SubDepartmentRepository extends JpaRepository<SubDepartment, String> {
     Page<SubDepartment> findByIsDeletedFalse(Pageable pageable);
     Page<SubDepartment> findByDepartmentIdAndIsDeletedFalse(String departmentId, Pageable pageable);
+    SubDepartment findByDepartmentIdAndNameAndIsDeletedFalse(String departmentId, String name);
 }

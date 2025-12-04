@@ -13,26 +13,42 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
 @Entity
-    public class Role {
-        @Id
-        @GeneratedValue(strategy = GenerationType.UUID)
-        String id;
+@Table(name = "role", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"name"})
+}, indexes = {
+    @Index(columnList = "name")
+})
+public class Role {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    String id;
 
-        String name;
+    @Column(nullable = false)
+    String name;
 
-        String description;
+    String description;
 
-        @ManyToMany
-        @JoinTable(
-                name = "role_permission",
-                joinColumns = @JoinColumn( name = "role_id"),
-                inverseJoinColumns = @JoinColumn(name =  "permission_id")
-        )
-        Set<Permission> permissions;
+    @ManyToMany
+    @JoinTable(
+            name = "role_permission",
+            joinColumns = @JoinColumn(name = "role_id"),
+            inverseJoinColumns = @JoinColumn(name = "permission_id")
+    )
+    Set<Permission> permissions;
 
-        @Builder.Default
-        @Column(nullable = false)
-        Boolean isDeleted = false;
+    @Builder.Default
+    LocalDateTime createdAt = LocalDateTime.now();
 
-        LocalDateTime deletedAt;
+    LocalDateTime updatedAt;
+
+    @Builder.Default
+    @Column(nullable = false)
+    Boolean isDeleted = false;
+
+    LocalDateTime deletedAt;
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
+}

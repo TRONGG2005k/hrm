@@ -21,7 +21,7 @@ public class Department {
     String id;
 
     @Column(nullable = false, unique = true)
-    String name; // Tên phòng ban (VD: Phòng Nhân Sự, Phòng IT)
+    String name;
 
     String description;
 
@@ -29,8 +29,18 @@ public class Department {
     Set<SubDepartment> subDepartments;
 
     @Builder.Default
+    LocalDateTime createdAt = LocalDateTime.now();
+
+    LocalDateTime updatedAt;
+
+    @Builder.Default
     @Column(nullable = false)
     Boolean isDeleted = false;
 
     LocalDateTime deletedAt;
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
