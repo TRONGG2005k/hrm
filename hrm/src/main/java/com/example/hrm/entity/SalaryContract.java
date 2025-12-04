@@ -1,0 +1,61 @@
+package com.example.hrm.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import com.example.hrm.enums.SalaryContractStatus;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "salary_contract")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class SalaryContract {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    String id;
+
+    @ManyToOne
+    @JoinColumn(name = "employee_id", nullable = false)
+    Employee employee;
+
+    @ManyToOne
+    @JoinColumn(name = "contract_id", nullable = false)
+    Contract contract;   // Một hợp đồng có thể có nhiều lần điều chỉnh lương
+
+    Double baseSalary;
+
+    Double allowance;     // phụ cấp cố định
+
+    Float salaryCoefficient;
+
+    LocalDate effectiveDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    SalaryContractStatus status;
+
+    String note;
+
+    @Builder.Default
+    LocalDateTime createdAt = LocalDateTime.now();
+
+    LocalDateTime updatedAt;
+
+    @Builder.Default
+    @Column(nullable = false)
+    Boolean isDeleted = false;
+
+    LocalDateTime deletedAt;
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+}
