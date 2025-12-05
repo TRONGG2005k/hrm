@@ -17,7 +17,7 @@ public class AddressRequest {
 
     String street;
 
-    @NotBlank(message = "Mã phường/xã không được để trống")
+    @NotBlank(message = "Phường/xã không được để trống")
     String wardId;
 
     String country;

@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MultipartException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -48,6 +49,23 @@ public class GlobalExceptionHandler {
                 .message(ErrorCode.VALIDATION_ERROR.getMessage())
                 .details("Dữ liệu đầu vào không hợp lệ")
                 .validationErrors(errors)
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ErrorResponse> handleMultipartException(
+            MultipartException ex,
+            WebRequest request) {
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(400)
+                .error(ErrorCode.FILE_UPLOAD_FAILED.getCode())
+                .message(ErrorCode.FILE_UPLOAD_FAILED.getMessage())
+                .details("Lỗi xử lý upload file: " + ex.getMessage())
                 .path(request.getDescription(false).replace("uri=", ""))
                 .build();
 

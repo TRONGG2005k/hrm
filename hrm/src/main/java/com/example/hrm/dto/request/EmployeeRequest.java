@@ -10,7 +10,8 @@ import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.web.multipart.MultipartFile;
+
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
@@ -30,6 +31,7 @@ public class EmployeeRequest {
     @NotBlank(message = "Họ không được để trống")
     String lastName;
 
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     LocalDate dateOfBirth;
 
     Gender gender;
@@ -40,13 +42,12 @@ public class EmployeeRequest {
 
     String phone;
 
-    MultipartFile avatar;
-
     EmployeeStatus status;
 
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     LocalDate joinDate;
 
-    String addressId;
+    AddressRequest address;
 
     String subDepartmentId;
 }

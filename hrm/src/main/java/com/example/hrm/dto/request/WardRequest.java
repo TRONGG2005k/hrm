@@ -15,9 +15,11 @@ import jakarta.validation.constraints.NotBlank;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class WardRequest {
 
+    String id;
+
     @NotBlank(message = "Tên phường/xã không được để trống")
     String name;
 
-    @NotBlank(message = "Mã quận/huyện không được để trống")
+    @NotBlank(message = "Quận/huyện không được để trống")
     String districtId;
 }
