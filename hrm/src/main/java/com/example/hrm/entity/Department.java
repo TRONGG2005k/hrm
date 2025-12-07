@@ -5,9 +5,12 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
-@Data
+//@Data
+@Setter
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -25,8 +28,9 @@ public class Department {
 
     String description;
 
+    @Builder.Default
     @OneToMany(mappedBy = "department", cascade = CascadeType.ALL)
-    Set<SubDepartment> subDepartments;
+    Set<SubDepartment> subDepartments = new HashSet<>();
 
     @Builder.Default
     LocalDateTime createdAt = LocalDateTime.now();

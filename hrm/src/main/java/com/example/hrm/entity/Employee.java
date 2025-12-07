@@ -57,10 +57,6 @@ public class Employee {
     @Builder.Default
     List<Contract> contracts = new ArrayList<>();
 
-    String avatarUrl;
-
-
-
     @ManyToOne
     @JoinColumn(name = "sub_department_id")
     SubDepartment subDepartment;

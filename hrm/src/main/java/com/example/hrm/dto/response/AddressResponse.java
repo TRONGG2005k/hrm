@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -20,17 +19,10 @@ public class AddressResponse {
 
     String street;
 
-    String wardId;
+    WardResponse wardResponse;
 
     String country;
 
     String note;
 
-    LocalDateTime createdAt;
-
-    LocalDateTime updatedAt;
-
-    Boolean isDeleted;
-
-    LocalDateTime deletedAt;
 }

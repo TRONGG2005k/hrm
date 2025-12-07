@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -35,20 +36,16 @@ public class EmployeeResponse {
 
     String phone;
 
-    String avatarUrl;
+    List<FileAttachmentResponse> fileAttachmentResponses;
 
     EmployeeStatus status;
 
     LocalDate joinDate;
 
-    String addressId;
+    AddressResponse address;
 
-    String subDepartmentId;
-
-    LocalDateTime createdAt;
-
-    LocalDateTime updatedAt;
-
+    SubDepartmentResponse subDepartment;
+    
     Boolean isDeleted;
 
     LocalDateTime deletedAt;

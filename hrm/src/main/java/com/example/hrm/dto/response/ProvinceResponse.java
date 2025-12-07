@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -20,9 +19,4 @@ public class ProvinceResponse {
 
     String name;
 
-    LocalDateTime createdAt;
-
-    Boolean isDeleted;
-
-    LocalDateTime deletedAt;
 }

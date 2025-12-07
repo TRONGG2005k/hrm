@@ -47,7 +47,7 @@ public class EmployeeRequest {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     LocalDate joinDate;
 
-    AddressRequest address;
+    String address;
 
     String subDepartmentId;
 }

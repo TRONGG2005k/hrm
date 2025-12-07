@@ -25,7 +25,9 @@ public class FileAttachment {
     private Long fileSize;
     private String description;
 
+
     private String refType;
+
     private String refId;
 
     @Builder.Default

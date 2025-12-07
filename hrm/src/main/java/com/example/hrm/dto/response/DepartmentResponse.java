@@ -8,6 +8,7 @@ import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -21,6 +22,8 @@ public class DepartmentResponse {
     String name;
 
     String description;
+
+    Set<SubDepartmentResponse> subDepartmentResponses;
 
     LocalDateTime createdAt;
 
