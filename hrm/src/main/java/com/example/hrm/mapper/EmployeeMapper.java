@@ -20,6 +20,7 @@ public interface EmployeeMapper {
     @Mapping(target = "files", ignore = true)
     Employee toEntity(EmployeeRequest request);
 
+    @Mapping(target = "contacts", ignore = true)
     @Mapping(target = "fileAttachmentResponses", ignore = true)
     @Mapping(source = "subDepartment", target = "subDepartment")
     EmployeeResponse toResponse(Employee entity);

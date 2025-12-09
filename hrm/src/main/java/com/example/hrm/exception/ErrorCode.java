@@ -108,6 +108,8 @@ public enum ErrorCode {
     SERVICE_UNAVAILABLE("E40002", "Dịch vụ không khả dụng"),
     TIMEOUT_ERROR("E40003", "Hết thời gian chờ"),
 
+    //Server errors (50000-50999)
+    CONTACT_NOT_FOUND("E50001", "không tồn tại contact"),
     // Unknown error
     UNKNOWN_ERROR("E99999", "Lỗi không xác định");
 

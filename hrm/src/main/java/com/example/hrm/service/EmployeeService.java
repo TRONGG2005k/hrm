@@ -4,12 +4,11 @@ import com.example.hrm.dto.response.FileAttachmentResponse;
 import com.example.hrm.entity.FileAttachment;
 import com.example.hrm.enums.RefType;
 // import com.example.hrm.mapper.AddressMapper;
+import com.example.hrm.mapper.ContactMapper;
 import com.example.hrm.mapper.FileAttachmentMapper;
-import com.example.hrm.repository.AddressRepository;
-import com.example.hrm.repository.FileAttachmentRepository;
+import com.example.hrm.repository.*;
 import org.springframework.stereotype.Service;
 import com.example.hrm.mapper.EmployeeMapper;
-import com.example.hrm.repository.EmployeeRepository;
 import com.example.hrm.entity.Employee;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.PageRequest;
@@ -19,7 +18,7 @@ import com.example.hrm.dto.response.EmployeeResponse;
 import com.example.hrm.exception.AppException;
 import com.example.hrm.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import com.example.hrm.repository.SubDepartmentRepository;
+
 import java.util.List;
 
 @Service
@@ -30,6 +29,8 @@ public class EmployeeService {
     private final AddressRepository addressRepository;
     private final FileAttachmentRepository fileAttachmentRepository;
     private final SubDepartmentRepository subDepartmentRepository;
+    private final ContactRepository contactRepository;
+    private final ContactMapper contactMapper;
 
     public Page<EmployeeResponse> getAllEmployees(int page, int size) {
         var employeePage = employeeRepository.findByIsDeletedFalse(PageRequest.of(page, size));
@@ -46,6 +47,10 @@ public class EmployeeService {
         List<FileAttachmentResponse> fileAttachmentResponses = fileAttachments.stream().map(
                 FileAttachmentMapper.INSTANCE::toResponse).toList();
         var employeeResponse = employeeMapper.toResponse(employee);
+        employeeResponse.setContacts(
+                contactRepository.findByEmployeeIdAndIsDeletedFalse(employee.getId())
+                        .stream().map(contactMapper::toResponse)
+                        .toList());
         employeeResponse.setFileAttachmentResponses(fileAttachmentResponses);
         return employeeResponse;
     }

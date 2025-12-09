@@ -38,6 +38,8 @@ public class EmployeeResponse {
 
     List<FileAttachmentResponse> fileAttachmentResponses;
 
+    List<ContactResponse> contacts;
+
     EmployeeStatus status;
 
     LocalDate joinDate;
