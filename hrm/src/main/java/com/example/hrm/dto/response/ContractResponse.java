@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -21,7 +22,7 @@ public class ContractResponse {
 
     String id;
 
-    String employeeId;
+    EmployeeResponse employee;
 
     String code;
 
@@ -38,6 +39,8 @@ public class ContractResponse {
     ContractStatus status;
 
     String note;
+
+    List<FileAttachmentResponse> fileAttachmentResponses;
 
     LocalDateTime createdAt;
 
