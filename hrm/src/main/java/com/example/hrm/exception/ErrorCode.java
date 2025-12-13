@@ -110,6 +110,12 @@ public enum ErrorCode {
 
     //Server errors (50000-50999)
     CONTACT_NOT_FOUND("E50001", "không tồn tại contact"),
+
+    //Token errors(60000- 60999)
+    INVALID_TOKEN_TYPE("E600001","invalid token type"),
+    INVALID_TOKEN("E600002", "invalid token"),
+    TOKEN_HAS_EXPIRED("E600003", "token has expired"),
+
     // Unknown error
     UNKNOWN_ERROR("E99999", "Lỗi không xác định");
 
