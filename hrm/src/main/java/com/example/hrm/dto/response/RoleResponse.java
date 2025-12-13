@@ -20,13 +20,4 @@ public class RoleResponse {
 
     String name;
 
-    String description;
-
-    LocalDateTime createdAt;
-
-    LocalDateTime updatedAt;
-
-    Boolean isDeleted;
-
-    LocalDateTime deletedAt;
 }

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/hrm">
+      <sourceFolder url="file://$MODULE_DIR$/hrm/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/hrm/src/test/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/hrm/target/generated-sources/annotations" isTestSource="false" />
+    </content>
+    <orderEntry type="jdk" jdkName="21" jdkType="JavaSDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
