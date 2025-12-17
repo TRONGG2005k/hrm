@@ -1,22 +1,26 @@
 package com.example.hrm.service;
 
+import com.example.hrm.dto.request.ActivateAccountRequest;
 import com.example.hrm.dto.request.LoginRequest;
 import com.example.hrm.dto.response.LoginResponse;
+import com.example.hrm.dto.response.UserAccountResponse;
 import com.example.hrm.enums.TokenType;
 import com.example.hrm.enums.UserStatus;
 import com.example.hrm.exception.AppException;
 import com.example.hrm.exception.ErrorCode;
-import com.example.hrm.redis.RefreshToken;
-import com.example.hrm.repository.RefreshTokenRepository;
+import com.example.hrm.mapper.RoleMapper;
+import com.example.hrm.mapper.UserAccountMapper;
 import com.example.hrm.repository.UserAccountRepository;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTClaimsSet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -26,32 +30,28 @@ public class AuthService {
     private final UserAccountRepository userAccountRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final UserAccountMapper userAccountMapper;
+    private final RoleMapper roleMapper;
 
-    /**
-     * LOGIN
-     */
+    private static final String REFRESH_KEY_PREFIX = "refreshToken:";
+    private static final String USER_TOKENS_PREFIX = "user:";
+
+    /* ================= LOGIN ================= */
     public LoginResponse login(LoginRequest request)
             throws JOSEException, ParseException {
 
         var user = userAccountRepository
                 .findByUsernameAndIsDeletedFalse(request.getUsername())
                 .orElseThrow(() ->
-                        new AppException(
-                                ErrorCode.INVALID_USERNAME_OR_PASSWORD, 401
-                        )
+                        new AppException(ErrorCode.INVALID_USERNAME_OR_PASSWORD, 401)
                 );
 
-        if (user.getStatus() != UserStatus.ACTIVE) {
+        if (user.getStatus() != UserStatus.ACTIVE)
             throw new AppException(ErrorCode.USER_NOT_ACTIVE, 409);
-        }
 
-        if (user.getPassword() == null ||
-                !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new AppException(
-                    ErrorCode.INVALID_USERNAME_OR_PASSWORD, 401
-            );
-        }
+        if (user.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword()))
+            throw new AppException(ErrorCode.INVALID_USERNAME_OR_PASSWORD, 401);
 
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
@@ -59,17 +59,10 @@ public class AuthService {
         JWTClaimsSet refreshClaims = jwtService.verifyAndParse(refreshToken);
         jwtService.assertType(refreshClaims, TokenType.REFRESH);
 
-        refreshTokenRepository.save(
-                RefreshToken.builder()
-                        .jwtID(refreshClaims.getJWTID())
-                        .username(user.getUsername())
-                        .ttl(2_592_000L) // 30 days
-                        .build()
-        );
+        // Lưu refresh token vào Redis với TTL qua helper
+        storeRefreshToken(refreshClaims.getJWTID(), user.getUsername(), refreshClaims);
 
-        String roles = jwtService
-                .verifyAndParse(accessToken)
-                .getStringClaim("scope");
+        String roles = jwtService.verifyAndParse(accessToken).getStringClaim("scope");
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
@@ -78,41 +71,38 @@ public class AuthService {
                 .build();
     }
 
-    /**
-     * LOGOUT
-     */
-    public void logout(String refreshToken)
-            throws ParseException {
-
+    /* ================= LOGOUT 1 TOKEN ================= */
+    public void logout(String refreshToken) throws ParseException {
         JWTClaimsSet claims = jwtService.verifyAndParse(refreshToken);
-
         jwtService.assertRefreshToken(claims);
 
         String jwtId = claims.getJWTID();
         String username = claims.getSubject();
 
-        userAccountRepository
-                .findByUsernameAndIsDeletedFalseAndStatus(username, UserStatus.ACTIVE)
-                .orElseThrow(() ->
-                        new AppException(ErrorCode.USER_NOT_FOUND, 404)
-                );
-
-        refreshTokenRepository.deleteById(jwtId);
+        // Xóa token cũ
+        jwtService.revokeRefreshToken(jwtId, username);
     }
 
-    /*
-    * refresh
-    * */
-    public LoginResponse refreshToken(String refreshToken)
-            throws JOSEException, ParseException {
+    /* ================= LOGOUT ALL TOKEN USER ================= */
+    public void logoutAll(String refreshToken) throws ParseException {
+        JWTClaimsSet claims = jwtService.verifyAndParse(refreshToken);
+        jwtService.assertRefreshToken(claims);
+        String username = claims.getSubject();
+        jwtService.revokeAllTokens(username);
+    }
 
-        var claims = jwtService.verifyAndParse(refreshToken);
+    /* ================= REFRESH TOKEN ================= */
+    public LoginResponse refreshToken(String refreshToken) throws JOSEException, ParseException {
 
+        JWTClaimsSet claims = jwtService.verifyAndParse(refreshToken);
         jwtService.assertRefreshToken(claims);
 
+        String oldJwtId = claims.getJWTID();
         String username = claims.getSubject();
 
-        refreshTokenRepository.deleteById(claims.getJWTID());
+        // Xóa token cũ
+        redisTemplate.delete(REFRESH_KEY_PREFIX + oldJwtId);
+        redisTemplate.opsForSet().remove(USER_TOKENS_PREFIX + username + ":tokens", oldJwtId);
 
         var user = userAccountRepository
                 .findByUsernameAndIsDeletedFalseAndStatus(username, UserStatus.ACTIVE)
@@ -122,20 +112,55 @@ public class AuthService {
 
         String newAccessToken = jwtService.generateAccessToken(user);
         String newRefreshToken = jwtService.generateRefreshToken(user);
-        var claim = jwtService.verifyAndParse(newAccessToken);
-        refreshTokenRepository.save(
-                RefreshToken.builder()
-                        .jwtID(claim.getJWTID())
-                        .username(user.getUsername())
-                        .ttl(2_592_000L) // 30 days
-                        .build()
-        );
+        JWTClaimsSet newRefreshClaims = jwtService.verifyAndParse(newRefreshToken);
 
+        // Lưu refresh token mới vào Redis với TTL qua helper
+        storeRefreshToken(newRefreshClaims.getJWTID(), username, newRefreshClaims);
 
         return LoginResponse.builder()
-                .refreshToken(newRefreshToken)
                 .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
                 .build();
     }
 
+    /* ================= ACTIVE ACCOUNT ================= */
+    public UserAccountResponse activeAccount(ActivateAccountRequest request) throws ParseException {
+        var claims = jwtService.verifyAndParse(request.getToken());
+        jwtService.assertActivationToken(claims);
+
+        var user = userAccountRepository.findByUsernameAndIsDeletedFalseAndStatus(
+                        claims.getSubject(), UserStatus.PENDING_ACTIVE)
+                .orElseThrow(
+                        () -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
+
+        // Update password nếu FE truyền
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        user.setStatus(UserStatus.ACTIVE);
+        userAccountRepository.save(user);
+
+        var response = userAccountMapper.toResponse(user);
+        response.setStatus(user.getStatus().name());
+        var roles = user.getRoles().stream().map(roleMapper::toResponse).toList();
+        response.setRoles(roles);
+        log.info("User {} activated successfully", user.getUsername());
+        return response;
+    }
+
+    /* ================= HELPER STORE REFRESH TOKEN ================= */
+    private void storeRefreshToken(String jwtId, String username, JWTClaimsSet refreshClaims) {
+        // Tính số giây còn lại đến khi token hết hạn
+        long secondsToExpire = (refreshClaims.getExpirationTime().getTime() - System.currentTimeMillis()) / 1000;
+
+        // Lưu token vào Redis với TTL
+        redisTemplate.opsForValue().set(
+                REFRESH_KEY_PREFIX + jwtId,
+                username,
+                Duration.ofSeconds(secondsToExpire)
+        );
+
+        // Thêm jwtId vào set user:{username}:tokens
+        redisTemplate.opsForSet().add(USER_TOKENS_PREFIX + username + ":tokens", jwtId);
+    }
 }

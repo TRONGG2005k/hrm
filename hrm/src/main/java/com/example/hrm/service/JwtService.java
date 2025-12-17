@@ -1,11 +1,11 @@
 package com.example.hrm.service;
 
 import com.example.hrm.configuration.JwtKeyStore;
+import com.example.hrm.entity.Role;
 import com.example.hrm.entity.UserAccount;
 import com.example.hrm.enums.TokenType;
 import com.example.hrm.exception.AppException;
 import com.example.hrm.exception.ErrorCode;
-import com.example.hrm.repository.RefreshTokenRepository;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -16,14 +16,15 @@ import com.nimbusds.jwt.SignedJWT;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.StringJoiner;
 import java.util.UUID;
 
 @Service
@@ -32,13 +33,13 @@ import java.util.UUID;
 public class JwtService {
 
     private final JwtKeyStore keyStore;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Value("${app.jwt.valid-duration}")
-    private long accessExp;
+    private final long accessExp;
 
     @Value("${app.jwt.refreshable-duration}")
-    private long refreshExp;
+    private final long refreshExp;
 
     private static final String ISSUER = "myapp.com";
 
@@ -49,7 +50,19 @@ public class JwtService {
     }
 
     public String generateRefreshToken(UserAccount user) throws JOSEException {
-        return generateToken(user, TokenType.REFRESH, refreshExp);
+        String refreshToken = generateToken(user, TokenType.REFRESH, refreshExp);
+
+        JWTClaimsSet claims = verifyAndParse(refreshToken);
+        String jwtId = claims.getJWTID();
+
+        // Lưu token vào Redis với TTL
+        redisTemplate.opsForValue().set("refreshToken:" + jwtId, user.getUsername());
+        redisTemplate.expire("refreshToken:" + jwtId, Duration.ofSeconds(refreshExp));
+
+        // Lưu jwtId vào Set user:{username}:tokens
+        redisTemplate.opsForSet().add("user:" + user.getUsername() + ":tokens", jwtId);
+
+        return refreshToken;
     }
 
     public ResponseCookie createRefreshCookie(String refreshToken) {
@@ -57,7 +70,7 @@ public class JwtService {
                 .httpOnly(true)
                 .secure(false) // true nếu HTTPS
                 .path("/")
-                .maxAge(30 * 24 * 60 * 60) // 7 ngày
+                .maxAge(30 * 24 * 60 * 60) // 30 ngày
                 .sameSite("Lax")
                 .build();
     }
@@ -73,7 +86,7 @@ public class JwtService {
 
         SignedJWT jwt = new SignedJWT(
                 new JWSHeader.Builder(JWSAlgorithm.HS512)
-                        .keyID(type.name()) // 🔥 KID
+                        .keyID(type.name())
                         .build(),
                 claims
         );
@@ -83,9 +96,8 @@ public class JwtService {
     }
 
     private JWTClaimsSet buildClaims(UserAccount user, TokenType type, long expSeconds) {
-
         String scope = user.getRoles().stream()
-                .map(r -> r.getName())
+                .map(Role::getName)
                 .reduce((a, b) -> a + " " + b)
                 .orElse("");
 
@@ -96,9 +108,7 @@ public class JwtService {
                 .claim("type", type.name())
                 .jwtID(UUID.randomUUID().toString())
                 .issueTime(new Date())
-                .expirationTime(
-                        Date.from(Instant.now().plus(expSeconds, ChronoUnit.SECONDS))
-                )
+                .expirationTime(Date.from(Instant.now().plus(expSeconds, ChronoUnit.SECONDS)))
                 .build();
     }
 
@@ -138,10 +148,11 @@ public class JwtService {
     public void assertRefreshToken(JWTClaimsSet claims) throws ParseException {
         assertType(claims, TokenType.REFRESH);
 
-        refreshTokenRepository.findByJwtID(claims.getJWTID())
-                .orElseThrow(() ->
-                        new AppException(ErrorCode.INVALID_TOKEN, 401)
-                );
+        String jwtId = claims.getJWTID();
+        String username = redisTemplate.opsForValue().get("refreshToken:" + jwtId);
+        if (username == null) {
+            throw new AppException(ErrorCode.INVALID_TOKEN, 401);
+        }
     }
 
     public void assertActivationToken(JWTClaimsSet claims) throws ParseException {
@@ -149,12 +160,27 @@ public class JwtService {
     }
 
     void assertType(JWTClaimsSet claims, TokenType expected) throws ParseException {
-        TokenType actual = TokenType.valueOf(
-                claims.getStringClaim("type")
-        );
-
+        TokenType actual = TokenType.valueOf(claims.getStringClaim("type"));
         if (actual != expected)
             throw new AppException(ErrorCode.INVALID_TOKEN_TYPE, 401);
     }
-}
 
+    /* ================= HELPER ================= */
+
+    public void revokeRefreshToken(String jwtId, String username) {
+        // Xóa token cụ thể
+        redisTemplate.delete("refreshToken:" + jwtId);
+        redisTemplate.opsForSet().remove("user:" + username + ":tokens", jwtId);
+    }
+
+    public void revokeAllTokens(String username) {
+        // Xóa tất cả token của user
+        var jtis = redisTemplate.opsForSet().members("user:" + username + ":tokens");
+        if (jtis != null) {
+            for (String jti : jtis) {
+                redisTemplate.delete("refreshToken:" + jti);
+            }
+        }
+        redisTemplate.delete("user:" + username + ":tokens");
+    }
+}

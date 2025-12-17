@@ -1,4 +1,4 @@
-package com.example.hrm.filter;
+package com.example.hrm.configuration.filter;
 
 import com.example.hrm.service.JwtService;
 import jakarta.servlet.FilterChain;
@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,10 +17,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
@@ -33,7 +36,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
 
-        // Không có token → cho qua
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -43,34 +45,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             var claims = jwtService.verifyAndParse(token);
-
             jwtService.assertAccessToken(claims);
 
             String username = claims.getSubject();
-
             String scope = claims.getStringClaim("scope");
-            List<GrantedAuthority> authorities =
-                    scope == null
-                            ? List.of()
-                            : Stream.of(scope.split(" "))
-                            .map(r -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + r))
-                            .toList();
 
-            Authentication authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            username,
-                            null,
-                            authorities
-                    );
+            List<GrantedAuthority> authorities = scope == null
+                    ? List.of()
+                    : Stream.of(scope.split(" "))
+                    .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
+                    .collect(Collectors.toList());
 
-            SecurityContextHolder.getContext()
-                    .setAuthentication(authentication);
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    username,
+                    null,
+                    authorities
+            );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
             filterChain.doFilter(request, response);
 
         } catch (Exception ex) {
-            // ❌ Token sai → 401
+            log.warn("Access token invalid: {}", ex.getMessage());
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
         }
     }
 }

@@ -1,7 +1,9 @@
 package com.example.hrm.controller;
 
+import com.example.hrm.dto.request.ActivateAccountRequest;
 import com.example.hrm.dto.request.LoginRequest;
 import com.example.hrm.dto.response.LoginResponse;
+import com.example.hrm.dto.response.UserAccountResponse;
 import com.example.hrm.exception.AppException;
 import com.example.hrm.exception.ErrorCode;
 import com.example.hrm.service.AuthService;
@@ -60,6 +62,27 @@ public class AuthController {
                 .body("Logout success");
     }
 
+    @DeleteMapping("/logoutAll")
+    public ResponseEntity<?> logoutAll(
+            @CookieValue(name = "refresh_token", required = false) String refreshToken
+    ) throws ParseException {
+        if (refreshToken == null) {
+            return ResponseEntity.badRequest().body("Refresh token not found.");
+        }
+        authService.logoutAll(refreshToken);
+        // Xoá cookie trên trình duyệt
+        ResponseCookie deleteCookie = ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .secure(false) // nếu bạn dùng HTTPS
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
+                .body("Logout success");
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<LoginResponse> refreshToken(
             @CookieValue(name = "refresh_token", required = false) String refreshToken
@@ -76,5 +99,18 @@ public class AuthController {
         }  catch (ParseException | JOSEException e) {
             throw new AppException(ErrorCode.INVALID_TOKEN, 409);
         }
+    }
+
+    /**
+     * Activate user account
+     * Request body contains activation token and optional password
+     */
+    @PostMapping("/activate")
+    public ResponseEntity<UserAccountResponse> activateAccount(
+            @RequestBody ActivateAccountRequest request
+    ) throws ParseException {
+
+        UserAccountResponse response = authService.activeAccount(request);
+        return ResponseEntity.ok(response);
     }
 }
