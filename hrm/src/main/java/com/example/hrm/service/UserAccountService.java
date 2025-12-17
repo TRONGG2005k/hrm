@@ -2,7 +2,9 @@ package com.example.hrm.service;
 
 import com.example.hrm.dto.request.UserAccountRequest;
 import com.example.hrm.dto.response.UserAccountResponse;
+import com.example.hrm.entity.UserAccount;
 import com.example.hrm.enums.Role;
+import com.example.hrm.enums.UserStatus;
 import com.example.hrm.exception.AppException;
 import com.example.hrm.exception.ErrorCode;
 import com.example.hrm.mapper.RoleMapper;
@@ -10,6 +12,7 @@ import com.example.hrm.mapper.UserAccountMapper;
 import com.example.hrm.repository.EmployeeRepository;
 import com.example.hrm.repository.RoleRepository;
 import com.example.hrm.repository.UserAccountRepository;
+import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,13 +31,60 @@ public class UserAccountService {
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
     private final RoleMapper roleMapper;
+    private final JwtService jwtService;
+    private final EmailService emailService;
 
-    public UserAccountResponse create(UserAccountRequest request){
+    @Transactional
+    public UserAccountResponse createAuto(String employeeId) throws JOSEException {
+
+        if (userAccountRepository.existsByEmployeeIdAndIsDeletedFalse(employeeId)) {
+            throw new AppException(ErrorCode.USER_ACCOUNT_ALREADY_EXISTS, 409);
+        }
+
+        var employee = employeeRepository
+                .findByIdAndIsDeletedFalse(employeeId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
+
+        var user = new UserAccount();
+        user.setUsername(employee.getCode());          // hoặc email
+        user.setEmployee(employee);
+        user.setStatus(UserStatus.PENDING_ACTIVE);
+        user.setPassword(null);
+
+        var role = roleRepository.findByNameAndIsDeletedFalse(Role.ROLE_EMPLOYEE.name())
+                .orElseGet(() -> roleRepository.save(
+                        com.example.hrm.entity.Role.builder()
+                                .name(Role.ROLE_EMPLOYEE.name())
+                                .build()
+                ));
+        user.getRoles().add(role);
+
+        userAccountRepository.save(user);
+
+        // ✅ TẠO ACTIVATION TOKEN
+        String activationToken = jwtService.generateActivationToken(user);
+
+        // ✅ GỬI MAIL (QUAN TRỌNG)
+        emailService.sendActivationEmail(user, activationToken);
+
+        // build response (KHÔNG token)
+        var response = userAccountMapper.toResponse(user);
+        var roles = user.getRoles().stream()
+                .map(roleMapper::toResponse)
+                .toList();
+        response.setRoles(roles);
+
+        return response;
+    }
+
+
+    public UserAccountResponse createManual(UserAccountRequest request){
         var user = userAccountMapper.toEntity(request);
         var employee = employeeRepository
                 .findByIdAndIsDeletedFalse(request.getEmployeeId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
         user.setEmployee(employee);
+        user.setStatus(UserStatus.ACTIVE);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         var role = roleRepository.findByNameAndIsDeletedFalse(Role.ROLE_EMPLOYEE.name())
                 .orElseGet(() -> roleRepository.save(com.example.hrm.entity.Role.builder()
@@ -49,7 +99,7 @@ public class UserAccountService {
     }
 
     public Page<UserAccountResponse> getAll(int page, int size){
-        var accounts = userAccountRepository.findByIsDeletedFalse(PageRequest.of(page, size));
+        var accounts = userAccountRepository.findByIsDeletedFalseAndStatus(PageRequest.of(page, size), UserStatus.ACTIVE);
         return accounts.map(item -> {
             var roles = item.getRoles().stream().map(roleMapper::toResponse).toList();
             var response = userAccountMapper.toResponse(item);
@@ -59,7 +109,7 @@ public class UserAccountService {
     }
 
     public UserAccountResponse getById(String id) {
-        var user = userAccountRepository.findByIdAndIsDeletedFalse(id)
+        var user = userAccountRepository.findByIdAndIsDeletedFalseAndStatus(id, UserStatus.ACTIVE)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
 
         var response = userAccountMapper.toResponse(user);
@@ -70,7 +120,7 @@ public class UserAccountService {
     }
 
     public UserAccountResponse update(String id, UserAccountRequest request) {
-        var user = userAccountRepository.findByIdAndIsDeletedFalse(id)
+        var user = userAccountRepository.findByIdAndIsDeletedFalseAndStatus(id, UserStatus.ACTIVE)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
         // Update employee
         if (request.getEmployeeId() != null) {
@@ -85,9 +135,11 @@ public class UserAccountService {
         }
         // Các field khác như username, email (nếu có):
         if (request.getUsername() != null) user.setUsername(request.getUsername());
+        if(request.getStatus() != null) user.setStatus(request.getStatus());
         userAccountRepository.save(user);
         // Build response
         var response = userAccountMapper.toResponse(user);
+        response.setStatus(user.getStatus().name());
         var roles = user.getRoles().stream().map(roleMapper::toResponse).toList();
         response.setRoles(roles);
 
@@ -96,7 +148,7 @@ public class UserAccountService {
 
     @Transactional
     public void delete(String id) {
-        var user = userAccountRepository.findByIdAndIsDeletedFalse(id)
+        var user = userAccountRepository.findByIdAndIsDeletedFalseAndStatus(id, UserStatus.ACTIVE)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
 
         user.setDeletedAt(LocalDateTime.now());

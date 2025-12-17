@@ -3,6 +3,7 @@ package com.example.hrm.controller;
 import com.example.hrm.dto.request.UserAccountRequest;
 import com.example.hrm.dto.response.UserAccountResponse;
 import com.example.hrm.service.UserAccountService;
+import com.nimbusds.jose.JOSEException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -21,7 +22,13 @@ public class UserAccountController {
     public ResponseEntity<UserAccountResponse> createUserAccount(
             @Valid @RequestBody UserAccountRequest request
     ) {
-        var response = userAccountService.create(request);
+        var response = userAccountService.createManual(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/auto/{id}")
+    public ResponseEntity<UserAccountResponse> createUserAccount(@PathVariable  String id) throws JOSEException {
+        var response = userAccountService.createAuto(id);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

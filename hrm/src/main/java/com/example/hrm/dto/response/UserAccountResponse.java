@@ -27,6 +27,8 @@ public class UserAccountResponse {
 
     List<RoleResponse> roles;
 
+    String status;
+
     LocalDateTime createdAt;
 
     LocalDateTime updatedAt;

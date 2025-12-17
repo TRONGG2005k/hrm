@@ -13,7 +13,10 @@ public enum ErrorCode {
     USER_USERNAME_ALREADY_EXISTS("E2002", "Tên đăng nhập đã tồn tại"),
     USER_INVALID_PASSWORD("E2003", "Mật khẩu không hợp lệ"),
     USER_ACCOUNT_LOCKED("E2004", "Tài khoản đã bị khóa"),
+    USER_ACCOUNT_ALREADY_EXISTS("E2007", "nhân viên này đã có tài khoản rồi"),
     USER_UNAUTHORIZED("E2005", "Người dùng không có quyền thực hiện hành động này"),
+    INVALID_USERNAME_OR_PASSWORD("E2006", "invalid user name or password"),
+    USER_NOT_ACTIVE("E2008", "tài khoản không được kích hoạt hoặc sai tên và mật khẩu"),
 
     // Department errors (3000-3999)
     DEPARTMENT_NOT_FOUND("E3001", "Phòng ban không tìm thấy"),

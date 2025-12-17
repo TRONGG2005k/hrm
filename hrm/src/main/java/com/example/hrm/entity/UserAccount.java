@@ -1,5 +1,6 @@
 package com.example.hrm.entity;
 
+import com.example.hrm.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -8,7 +9,8 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -37,6 +39,9 @@ public class UserAccount {
     )
     @Builder.Default
     Set<Role> roles = new HashSet<>();
+
+    @Enumerated(EnumType.STRING)
+    UserStatus status;
 
     @Builder.Default
     LocalDateTime createdAt = LocalDateTime.now();

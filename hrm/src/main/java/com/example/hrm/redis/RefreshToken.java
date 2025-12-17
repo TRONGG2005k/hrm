@@ -16,9 +16,9 @@ import org.springframework.data.redis.core.index.Indexed;
 @RedisHash("refreshToken")
 public class RefreshToken {
     @Id
-    String username; // key
+    String jwtID;    // key
     @Indexed
-    String jwtID;    // value
+    String username; // value
     @TimeToLive
     Long ttl;
 }

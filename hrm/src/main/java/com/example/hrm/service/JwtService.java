@@ -1,6 +1,8 @@
 package com.example.hrm.service;
 
+import com.example.hrm.configuration.JwtKeyStore;
 import com.example.hrm.entity.UserAccount;
+import com.example.hrm.enums.TokenType;
 import com.example.hrm.exception.AppException;
 import com.example.hrm.exception.ErrorCode;
 import com.example.hrm.repository.RefreshTokenRepository;
@@ -28,54 +30,26 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class JwtService {
-    @Value("${app.jwt.signerKeyAccess}")
-    protected String SECRET_KEY_ACCESS;
-    @Value("${app.jwt.signerKeyRefresh}")
-    protected String SECRET_KEY_REFRESH;
-    @Value("${app.jwt.valid-duration}")
-    protected long ACCESS_TOKEN_EXPIRATION;
 
-    @Value("${app.jwt.refreshable-duration}")
-    protected long REFRESH_TOKEN_EXPIRATION;
-
+    private final JwtKeyStore keyStore;
     private final RefreshTokenRepository refreshTokenRepository;
 
+    @Value("${app.jwt.valid-duration}")
+    private long accessExp;
+
+    @Value("${app.jwt.refreshable-duration}")
+    private long refreshExp;
+
+    private static final String ISSUER = "myapp.com";
+
+    /* ================= GENERATE ================= */
+
     public String generateAccessToken(UserAccount user) throws JOSEException {
-        return generateToken(user, SECRET_KEY_ACCESS, "access", ACCESS_TOKEN_EXPIRATION);
+        return generateToken(user, TokenType.ACCESS, accessExp);
     }
 
     public String generateRefreshToken(UserAccount user) throws JOSEException {
-        return generateToken(user, SECRET_KEY_REFRESH, "refresh", REFRESH_TOKEN_EXPIRATION);
-    }
-
-    private String generateToken(UserAccount user, String secret, String type, long expirationMs) throws JOSEException {
-        JWTClaimsSet claims = buildClaims(user, type, expirationMs);
-
-        SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS512), claims);
-
-        signedJWT.sign(new MACSigner(secret.getBytes()));
-
-        return signedJWT.serialize();
-    }
-
-    private JWTClaimsSet buildClaims(UserAccount user, String type, long expirationMs) {
-        StringJoiner scopes = new StringJoiner(" ");
-        user.getRoles().forEach(role -> scopes.add(role.getName()));
-
-        return new JWTClaimsSet.Builder()
-                .issueTime(new Date())
-                .subject(user.getUsername())
-                .claim("scope", scopes.toString())
-                .claim("type", type)
-                .issuer("myapp.com")
-                .jwtID(UUID.randomUUID().toString())
-                .expirationTime(
-                        new Date(
-                                Instant.now().plus(expirationMs, ChronoUnit.SECONDS)
-                                        .toEpochMilli()
-                        )
-                )
-                .build();
+        return generateToken(user, TokenType.REFRESH, refreshExp);
     }
 
     public ResponseCookie createRefreshCookie(String refreshToken) {
@@ -88,46 +62,99 @@ public class JwtService {
                 .build();
     }
 
-    public SignedJWT getClaims(String token) throws ParseException {
-        return SignedJWT.parse(token);
+    public String generateActivationToken(UserAccount user) throws JOSEException {
+        return generateToken(user, TokenType.ACTIVATION, 900);
     }
 
-    public void verifyRefreshToken(String token) throws ParseException, JOSEException {
+    private String generateToken(UserAccount user, TokenType type, long expSeconds)
+            throws JOSEException {
 
-        SignedJWT jwt = SignedJWT.parse(token);
+        JWTClaimsSet claims = buildClaims(user, type, expSeconds);
 
-        // 1️⃣ Verify signature trước
-        if (!jwt.verify(new MACVerifier(SECRET_KEY_REFRESH.getBytes()))) {
-            throw new AppException(ErrorCode.INVALID_TOKEN, 401);
-        }
+        SignedJWT jwt = new SignedJWT(
+                new JWSHeader.Builder(JWSAlgorithm.HS512)
+                        .keyID(type.name()) // 🔥 KID
+                        .build(),
+                claims
+        );
 
-        String jwtId = getJwtId(jwt);
-        if (jwtId == null) {
-            throw new AppException(ErrorCode.INVALID_TOKEN, 401);
-        }
-
-        refreshTokenRepository.findByJwtID(jwtId)
-                .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN, 401));
+        jwt.sign(new MACSigner(keyStore.getKey(type.name())));
+        return jwt.serialize();
     }
 
-    private static String getJwtId(SignedJWT jwt) throws ParseException {
-        var claims = jwt.getJWTClaimsSet();
+    private JWTClaimsSet buildClaims(UserAccount user, TokenType type, long expSeconds) {
 
-        // 2️⃣ Check type
-        String type = claims.getStringClaim("type");
-        if (!"refresh".equals(type)) {
+        String scope = user.getRoles().stream()
+                .map(r -> r.getName())
+                .reduce((a, b) -> a + " " + b)
+                .orElse("");
+
+        return new JWTClaimsSet.Builder()
+                .subject(user.getUsername())
+                .issuer(ISSUER)
+                .claim("scope", scope)
+                .claim("type", type.name())
+                .jwtID(UUID.randomUUID().toString())
+                .issueTime(new Date())
+                .expirationTime(
+                        Date.from(Instant.now().plus(expSeconds, ChronoUnit.SECONDS))
+                )
+                .build();
+    }
+
+    /* ================= VERIFY (CRYPTO) ================= */
+
+    public JWTClaimsSet verifyAndParse(String token) {
+        try {
+            SignedJWT jwt = SignedJWT.parse(token);
+
+            String kid = jwt.getHeader().getKeyID();
+            byte[] key = keyStore.getKey(kid);
+
+            if (key == null || !jwt.verify(new MACVerifier(key)))
+                throw new AppException(ErrorCode.INVALID_TOKEN, 401);
+
+            JWTClaimsSet claims = jwt.getJWTClaimsSet();
+
+            if (!ISSUER.equals(claims.getIssuer()))
+                throw new AppException(ErrorCode.INVALID_TOKEN, 401);
+
+            if (claims.getExpirationTime().before(new Date()))
+                throw new AppException(ErrorCode.TOKEN_HAS_EXPIRED, 401);
+
+            return claims;
+
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.INVALID_TOKEN, 401);
+        }
+    }
+
+    /* ================= ASSERT PURPOSE ================= */
+
+    public void assertAccessToken(JWTClaimsSet claims) throws ParseException {
+        assertType(claims, TokenType.ACCESS);
+    }
+
+    public void assertRefreshToken(JWTClaimsSet claims) throws ParseException {
+        assertType(claims, TokenType.REFRESH);
+
+        refreshTokenRepository.findByJwtID(claims.getJWTID())
+                .orElseThrow(() ->
+                        new AppException(ErrorCode.INVALID_TOKEN, 401)
+                );
+    }
+
+    public void assertActivationToken(JWTClaimsSet claims) throws ParseException {
+        assertType(claims, TokenType.ACTIVATION);
+    }
+
+    void assertType(JWTClaimsSet claims, TokenType expected) throws ParseException {
+        TokenType actual = TokenType.valueOf(
+                claims.getStringClaim("type")
+        );
+
+        if (actual != expected)
             throw new AppException(ErrorCode.INVALID_TOKEN_TYPE, 401);
-        }
-
-        // 3️⃣ Check expiration
-        Date expirationTime = claims.getExpirationTime();
-        if (expirationTime == null || expirationTime.before(new Date())) {
-            throw new AppException(ErrorCode.TOKEN_HAS_EXPIRED, 401);
-        }
-
-        // 4️⃣ Check jti
-        String jwtId = claims.getJWTID();
-        return jwtId;
     }
-
 }
+
