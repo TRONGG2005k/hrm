@@ -11,19 +11,19 @@ import java.util.List;
 
 @Entity
 @Table(name = "attendance", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"employee_id", "date"})
+        @UniqueConstraint(columnNames = {"employee_id", "date"})
 }, indexes = {
-    @Index(columnList = "employee_id"),
-    @Index(columnList = "date"),
-    @Index(columnList = "status")
+        @Index(columnList = "employee_id"),
+        @Index(columnList = "date"),
+        @Index(columnList = "status")
 })
 @Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-
 public class Attendance {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
@@ -34,24 +34,36 @@ public class Attendance {
 
     @Column(nullable = false)
     LocalDate date;
-    
+
+    // Thời gian vào ra thực tế
     LocalDateTime checkInTime;
-    LocalDateTime checkoutTime;
-    Double lunchHours;
-    Double workingHours;
-    Integer lateMinutes;
-    Integer earlyLeaveMinutes;
+    LocalDateTime checkOutTime;
+
+    // Số giờ làm việc được tính tự động từ checkIn/checkOut - lunchHours
+    @Column(nullable = false)
+    Double workingHours = 0.0;
+
+    @Column(nullable = false)
+    Double lunchHours = 0.0;
+
+    // Trễ / về sớm (tính tự động)
+    @Column(nullable = false)
+    Integer lateMinutes = 0;
+
+    @Column(nullable = false)
+    Integer earlyLeaveMinutes = 0;
 
     @Enumerated(EnumType.STRING)
     AttendanceStatus status;
 
+    // Quan hệ OT
     @OneToMany(mappedBy = "attendance", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AttendanceOTRate> attendanceOTRates;
+    List<AttendanceOTRate> attendanceOTRates;
 
     @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+    LocalDateTime createdAt = LocalDateTime.now();
 
-    private LocalDateTime updatedAt;
+    LocalDateTime updatedAt;
 
     @Builder.Default
     @Column(nullable = false)
@@ -63,6 +75,5 @@ public class Attendance {
     public void preUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
 }
 

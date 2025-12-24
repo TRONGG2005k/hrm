@@ -93,6 +93,8 @@ public enum ErrorCode {
     FILE_UPLOAD_FAILED("E16002", "Tải lên tệp thất bại"),
     FILE_SIZE_EXCEEDED("E16003", "Kích thước tệp vượt quá giới hạn cho phép"),
     FILE_INVALID_TYPE("E16004", "Loại tệp không được hỗ trợ"),
+    FILE_IS_EMPTY("E16005", "không có file nào tồn tại trong request"),
+    HANDLING_FAILED_FILES("E16006", "xử lý file thất bại"),
 
     // Validation errors (20000-20999)
     VALIDATION_ERROR("E20001", "Dữ liệu đầu vào không hợp lệ"),

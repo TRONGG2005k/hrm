@@ -36,10 +36,10 @@ public class JwtService {
     private final RedisTemplate<String, String> redisTemplate;
 
     @Value("${app.jwt.valid-duration}")
-    private final long accessExp;
+    private  long accessExp;
 
     @Value("${app.jwt.refreshable-duration}")
-    private final long refreshExp;
+    private  long refreshExp;
 
     private static final String ISSUER = "myapp.com";
 

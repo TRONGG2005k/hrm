@@ -20,23 +20,4 @@ import java.time.LocalDateTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AttendanceRequest {
 
-    @NotBlank(message = "Mã nhân viên không được để trống")
-    String employeeId;
-
-    @NotNull(message = "Ngày không được để trống")
-    LocalDate date;
-
-    LocalDateTime checkInTime;
-
-    LocalDateTime checkoutTime;
-
-    Double lunchHours;
-
-    Double workingHours;
-
-    Integer lateMinutes;
-
-    Integer earlyLeaveMinutes;
-
-    AttendanceStatus status;
 }

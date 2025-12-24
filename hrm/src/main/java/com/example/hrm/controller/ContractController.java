@@ -4,6 +4,7 @@ import com.example.hrm.dto.request.ContractRequest;
 import com.example.hrm.dto.request.ContractUpdateRequest;
 import com.example.hrm.dto.response.ContractListResponse;
 import com.example.hrm.dto.response.ContractResponse;
+import com.example.hrm.enums.ContractStatus;
 import com.example.hrm.service.ContractService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class ContractController {
             @RequestParam(defaultValue = "10") int size
     )
     {
-        return ResponseEntity.ok(contractService.getAll(page, size));
+        return ResponseEntity.ok(contractService.getAllContractActive(page, size));
     }
 
     @GetMapping("/{id}")
@@ -45,6 +46,34 @@ public class ContractController {
             @PathVariable String id
     ) {
         return ResponseEntity.ok(contractService.getById(id));
+    }
+
+    public Page<ContractListResponse> getContractsNotActive(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return contractService.getAllContractNotActive(page, size);
+    }
+
+    @RestController
+    @RequestMapping("/api/contracts")
+    @RequiredArgsConstructor
+    public class ContractApprovalController {
+
+        private final ContractService contractService;
+
+        /**
+         * Duyệt hợp đồng
+         * @param contractId id hợp đồng
+         * @param newStatus trạng thái mới (vd: ACTIVE, TERMINATED)
+         */
+        @PostMapping("/{contractId}/approve")
+        public ContractResponse approveContract(
+                @PathVariable String contractId,
+                @RequestParam ContractStatus newStatus
+        ) {
+            return contractService.changeContractStatus(contractId, newStatus);
+        }
     }
 
 }

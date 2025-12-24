@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-
 public class AttendanceOTRate {
 
     @Id
@@ -24,11 +23,13 @@ public class AttendanceOTRate {
     @JoinColumn(name = "attendance_id", nullable = false)
     Attendance attendance;
 
+    // Lưu OT rate như 1 entity riêng để linh hoạt
     @ManyToOne
     @JoinColumn(name = "ot_rate_id", nullable = false)
     OTRate otRate;
 
-    Double otHours; // số giờ tăng ca
+    @Column(nullable = false)
+    Double otHours = 0.0; // số giờ tăng ca
 
     @Builder.Default
     LocalDateTime createdAt = LocalDateTime.now();
@@ -39,3 +40,4 @@ public class AttendanceOTRate {
 
     LocalDateTime deletedAt;
 }
+
