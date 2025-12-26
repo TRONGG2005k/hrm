@@ -18,6 +18,8 @@ import java.util.List;
 @Slf4j
 public class AttendanceHelper {
 
+
+
     public LocalDateTime getShiftStart(Employee employee, LocalDateTime now) {
         if (employee.getShiftType() == ShiftType.NIGHT) {
             // ca đêm bắt đầu 22:00

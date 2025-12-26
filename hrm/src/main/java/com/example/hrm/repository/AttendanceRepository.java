@@ -19,6 +19,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, String> 
 
     Optional<Attendance> findTopByEmployeeOrderByCheckInTimeDesc(Employee employee);
 
+    Optional<Attendance> findByIdAndIsDeletedFalse(String id);
 
     Optional<Attendance> findTopByEmployeeAndCheckOutTimeIsNullOrderByCheckInTimeDesc(Employee employee );
 

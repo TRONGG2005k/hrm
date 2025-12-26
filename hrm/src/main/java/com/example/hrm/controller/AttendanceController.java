@@ -1,12 +1,11 @@
 package com.example.hrm.controller;
 
-import com.example.hrm.dto.response.AttendanceRealTimeResponse;
+import com.example.hrm.dto.response.AttendanceDetailResponse;
+import com.example.hrm.dto.response.AttendanceListResponse;
 import com.example.hrm.service.AttendanceService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("${app.api-prefix}/attendance")
@@ -16,20 +15,23 @@ public class AttendanceController {
     private final AttendanceService attendanceService;
 
     /**
-     * Endpoint quét khuôn mặt để check-in/check-out
-     * @param file hình ảnh quét khuôn mặt
-     * @return thông tin check-in/check-out
+     * 📌 Lấy danh sách chấm công (phân trang)
+     * GET /attendance?page=0&size=10
      */
-    @PostMapping("/scan")
-    public ResponseEntity<AttendanceRealTimeResponse> scanFace(@RequestParam("file") MultipartFile file) {
-        AttendanceRealTimeResponse response = attendanceService.scan(file);
-        if (response == null) {
-            // Trường hợp trong giờ nghỉ
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body(AttendanceRealTimeResponse.builder()
-                            .message("Hiện tại đang trong giờ nghỉ, không tính check-out")
-                            .build());
-        }
-        return ResponseEntity.ok(response);
+    @GetMapping
+    public Page<AttendanceListResponse> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return attendanceService.getAll(page, size);
+    }
+
+    /**
+     * 📌 Xem chi tiết 1 bản ghi chấm công
+     * GET /attendance/{id}
+     */
+    @GetMapping("/{id}")
+    public AttendanceDetailResponse getDetail(@PathVariable String id) {
+        return attendanceService.getDetail(id);
     }
 }

@@ -43,6 +43,9 @@ public class Attendance {
     )
     List<BreakTime> breaks;
 
+//    @Column(name = "work_date", nullable = false)
+    @Column(name = "work_date", nullable = true)
+    LocalDate workDate;
 
     // Quan hệ OT
     @OneToMany(mappedBy = "attendance", cascade = CascadeType.ALL, orphanRemoval = true)

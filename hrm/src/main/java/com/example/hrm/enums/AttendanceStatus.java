@@ -5,4 +5,5 @@ public enum AttendanceStatus {
     LEAVE_EARLY,
     ON_TIME,
     OVER_TIME,
+    WORKING,
 }

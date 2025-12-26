@@ -51,6 +51,7 @@ public class AttendanceCheckInService {
         }
 
         Attendance attendance = Attendance.builder()
+                .workDate(LocalDate.now())
                 .employee(employee)
                 .checkInTime(now)
                 .status(status)

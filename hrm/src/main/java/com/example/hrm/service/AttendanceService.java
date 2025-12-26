@@ -1,64 +1,200 @@
 package com.example.hrm.service;
 
-
-import com.example.hrm.dto.response.AttendanceRealTimeResponse;
-import com.example.hrm.entity.*;
-import com.example.hrm.enums.ShiftType;
+import com.example.hrm.dto.response.AttendanceDetailResponse;
+import com.example.hrm.dto.response.AttendanceListResponse;
+import com.example.hrm.dto.response.BreakTimeResponse;
+import com.example.hrm.enums.AttendanceStatus;
 import com.example.hrm.exception.AppException;
 import com.example.hrm.exception.ErrorCode;
 import com.example.hrm.repository.AttendanceRepository;
-import com.example.hrm.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.time.*;
-
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AttendanceService {
     private final AttendanceRepository attendanceRepository;
-    private final EmployeeRepository employeeRepository;
-    private final FaceRecognitionService faceRecognitionService;
-    private final BreakTimeService breakTimeService;
-    private final AttendanceCheckInService attendanceCheckInService;
-    private final AttendanceCheckOutService attendanceCheckOutService;
+    private final AttendanceHelper attendanceHelper;
 
-    public AttendanceRealTimeResponse scan(MultipartFile request) {
+    public Page<AttendanceListResponse> getAll(int page, int size) {
+        return attendanceRepository
+                .findByIsDeletedFalse(PageRequest.of(page, size))
+                .map(item -> {
 
-        var employeeCode = faceRecognitionService.recognizeFace(request);
-        var employee = employeeRepository
-                .findByCodeAndIsDeletedFalse(employeeCode.getCode())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
+                    LocalDateTime checkIn = item.getCheckInTime();
+                    LocalDateTime checkOut = item.getCheckOutTime();
 
-        var openAttendanceOpt =
-                attendanceRepository
-                        .findTopByEmployeeAndCheckOutTimeIsNullOrderByCheckInTimeDesc(employee);
+                    LocalDateTime shiftStart =
+                            attendanceHelper.getShiftStart(item.getEmployee(), checkIn);
+                    LocalDateTime shiftEnd =
+                            attendanceHelper.getShiftEnd(item.getEmployee(), checkIn);
 
-        if (openAttendanceOpt.isEmpty()) {
-            return attendanceCheckInService.checkIn(employee);
+                    long earlyLeaveMinutes = 0;
+                    long lateMinutes = 0;
+                    long otMinutes = 0;
+
+                    if (checkIn.isAfter(shiftStart)) {
+                        lateMinutes = Duration.between(shiftStart, checkIn).toMinutes();
+                    }
+
+                    if (checkOut != null) {
+                        if (checkOut.isBefore(shiftEnd)) {
+                            earlyLeaveMinutes =
+                                    Duration.between(checkOut, shiftEnd).toMinutes();
+                        }
+
+                        otMinutes = attendanceHelper.calculateBreakMinutesInOT(
+                                item.getBreaks(), shiftEnd, checkOut
+                        );
+                    }
+
+                    AttendanceStatus status;
+                    if (checkOut == null) {
+                        status = AttendanceStatus.WORKING;
+                    } else if (earlyLeaveMinutes > 0) {
+                        status = AttendanceStatus.LEAVE_EARLY;
+                    } else if (lateMinutes > 0) {
+                        status = AttendanceStatus.LATE;
+                    } else if (otMinutes > 0) {
+                        status = AttendanceStatus.OVER_TIME;
+                    } else {
+                        status = AttendanceStatus.ON_TIME;
+                    }
+
+                    double otRate = item.getAttendanceOTRates().isEmpty()
+                            ? 1.0
+                            : item.getAttendanceOTRates().getFirst()
+                            .getOtRate().getRate();
+
+                    return AttendanceListResponse.builder()
+                            .employeeCode(item.getEmployee().getCode())
+                            .checkInTime(checkIn)
+                            .checkOutTime(checkOut)
+                            .lateMinutes(lateMinutes)
+                            .earlyLeaveMinutes(earlyLeaveMinutes)
+                            .otMinutes(otMinutes)
+                            .otRate(otRate)
+                            .workDate(item.getWorkDate())
+                            .status(status)
+                            .build();
+                });
+    }
+
+    public AttendanceDetailResponse getDetail(String attendanceId) {
+
+        var attendance = attendanceRepository.findByIdAndIsDeletedFalse(attendanceId)
+                .orElseThrow(() -> new AppException(ErrorCode.ATTENDANCE_NOT_FOUND, 404));
+
+        LocalDateTime checkIn = attendance.getCheckInTime();
+        LocalDateTime checkOut = attendance.getCheckOutTime();
+
+        var employee = attendance.getEmployee();
+
+        LocalDateTime shiftStart =
+                attendanceHelper.getShiftStart(employee, checkIn);
+        LocalDateTime shiftEnd =
+                attendanceHelper.getShiftEnd(employee, checkIn);
+
+        long lateMinutes = 0;
+        long earlyLeaveMinutes = 0;
+
+        if (checkIn != null && checkIn.isAfter(shiftStart)) {
+            lateMinutes = Duration.between(shiftStart, checkIn).toMinutes();
         }
 
-        Attendance attendance = openAttendanceOpt.get();
-        LocalDateTime now = LocalDateTime.now();
-
-        LocalDate workDate =
-                employee.getShiftType() == ShiftType.NIGHT
-                        && now.toLocalTime().isBefore(LocalTime.of(22, 0))
-                        ? now.minusDays(1).toLocalDate()
-                        : now.toLocalDate();
-
-        // 🔥 TẤT CẢ BREAK LOGIC ĐÃ ĐƯỢC TÁCH
-        breakTimeService.ensureDefaultBreak(attendance, workDate);
-
-        if (breakTimeService.isInBreak(attendance, now)) {
-            throw new AppException(ErrorCode.IN_BREAK_TIME, 400);
+        if (checkOut != null && checkOut.isBefore(shiftEnd)) {
+            earlyLeaveMinutes = Duration.between(checkOut, shiftEnd).toMinutes();
         }
 
-        return attendanceCheckOutService.checkOut(attendance);
+        long workedMinutes = 0;
+        double workedHours = 0;
+
+        if (checkIn != null && checkOut != null) {
+            workedMinutes = Duration.between(checkIn, checkOut).toMinutes();
+            workedHours = workedMinutes / 60.0;
+        }
+
+        long otMinutes = 0;
+        if (checkOut != null) {
+            otMinutes = attendanceHelper.calculateBreakMinutesInOT(
+                    attendance.getBreaks(),
+                    shiftEnd,
+                    checkOut
+            );
+        }
+
+
+        double otHours = otMinutes / 60.0;
+
+        double otRate = attendance.getAttendanceOTRates()
+                .isEmpty()
+                ? 0
+                : attendance.getAttendanceOTRates()
+                .getFirst()
+                .getOtRate()
+                .getRate();
+
+        AttendanceStatus status;
+
+        if (checkOut == null) {
+            status = AttendanceStatus.WORKING;
+        } else if (earlyLeaveMinutes > 0) {
+            status = AttendanceStatus.LEAVE_EARLY;
+        } else if (lateMinutes > 0) {
+            status = AttendanceStatus.LATE;
+        } else if (otMinutes > 0) {
+            status = AttendanceStatus.OVER_TIME;
+        } else {
+            status = AttendanceStatus.ON_TIME;
+        }
+
+        var breakResponses = attendance.getBreaks()
+                .stream()
+                .map(b -> BreakTimeResponse.builder()
+                        .id(b.getId())
+                        .breakStart(b.getBreakStart())
+                        .breakEnd(b.getBreakEnd())
+                        .type(b.getType())
+                        .build()
+                )
+                .toList();
+
+        return AttendanceDetailResponse.builder()
+                .employeeId(employee.getId())
+                .employeeCode(employee.getCode())
+                .employeeName(employee.getFirstName() + " " + employee.getLastName())
+                .subDepartmentName(employee.getSubDepartment().getName())
+
+                .workDate(attendance.getWorkDate())
+
+                .shiftType(employee.getShiftType())
+                .shiftStart(shiftStart)
+                .shiftEnd(shiftEnd)
+
+                .checkInTime(checkIn)
+                .checkOutTime(checkOut)
+
+                .lateMinutes(lateMinutes)
+                .earlyLeaveMinutes(earlyLeaveMinutes)
+
+                .workedMinutes(workedMinutes)
+                .workedHours(workedHours)
+
+                .breakTimes(breakResponses)
+
+                .otMinutes(otMinutes)
+                .otHours(otHours)
+                .otRate(otRate)
+
+                .status(status)
+                .build();
     }
 
 
