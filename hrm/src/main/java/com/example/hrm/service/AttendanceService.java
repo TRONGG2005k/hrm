@@ -4,6 +4,7 @@ import com.example.hrm.dto.response.AttendanceDetailResponse;
 import com.example.hrm.dto.response.AttendanceListResponse;
 import com.example.hrm.dto.response.BreakTimeResponse;
 import com.example.hrm.enums.AttendanceStatus;
+import com.example.hrm.enums.OTType;
 import com.example.hrm.exception.AppException;
 import com.example.hrm.exception.ErrorCode;
 import com.example.hrm.repository.AttendanceRepository;
@@ -141,6 +142,14 @@ public class AttendanceService {
                 .getOtRate()
                 .getRate();
 
+        OTType otType = attendance.getAttendanceOTRates()
+                .isEmpty()
+                ? null
+                : attendance.getAttendanceOTRates()
+                .getFirst()
+                .getOtRate()
+                .getType();
+
         AttendanceStatus status;
 
         if (checkOut == null) {
@@ -192,7 +201,7 @@ public class AttendanceService {
                 .otMinutes(otMinutes)
                 .otHours(otHours)
                 .otRate(otRate)
-
+                .otType(otType)
                 .status(status)
                 .build();
     }
