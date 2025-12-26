@@ -7,14 +7,12 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "attendance", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"employee_id", "date"})
-}, indexes = {
+@Table(name = "attendance", indexes = {
         @Index(columnList = "employee_id"),
-        @Index(columnList = "date"),
         @Index(columnList = "status")
 })
 @Builder
@@ -29,36 +27,26 @@ public class Attendance {
     String id;
 
     @ManyToOne
-    @JoinColumn(name = "employee_id", nullable = false)
+            @JoinColumn(name = "employee_id", nullable = false)
     Employee employee;
 
-    @Column(nullable = false)
-    LocalDate date;
-
-    // Thời gian vào ra thực tế
     LocalDateTime checkInTime;
     LocalDateTime checkOutTime;
-
-    // Số giờ làm việc được tính tự động từ checkIn/checkOut - lunchHours
-    @Column(nullable = false)
-    Double workingHours = 0.0;
-
-    @Column(nullable = false)
-    Double lunchHours = 0.0;
-
-    // Trễ / về sớm (tính tự động)
-    @Column(nullable = false)
-    Integer lateMinutes = 0;
-
-    @Column(nullable = false)
-    Integer earlyLeaveMinutes = 0;
 
     @Enumerated(EnumType.STRING)
     AttendanceStatus status;
 
+    @OneToMany(
+            mappedBy = "attendance",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    List<BreakTime> breaks;
+
+
     // Quan hệ OT
     @OneToMany(mappedBy = "attendance", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<AttendanceOTRate> attendanceOTRates;
+    List<AttendanceOTRate> attendanceOTRates = new ArrayList<>();
 
     @Builder.Default
     LocalDateTime createdAt = LocalDateTime.now();

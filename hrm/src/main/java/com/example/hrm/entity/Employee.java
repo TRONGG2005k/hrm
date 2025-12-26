@@ -2,6 +2,7 @@ package com.example.hrm.entity;
 
 import com.example.hrm.enums.EmployeeStatus;
 import com.example.hrm.enums.Gender;
+import com.example.hrm.enums.ShiftType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -58,6 +59,10 @@ public class Employee {
     @OneToMany(mappedBy = "employee")
     @Builder.Default
     List<Contract> contracts = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    ShiftType shiftType;
+
 
     @ManyToOne
     @JoinColumn(name = "sub_department_id")

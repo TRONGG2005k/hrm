@@ -1,0 +1,120 @@
+package com.example.hrm.service;
+
+import com.example.hrm.dto.request.BreakTimeBatchRequest;
+import com.example.hrm.dto.request.BreakTimeRequest;
+import com.example.hrm.dto.response.BreakTimeResponse;
+import com.example.hrm.entity.Attendance;
+import com.example.hrm.entity.BreakTime;
+import com.example.hrm.entity.Employee;
+import com.example.hrm.exception.AppException;
+import com.example.hrm.exception.ErrorCode;
+import com.example.hrm.repository.AttendanceRepository;
+import com.example.hrm.repository.BreakTimeRepository;
+import com.example.hrm.repository.EmployeeRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+@Service
+@RequiredArgsConstructor
+public class BreakTimeService {
+
+    private final BreakTimeRepository breakTimeRepository;
+    private final AttendanceRepository attendanceRepository;
+    private final EmployeeRepository employeeRepository;
+
+    public List<String> updateBreakForSubDepartment(BreakTimeBatchRequest request) {
+        // Lấy tất cả nhân viên trong phòng ban
+        List<Employee> employees = employeeRepository.findBySubDepartmentId(request.getSubDepartmentId());
+
+        // Lấy attendance mới nhất của từng nhân viên
+        List<Attendance> attendances = employees.stream()
+                .map(e -> attendanceRepository.findTopByEmployeeOrderByCheckInTimeDesc(e).orElse(null))
+                .filter(Objects::nonNull)
+                .toList();
+
+        List<String> updatedAttendanceIds = new ArrayList<>();
+
+        List<BreakTime> breaksToSave = new ArrayList<>();
+        for (Attendance attendance : attendances) {
+            if (attendance.getBreaks() == null) {
+                attendance.setBreaks(new ArrayList<>());
+            }
+
+            BreakTime breakTime = new BreakTime();
+            breakTime.setAttendance(attendance);
+            breakTime.setBreakStart(request.getBreakStart());
+            breakTime.setBreakEnd(request.getBreakEnd());
+            breakTime.setType(request.getType());
+
+            attendance.getBreaks().add(breakTime);
+            breaksToSave.add(breakTime);
+
+            updatedAttendanceIds.add(attendance.getId());
+        }
+
+        // Batch save để tối ưu
+        breakTimeRepository.saveAll(breaksToSave);
+
+        return updatedAttendanceIds; // trả về danh sách attendance đã cập nhật
+    }
+
+    // Tạo break mới
+    public BreakTimeResponse createBreak(BreakTimeRequest request) {
+        Attendance attendance = attendanceRepository.findById(request.getAttendanceId())
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404));
+
+        BreakTime breakTime = new BreakTime();
+        breakTime.setAttendance(attendance);
+        breakTime.setBreakStart(request.getBreakStart());
+        breakTime.setBreakEnd(request.getBreakEnd());
+        breakTime.setType(request.getType());
+
+        breakTimeRepository.save(breakTime);
+        return mapToResponse(breakTime);
+    }
+
+    // Cập nhật break
+    public BreakTimeResponse updateBreak(String id, BreakTimeRequest request) {
+        BreakTime breakTime = breakTimeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404));
+
+        breakTime.setBreakStart(request.getBreakStart());
+        breakTime.setBreakEnd(request.getBreakEnd());
+        breakTime.setType(request.getType());
+
+        breakTimeRepository.save(breakTime);
+        return mapToResponse(breakTime);
+    }
+
+    // Xóa break
+    public void deleteBreak(String id) {
+        BreakTime breakTime = breakTimeRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404));
+        breakTimeRepository.delete(breakTime);
+    }
+
+    // Lấy break theo attendance (paging)
+    public Page<BreakTimeResponse> getBreaksByAttendance(String attendanceId, Pageable pageable) {
+        Attendance attendance = attendanceRepository.findById(attendanceId)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404));
+
+        return breakTimeRepository.findByAttendance(attendance, pageable)
+                .map(this::mapToResponse);
+    }
+
+    private BreakTimeResponse mapToResponse(BreakTime breakTime) {
+        return BreakTimeResponse.builder()
+                .id(breakTime.getId())
+                .attendanceId(breakTime.getAttendance().getId())
+                .breakStart(breakTime.getBreakStart())
+                .breakEnd(breakTime.getBreakEnd())
+                .type(breakTime.getType())
+                .build();
+    }
+}

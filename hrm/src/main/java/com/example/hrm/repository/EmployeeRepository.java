@@ -4,6 +4,7 @@ import com.example.hrm.entity.Employee;
 
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
 
     Optional<Employee> findByIdAndIsDeletedFalse(String id);
 
+    Optional<Employee> findByCodeAndIsDeletedFalse(String id);
     @Query("""
                 SELECT e FROM Employee e
                 LEFT JOIN FETCH e.subDepartment sd
@@ -27,5 +29,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
                 WHERE e.id = :employeeId
             """)
     Optional<Employee> findEmployeeWithFiles(@Param("employeeId") String employeeId);
+
+    @Query("SELECT e FROM Employee e WHERE e.subDepartment.id = :subDeptId AND e.isDeleted = false")
+    List<Employee> findBySubDepartmentId(@Param("subDeptId") String subDeptId);
+
 
 }

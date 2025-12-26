@@ -27,8 +27,9 @@ public class SecurityConfiguration {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/v1/employees/faces/recognize").permitAll()
+                        .requestMatchers("/api/v1/auth/**",
+                                "/api/v1/employees/faces/**").permitAll()
+//                        .requestMatchers(HttpMethod.POST,).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

@@ -2,6 +2,7 @@ package com.example.hrm.dto.request;
 
 import com.example.hrm.enums.EmployeeStatus;
 import com.example.hrm.enums.Gender;
+import com.example.hrm.enums.ShiftType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -46,6 +47,8 @@ public class EmployeeRequest {
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     LocalDate joinDate;
+
+    ShiftType shiftType;
 
     String address;
 

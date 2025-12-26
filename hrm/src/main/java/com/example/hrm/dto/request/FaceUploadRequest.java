@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class FaceUploadRequest {
-    private MultipartFile image;
-
+    private List<MultipartFile> files;
+    private String employeeId;
 }
 

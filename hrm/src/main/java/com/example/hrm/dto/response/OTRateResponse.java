@@ -28,9 +28,4 @@ public class OTRateResponse {
 
     String description;
 
-    LocalDateTime createdAt;
-
-    Boolean isDeleted;
-
-    LocalDateTime deletedAt;
 }

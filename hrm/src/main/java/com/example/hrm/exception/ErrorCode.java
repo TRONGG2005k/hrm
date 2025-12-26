@@ -2,6 +2,8 @@ package com.example.hrm.exception;
 
 public enum ErrorCode {
 
+
+    NOT_FOUND("E1000", "NOT FOUND"),
     // Employee errors (1000-1999)
     EMPLOYEE_NOT_FOUND("E1001", "Nhân viên không tìm thấy"),
     EMPLOYEE_CODE_ALREADY_EXISTS("E1002", "Mã nhân viên đã tồn tại"),
@@ -67,6 +69,7 @@ public enum ErrorCode {
     OT_RATE_NOT_FOUND("E11001", "Mức tăng ca không tìm thấy"),
     OT_RATE_INVALID_RATE("E11002", "Mức tăng ca phải lớn hơn 0"),
     OT_RATE_INVALID_TYPE("E11003", "Loại tăng ca không hợp lệ"),
+    OT_RATE_DUPLICATE("E11004", "OT rate for this date and type already exists"),
 
     // Salary Adjustment errors (12000-12999)
     SALARY_ADJUSTMENT_NOT_FOUND("E12001", "Điều chỉnh lương không tìm thấy"),

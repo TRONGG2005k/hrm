@@ -2,6 +2,7 @@ package com.example.hrm.controller;
 
 import com.example.hrm.dto.request.SubDepartmentRequest;
 import com.example.hrm.dto.response.SubDepartmentResponse;
+import com.example.hrm.dto.response.SubDepartmentResponseDetail;
 import com.example.hrm.service.SubDepartmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,7 +34,7 @@ public class SubDepartmentController {
     }
 
     @GetMapping("/{id}")
-    public Optional<SubDepartmentResponse> getById(@PathVariable String id) {
+    public SubDepartmentResponseDetail getById(@PathVariable String id) {
         return subDepartmentService.getSubDepartmentById(id);
     }
 

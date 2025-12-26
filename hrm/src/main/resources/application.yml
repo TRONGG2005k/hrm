@@ -48,7 +48,7 @@ app:
     signerKeyAccess: ${SIGNER_KEY_ACCESS_DEV:1TjXchw5FloESb63Kc+DFhTARvpWL4jUGCwfGWxuG5SIf/1y/LgJxHnMqaF6A/ij}
     signerKeyRefresh: ${SIGNER_KEY_REFRESH_DEV:cbd90562e6d653c6779c233efcb3288b2342c62cfddd8c4ba67eca36d79d2b38}
     signerKeyActivation: ${SIGNER_KEY_ACTIVATION_DEV:7c7f1375fdc9f16e2b2143cc9eddb315c0837118de48551baeeb0d62feca745b}
-    valid-duration: 260              # access token (s)
+    valid-duration: 900       # access token (s)
     refreshable-duration: 2592000    # refresh token (s)
     activation-duration: 900         # activation token (15 phút)
   mail:
