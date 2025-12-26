@@ -6,6 +6,7 @@ import com.example.hrm.dto.response.BreakTimeResponse;
 import com.example.hrm.entity.Attendance;
 import com.example.hrm.entity.BreakTime;
 import com.example.hrm.entity.Employee;
+import com.example.hrm.enums.ShiftType;
 import com.example.hrm.exception.AppException;
 import com.example.hrm.exception.ErrorCode;
 import com.example.hrm.repository.AttendanceRepository;
@@ -16,6 +17,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -27,6 +31,34 @@ public class BreakTimeService {
     private final BreakTimeRepository breakTimeRepository;
     private final AttendanceRepository attendanceRepository;
     private final EmployeeRepository employeeRepository;
+
+    public void ensureDefaultBreak(Attendance attendance, LocalDate workDate) {
+
+        if (!attendance.getBreaks().isEmpty()) return;
+
+        ShiftType shiftType = attendance.getEmployee().getShiftType();
+
+        LocalTime breakStart = shiftType == ShiftType.NIGHT
+                ? LocalTime.of(2, 0)
+                : LocalTime.of(12, 0);
+
+        BreakTime breakTime = new BreakTime();
+        breakTime.setAttendance(attendance);
+        breakTime.setBreakStart(LocalDateTime.of(workDate, breakStart));
+        breakTime.setBreakEnd(LocalDateTime.of(workDate, breakStart.plusHours(1)));
+
+        attendance.getBreaks().add(breakTime);
+        breakTimeRepository.save(breakTime);
+    }
+
+    public boolean isInBreak(Attendance attendance, LocalDateTime now) {
+        return attendance.getBreaks()
+                .stream()
+                .anyMatch(b ->
+                        !now.isBefore(b.getBreakStart())
+                                && !now.isAfter(b.getBreakEnd())
+                );
+    }
 
     public List<String> updateBreakForSubDepartment(BreakTimeBatchRequest request) {
         // Lấy tất cả nhân viên trong phòng ban

@@ -124,6 +124,8 @@ public enum ErrorCode {
     INVALID_TOKEN("E600002", "invalid token"),
     TOKEN_HAS_EXPIRED("E600003", "token has expired"),
 
+    //breaktime error(70000 - 70999)
+    IN_BREAK_TIME("E70001", "in break time"),
     // Unknown error
     UNKNOWN_ERROR("E99999", "Lỗi không xác định");
 
