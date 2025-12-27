@@ -1,5 +1,6 @@
 package com.example.hrm.service;
 
+import com.example.hrm.entity.Attendance;
 import com.example.hrm.entity.BreakTime;
 import com.example.hrm.entity.Employee;
 import com.example.hrm.enums.ShiftType;
@@ -66,6 +67,35 @@ public class AttendanceHelper {
         }
 
         return total;
+    }
+
+    public long calculateWorkedMinutes(Attendance attendance) {
+        if (attendance.getCheckInTime() == null || attendance.getCheckOutTime() == null) {
+            return 0;
+        }
+        return Duration.between(
+                attendance.getCheckInTime(),
+                attendance.getCheckOutTime()
+        ).toMinutes();
+    }
+
+
+    public long calculateEarlyLeaveMinutes(Attendance attendance, int graceMinutes) {
+        LocalDateTime checkIn = attendance.getCheckInTime();
+        LocalDateTime checkOut = attendance.getCheckOutTime();
+        LocalDateTime shiftEnd = getShiftEnd(attendance.getEmployee(), checkIn);
+
+        long early = Duration.between(checkOut, shiftEnd).toMinutes();
+        return Math.max(0, early - graceMinutes);
+    }
+
+
+    public long calculateLateMinutes(Attendance attendance, int graceMinutes) {
+        LocalDateTime checkIn = attendance.getCheckInTime();
+        LocalDateTime shiftStart = getShiftStart(attendance.getEmployee(), checkIn);
+
+        long late = Duration.between(shiftStart, checkIn).toMinutes();
+        return Math.max(0, late - graceMinutes);
     }
 
 }

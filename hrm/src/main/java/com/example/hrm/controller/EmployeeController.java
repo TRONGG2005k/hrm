@@ -52,7 +52,7 @@ public class EmployeeController {
      * @return Nhân viên vừa tạo
      */
     @PostMapping
-    public ResponseEntity<EmployeeResponse> createEmployee(@ModelAttribute @Valid EmployeeRequest request) {
+    public ResponseEntity<EmployeeResponse> createEmployee(@RequestBody @Valid EmployeeRequest request) {
         EmployeeResponse employee = employeeService.createEmployee(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(employee);
     }
@@ -67,7 +67,7 @@ public class EmployeeController {
     @PutMapping("/{id}")
     public ResponseEntity<EmployeeResponse> updateEmployee(
             @PathVariable String id,
-            @ModelAttribute @Valid EmployeeRequest request) {
+            @RequestBody @Valid EmployeeRequest request) {
         EmployeeResponse employee = employeeService.updateEmployee(id, request);
         return ResponseEntity.ok(employee);
     }

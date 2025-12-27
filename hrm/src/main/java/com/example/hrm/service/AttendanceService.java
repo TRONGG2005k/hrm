@@ -3,6 +3,7 @@ package com.example.hrm.service;
 import com.example.hrm.dto.response.AttendanceDetailResponse;
 import com.example.hrm.dto.response.AttendanceListResponse;
 import com.example.hrm.dto.response.BreakTimeResponse;
+import com.example.hrm.entity.Attendance;
 import com.example.hrm.enums.AttendanceStatus;
 import com.example.hrm.enums.OTType;
 import com.example.hrm.exception.AppException;
@@ -21,81 +22,40 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @Slf4j
 public class AttendanceService {
+
+    private static final int GRACE_MINUTES = 5;
+
     private final AttendanceRepository attendanceRepository;
     private final AttendanceHelper attendanceHelper;
+
+    /* ===================== LIST ===================== */
 
     public Page<AttendanceListResponse> getAll(int page, int size) {
         return attendanceRepository
                 .findByIsDeletedFalse(PageRequest.of(page, size))
-                .map(item -> {
-
-                    LocalDateTime checkIn = item.getCheckInTime();
-                    LocalDateTime checkOut = item.getCheckOutTime();
-
-                    LocalDateTime shiftStart =
-                            attendanceHelper.getShiftStart(item.getEmployee(), checkIn);
-                    LocalDateTime shiftEnd =
-                            attendanceHelper.getShiftEnd(item.getEmployee(), checkIn);
-
-                    long earlyLeaveMinutes = 0;
-                    long lateMinutes = 0;
-                    long otMinutes = 0;
-
-                    if (checkIn.isAfter(shiftStart)) {
-                        lateMinutes = Duration.between(shiftStart, checkIn).toMinutes();
-                    }
-
-                    if (checkOut != null) {
-                        if (checkOut.isBefore(shiftEnd)) {
-                            earlyLeaveMinutes =
-                                    Duration.between(checkOut, shiftEnd).toMinutes();
-                        }
-
-                        otMinutes = attendanceHelper.calculateBreakMinutesInOT(
-                                item.getBreaks(), shiftEnd, checkOut
-                        );
-                    }
-
-                    AttendanceStatus status;
-                    if (checkOut == null) {
-                        status = AttendanceStatus.WORKING;
-                    } else if (earlyLeaveMinutes > 0) {
-                        status = AttendanceStatus.LEAVE_EARLY;
-                    } else if (lateMinutes > 0) {
-                        status = AttendanceStatus.LATE;
-                    } else if (otMinutes > 0) {
-                        status = AttendanceStatus.OVER_TIME;
-                    } else {
-                        status = AttendanceStatus.ON_TIME;
-                    }
-
-                    double otRate = item.getAttendanceOTRates().isEmpty()
-                            ? 1.0
-                            : item.getAttendanceOTRates().getFirst()
-                            .getOtRate().getRate();
-
-                    return AttendanceListResponse.builder()
-                            .employeeCode(item.getEmployee().getCode())
-                            .checkInTime(checkIn)
-                            .checkOutTime(checkOut)
-                            .lateMinutes(lateMinutes)
-                            .earlyLeaveMinutes(earlyLeaveMinutes)
-                            .otMinutes(otMinutes)
-                            .otRate(otRate)
-                            .workDate(item.getWorkDate())
-                            .status(status)
-                            .build();
-                });
+                .map(this::mapToListResponse);
     }
+
+    public Page<AttendanceListResponse> getAllBySubDepartment(
+            int page, int size, String subDepartmentId
+    ) {
+        return attendanceRepository
+                .findBySubDepartmentId(PageRequest.of(page, size), subDepartmentId)
+                .map(this::mapToListResponse);
+    }
+
+    /* ===================== DETAIL ===================== */
 
     public AttendanceDetailResponse getDetail(String attendanceId) {
 
-        var attendance = attendanceRepository.findByIdAndIsDeletedFalse(attendanceId)
-                .orElseThrow(() -> new AppException(ErrorCode.ATTENDANCE_NOT_FOUND, 404));
+        Attendance attendance = attendanceRepository
+                .findByIdAndIsDeletedFalse(attendanceId)
+                .orElseThrow(() ->
+                        new AppException(ErrorCode.ATTENDANCE_NOT_FOUND, 404)
+                );
 
         LocalDateTime checkIn = attendance.getCheckInTime();
         LocalDateTime checkOut = attendance.getCheckOutTime();
-
         var employee = attendance.getEmployee();
 
         LocalDateTime shiftStart =
@@ -103,20 +63,17 @@ public class AttendanceService {
         LocalDateTime shiftEnd =
                 attendanceHelper.getShiftEnd(employee, checkIn);
 
-        long lateMinutes = 0;
+        long lateMinutes = attendanceHelper
+                .calculateLateMinutes(attendance, GRACE_MINUTES);
+
         long earlyLeaveMinutes = 0;
-
-        if (checkIn != null && checkIn.isAfter(shiftStart)) {
-            lateMinutes = Duration.between(shiftStart, checkIn).toMinutes();
-        }
-
-        if (checkOut != null && checkOut.isBefore(shiftEnd)) {
-            earlyLeaveMinutes = Duration.between(checkOut, shiftEnd).toMinutes();
+        if (checkOut != null) {
+            earlyLeaveMinutes = attendanceHelper
+                    .calculateEarlyLeaveMinutes(attendance, GRACE_MINUTES);
         }
 
         long workedMinutes = 0;
         double workedHours = 0;
-
         if (checkIn != null && checkOut != null) {
             workedMinutes = Duration.between(checkIn, checkOut).toMinutes();
             workedHours = workedMinutes / 60.0;
@@ -131,38 +88,26 @@ public class AttendanceService {
             );
         }
 
+        AttendanceStatus status = resolveStatus(
+                checkOut,
+                lateMinutes,
+                earlyLeaveMinutes,
+                otMinutes
+        );
 
-        double otHours = otMinutes / 60.0;
-
-        double otRate = attendance.getAttendanceOTRates()
-                .isEmpty()
+        double otRate = attendance.getAttendanceOTRates().isEmpty()
                 ? 0
                 : attendance.getAttendanceOTRates()
                 .getFirst()
                 .getOtRate()
                 .getRate();
 
-        OTType otType = attendance.getAttendanceOTRates()
-                .isEmpty()
+        OTType otType = attendance.getAttendanceOTRates().isEmpty()
                 ? null
                 : attendance.getAttendanceOTRates()
                 .getFirst()
                 .getOtRate()
                 .getType();
-
-        AttendanceStatus status;
-
-        if (checkOut == null) {
-            status = AttendanceStatus.WORKING;
-        } else if (earlyLeaveMinutes > 0) {
-            status = AttendanceStatus.LEAVE_EARLY;
-        } else if (lateMinutes > 0) {
-            status = AttendanceStatus.LATE;
-        } else if (otMinutes > 0) {
-            status = AttendanceStatus.OVER_TIME;
-        } else {
-            status = AttendanceStatus.ON_TIME;
-        }
 
         var breakResponses = attendance.getBreaks()
                 .stream()
@@ -199,14 +144,89 @@ public class AttendanceService {
                 .breakTimes(breakResponses)
 
                 .otMinutes(otMinutes)
-                .otHours(otHours)
+                .otHours(otMinutes / 60.0)
                 .otRate(otRate)
                 .otType(otType)
+
                 .status(status)
                 .build();
     }
 
+    /* ===================== MAPPER ===================== */
 
+    private AttendanceListResponse mapToListResponse(Attendance attendance) {
 
+        LocalDateTime checkIn = attendance.getCheckInTime();
+        LocalDateTime checkOut = attendance.getCheckOutTime();
 
+        LocalDateTime shiftEnd =
+                attendanceHelper.getShiftEnd(attendance.getEmployee(), checkIn);
+
+        long lateMinutes =
+                attendanceHelper.calculateLateMinutes(attendance, GRACE_MINUTES);
+
+        long earlyLeaveMinutes = 0;
+        long otMinutes = 0;
+
+        if (checkOut != null) {
+            earlyLeaveMinutes =
+                    attendanceHelper.calculateEarlyLeaveMinutes(attendance, GRACE_MINUTES);
+
+            otMinutes = attendanceHelper.calculateBreakMinutesInOT(
+                    attendance.getBreaks(),
+                    shiftEnd,
+                    checkOut
+            );
+        }
+
+        AttendanceStatus status = resolveStatus(
+                checkOut,
+                lateMinutes,
+                earlyLeaveMinutes,
+                otMinutes
+        );
+
+        double otRate = attendance.getAttendanceOTRates().isEmpty()
+                ? 1.0
+                : attendance.getAttendanceOTRates()
+                .getFirst()
+                .getOtRate()
+                .getRate();
+
+        return AttendanceListResponse.builder()
+                .employeeCode(attendance.getEmployee().getCode())
+                .checkInTime(checkIn)
+                .checkOutTime(checkOut)
+                .lateMinutes(lateMinutes)
+                .earlyLeaveMinutes(earlyLeaveMinutes)
+                .otMinutes(otMinutes)
+                .otRate(otRate)
+                .workDate(attendance.getWorkDate())
+                .status(status)
+                .build();
+    }
+
+    /* ===================== STATUS ===================== */
+
+    private AttendanceStatus resolveStatus(
+            LocalDateTime checkOut,
+            long lateMinutes,
+            long earlyLeaveMinutes,
+            long otMinutes
+    ) {
+        if (checkOut == null) {
+            return AttendanceStatus.WORKING;
+        }
+        if (earlyLeaveMinutes > 0) {
+            return AttendanceStatus.LEAVE_EARLY;
+        }
+        if (lateMinutes > 0) {
+            return AttendanceStatus.LATE;
+        }
+        if (otMinutes > 0) {
+            return AttendanceStatus.OVER_TIME;
+        }
+        return AttendanceStatus.ON_TIME;
+    }
 }
+

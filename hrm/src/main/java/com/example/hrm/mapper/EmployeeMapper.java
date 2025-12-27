@@ -18,6 +18,7 @@ public interface EmployeeMapper {
     @Mapping(target = "contracts", ignore = true)
     @Mapping(target = "subDepartment", ignore = true)
     @Mapping(target = "files", ignore = true)
+    @Mapping(source = "shiftType", target = "shiftType")
     Employee toEntity(EmployeeRequest request);
 
     @Mapping(target = "contacts", ignore = true)

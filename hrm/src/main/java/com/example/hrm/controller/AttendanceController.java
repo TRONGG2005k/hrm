@@ -34,4 +34,17 @@ public class AttendanceController {
     public AttendanceDetailResponse getDetail(@PathVariable String id) {
         return attendanceService.getDetail(id);
     }
+
+    /**
+     * Lấy danh sách chấm công theo subDepartment
+     * GET /api/attendances/sub-department/{subDepartmentId}?page=0&size=10
+     */
+    @GetMapping("/sub-department/{subDepartmentId}")
+    public Page<AttendanceListResponse> getAllBySubDepartment(
+            @PathVariable String subDepartmentId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return attendanceService.getAllBySubDepartment(page, size, subDepartmentId);
+    }
 }

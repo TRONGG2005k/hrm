@@ -17,6 +17,20 @@ import java.util.Optional;
 public interface AttendanceRepository extends JpaRepository<Attendance, String> {
     Page<Attendance> findByIsDeletedFalse(Pageable pageable);
 
+    @Query("""
+        select a
+        from Attendance a
+        join a.employee e
+        join e.subDepartment s
+        where s.id = :subDepartmentId
+          and a.isDeleted = false
+    """)
+    Page<Attendance> findBySubDepartmentId(
+            Pageable pageable,
+            @Param("subDepartmentId") String subDepartmentId
+    );
+
+
     Optional<Attendance> findTopByEmployeeOrderByCheckInTimeDesc(Employee employee);
 
     Optional<Attendance> findByIdAndIsDeletedFalse(String id);

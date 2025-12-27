@@ -2,6 +2,7 @@ package com.example.hrm.dto.response;
 
 import com.example.hrm.enums.EmployeeStatus;
 import com.example.hrm.enums.Gender;
+import com.example.hrm.enums.ShiftType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -45,6 +46,8 @@ public class EmployeeResponse {
     LocalDate joinDate;
 
     AddressResponse address;
+
+    ShiftType shiftType;
 
     SubDepartmentResponse subDepartment;
     
