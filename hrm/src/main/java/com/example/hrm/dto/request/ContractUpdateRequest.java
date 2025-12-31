@@ -2,7 +2,6 @@ package com.example.hrm.dto.request;
 
 import com.example.hrm.enums.ContractStatus;
 import com.example.hrm.enums.ContractType;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -29,6 +28,8 @@ public class ContractUpdateRequest {
 
     @NotNull(message = "Trạng thái không được để trống")
     ContractStatus status;
+
+    SalaryContractRequest salaryContract;
 
     String note;
 }

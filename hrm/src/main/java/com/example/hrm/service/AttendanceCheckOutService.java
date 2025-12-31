@@ -21,6 +21,7 @@ public class AttendanceCheckOutService {
 
     private final AttendanceRepository attendanceRepository;
     private final AttendanceHelper attendancePolicy;
+    private final AttendancePenaltyService attendancePenaltyService;
 
     public AttendanceRealTimeResponse checkOut(Attendance attendance) {
 
@@ -66,6 +67,7 @@ public class AttendanceCheckOutService {
         }
 
         attendanceRepository.save(attendance);
+        attendancePenaltyService.calculateAndSave(attendance);
 
         return AttendanceRealTimeResponse.builder()
                 .employeeCode(attendance.getEmployee().getCode())

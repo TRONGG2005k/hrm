@@ -5,12 +5,14 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import com.example.hrm.enums.SalaryContractStatus;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "salary_contract")
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -29,11 +31,11 @@ public class SalaryContract {
     @JoinColumn(name = "contract_id", nullable = false)
     Contract contract;   // Một hợp đồng có thể có nhiều lần điều chỉnh lương
 
-    Double baseSalary;
+    BigDecimal baseSalary;
 
-    Double allowance;     // phụ cấp cố định
+    BigDecimal allowance;     // phụ cấp cố định
 
-    Float salaryCoefficient;
+    Double salaryCoefficient;
 
     LocalDate effectiveDate;
 

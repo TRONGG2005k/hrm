@@ -10,6 +10,7 @@ import lombok.experimental.FieldDefaults;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
@@ -25,9 +26,9 @@ public class SalaryContractRequest {
     @NotBlank(message = "Mã hợp đồng không được để trống")
     String contractId;
 
-    Double baseSalary;
+    BigDecimal baseSalary;
 
-    Double allowance;
+    BigDecimal allowance;
 
     Double salaryCoefficient;
 

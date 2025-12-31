@@ -28,8 +28,6 @@ public class AttendanceService {
     private final AttendanceRepository attendanceRepository;
     private final AttendanceHelper attendanceHelper;
 
-    /* ===================== LIST ===================== */
-
     public Page<AttendanceListResponse> getAll(int page, int size) {
         return attendanceRepository
                 .findByIsDeletedFalse(PageRequest.of(page, size))
@@ -43,8 +41,6 @@ public class AttendanceService {
                 .findBySubDepartmentId(PageRequest.of(page, size), subDepartmentId)
                 .map(this::mapToListResponse);
     }
-
-    /* ===================== DETAIL ===================== */
 
     public AttendanceDetailResponse getDetail(String attendanceId) {
 

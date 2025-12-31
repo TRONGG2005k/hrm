@@ -11,4 +11,8 @@ public interface SalaryAdjustmentRepository extends JpaRepository<SalaryAdjustme
     Page<SalaryAdjustment> findByIsDeletedFalse(Pageable pageable);
     Page<SalaryAdjustment> findByEmployeeIdAndIsDeletedFalse(String employeeId, Pageable pageable);
     Page<SalaryAdjustment> findByEmployeeIdAndMonthAndIsDeletedFalse(String employeeId, String month, Pageable pageable);
+    Page<SalaryAdjustment> findByEmployee_IdAndIsDeletedFalse(String employeeId, Pageable pageable);
+
+    Page<SalaryAdjustment> findByEmployee_IdAndMonthAndIsDeletedFalse(String employeeId, String month, Pageable pageable);
+
 }

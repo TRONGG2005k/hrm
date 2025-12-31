@@ -2,14 +2,11 @@ package com.example.hrm.dto.request;
 
 import com.example.hrm.enums.ContractType;
 import com.example.hrm.enums.ContractStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 
@@ -29,6 +26,7 @@ public class ContractRequest {
     @NotNull(message = "Loại hợp đồng không được để trống")
     ContractType type;
 
+    @NotNull(message = "Ngày ký hợp đồng không được để trống")
     LocalDate signDate;
 
     @NotNull(message = "Ngày bắt đầu không được để trống")
@@ -36,10 +34,11 @@ public class ContractRequest {
 
     LocalDate endDate;
 
-    Double baseSalary;
-
-    @NotNull(message = "Trạng thái không được để trống")
+    @NotNull(message = "Trạng thái hợp đồng không được để trống")
     ContractStatus status;
 
     String note;
+
+    @NotNull(message = "Thông tin lương không được để trống")
+    SalaryContractRequest salaryContract;
 }
