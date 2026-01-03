@@ -29,6 +29,7 @@ public class AttendanceOTRate {
     OTRate otRate;
 
     @Column(nullable = false)
+    @Builder.Default
     Double otHours = 0.0; // số giờ tăng ca
 
     @Builder.Default

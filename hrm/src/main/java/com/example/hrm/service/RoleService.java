@@ -2,7 +2,6 @@ package com.example.hrm.service;
 
 import com.example.hrm.dto.request.RoleRequest;
 import com.example.hrm.dto.response.RoleResponse;
-import com.example.hrm.entity.Role;
 import com.example.hrm.exception.AppException;
 import com.example.hrm.exception.ErrorCode;
 import com.example.hrm.mapper.RoleMapper;

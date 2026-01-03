@@ -49,6 +49,7 @@ public class Attendance {
 
     // Quan hệ OT
     @OneToMany(mappedBy = "attendance", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     List<AttendanceOTRate> attendanceOTRates = new ArrayList<>();
 
     @Builder.Default

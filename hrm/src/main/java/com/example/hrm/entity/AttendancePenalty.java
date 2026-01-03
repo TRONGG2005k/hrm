@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class AttendancePenalty {
+public class AttendancePenalty implements PenaltySource {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -31,9 +31,15 @@ public class AttendancePenalty {
     @Enumerated(EnumType.STRING)
     private PenaltyType penaltyType;
 
-    private double penaltyValue;
 
     private String reason;
+
+    private Integer minutes;
+
+    @Override
+    public int getValue() {
+        return minutes;
+    }
 
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

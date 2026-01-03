@@ -126,6 +126,15 @@ public enum ErrorCode {
 
     //breaktime error(70000 - 70999)
     IN_BREAK_TIME("E70001", "in break time"),
+
+    // Payroll Cycle errors (90000-90999)
+    PAYROLL_CYCLE_NOT_FOUND("E9006", "Chưa cấu hình chu kỳ lương"),
+
+    // Penalty Rule errors (17000-17999)
+    PENALTY_RULE_NOT_FOUND("E17001", "Quy tắc phạt không tìm thấy"),
+    PENALTY_RULE_CODE_ALREADY_EXISTS("E17002", "Mã quy tắc phạt đã tồn tại"),
+    PENALTY_RULE_INVALID_VALUE("E17003", "Giá trị quy tắc phạt không hợp lệ"),
+
     // Unknown error
     UNKNOWN_ERROR("E99999", "Lỗi không xác định");
 

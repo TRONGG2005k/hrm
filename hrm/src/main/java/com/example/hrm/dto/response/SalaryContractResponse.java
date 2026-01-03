@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -24,9 +25,9 @@ public class SalaryContractResponse {
 
     String contractId;
 
-    Double baseSalary;
+    BigDecimal baseSalary;
 
-    Double allowance;
+    BigDecimal allowance;
 
     Double salaryCoefficient;
 
