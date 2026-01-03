@@ -18,9 +18,6 @@ public class AttendancePenaltyService {
     private final AttendancePenaltyRepository penaltyRepository;
     private final AttendanceHelper attendanceHelper;
 
-    // ===== RULE CONFIG (sau này đưa DB) =====
-    private static final int LATE_GRACE_MINUTES = 5;
-    private static final int EARLY_GRACE_MINUTES = 5;
 
     public void calculateAndSave(Attendance attendance) {
 
@@ -36,13 +33,11 @@ public class AttendancePenaltyService {
         }
 
         long lateMinutes = attendanceHelper.calculateLateMinutes(
-                attendance,
-                LATE_GRACE_MINUTES
+                attendance
         );
 
         long earlyLeaveMinutes = attendanceHelper.calculateEarlyLeaveMinutes(
-                attendance,
-                EARLY_GRACE_MINUTES
+                attendance
         );
 
         // Không có vi phạm

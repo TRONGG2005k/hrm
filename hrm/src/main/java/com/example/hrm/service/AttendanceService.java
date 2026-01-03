@@ -23,7 +23,6 @@ import java.time.LocalDateTime;
 @Slf4j
 public class AttendanceService {
 
-    private static final int GRACE_MINUTES = 5;
 
     private final AttendanceRepository attendanceRepository;
     private final AttendanceHelper attendanceHelper;
@@ -60,12 +59,12 @@ public class AttendanceService {
                 attendanceHelper.getShiftEnd(employee, checkIn);
 
         long lateMinutes = attendanceHelper
-                .calculateLateMinutes(attendance, GRACE_MINUTES);
+                .calculateLateMinutes(attendance);
 
         long earlyLeaveMinutes = 0;
         if (checkOut != null) {
             earlyLeaveMinutes = attendanceHelper
-                    .calculateEarlyLeaveMinutes(attendance, GRACE_MINUTES);
+                    .calculateEarlyLeaveMinutes(attendance);
         }
 
         long workedMinutes = 0;
@@ -159,14 +158,14 @@ public class AttendanceService {
                 attendanceHelper.getShiftEnd(attendance.getEmployee(), checkIn);
 
         long lateMinutes =
-                attendanceHelper.calculateLateMinutes(attendance, GRACE_MINUTES);
+                attendanceHelper.calculateLateMinutes(attendance);
 
         long earlyLeaveMinutes = 0;
         long otMinutes = 0;
 
         if (checkOut != null) {
             earlyLeaveMinutes =
-                    attendanceHelper.calculateEarlyLeaveMinutes(attendance, GRACE_MINUTES);
+                    attendanceHelper.calculateEarlyLeaveMinutes(attendance);
 
             otMinutes = attendanceHelper.calculateBreakMinutesInOT(
                     attendance.getBreaks(),

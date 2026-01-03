@@ -20,7 +20,7 @@ public class PayrollCycleService {
 
     public PayrollCycleResponse create(
         PayrollCycleRequest request,
-        Long creatorId
+        String creatorId
     ) {
         validate(request);
 

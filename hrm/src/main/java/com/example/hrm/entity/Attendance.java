@@ -33,6 +33,9 @@ public class Attendance {
     LocalDateTime checkInTime;
     LocalDateTime checkOutTime;
 
+    long earlyLeaveMinutes;
+    long lateMinutes;
+
     @Enumerated(EnumType.STRING)
     AttendanceStatus status;
 

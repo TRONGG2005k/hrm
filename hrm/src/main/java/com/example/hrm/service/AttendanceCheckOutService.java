@@ -22,7 +22,7 @@ public class AttendanceCheckOutService {
     private final AttendanceRepository attendanceRepository;
     private final AttendanceHelper attendancePolicy;
     private final AttendancePenaltyService attendancePenaltyService;
-
+    private final AttendanceHelper attendanceHelper;
     public AttendanceRealTimeResponse checkOut(Attendance attendance) {
 
         LocalDateTime checkIn = attendance.getCheckInTime();
@@ -66,6 +66,7 @@ public class AttendanceCheckOutService {
             attendance.setStatus(AttendanceStatus.ON_TIME);
         }
 
+        attendanceHelper.analyzeAttendance(attendance);
         attendanceRepository.save(attendance);
         attendancePenaltyService.calculateAndSave(attendance);
 

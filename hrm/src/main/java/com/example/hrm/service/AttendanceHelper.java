@@ -13,44 +13,109 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AttendanceHelper {
 
+    /**
+     * Phân tích chấm công và ghi lại dữ liệu THUẦN vào Attendance
+     * - lateMinutes  : số phút đi muộn thực tế
+     * - earlyMinutes : số phút về sớm thực tế
+     */
+    public void analyzeAttendance(Attendance attendance) {
+        if (attendance.getCheckInTime() == null
+                || attendance.getCheckOutTime() == null) {
+            return;
+        }
 
+        long lateMinutes = calculateLateMinutes(attendance);
+        long earlyLeaveMinutes = calculateEarlyLeaveMinutes(attendance);
 
-    public LocalDateTime getShiftStart(Employee employee, LocalDateTime now) {
+        attendance.setLateMinutes((int) lateMinutes);
+        attendance.setEarlyLeaveMinutes((int) earlyLeaveMinutes);
+    }
+
+    /**
+     * Tính thời điểm bắt đầu ca làm
+     */
+    public LocalDateTime getShiftStart(Employee employee, LocalDateTime checkInTime) {
         if (employee.getShiftType() == ShiftType.NIGHT) {
-            // ca đêm bắt đầu 22:00
             LocalTime nightStart = LocalTime.of(22, 0);
 
-            // nếu check-in sau 00:00 → thuộc ngày hôm trước
-            if (now.toLocalTime().isBefore(nightStart)) {
-                return now.minusDays(1).toLocalDate().atTime(nightStart);
+            // check-in sau 0h sáng → ca đêm của ngày hôm trước
+            if (checkInTime.toLocalTime().isBefore(nightStart)) {
+                return checkInTime.minusDays(1)
+                        .toLocalDate()
+                        .atTime(nightStart);
             }
 
-            return now.toLocalDate().atTime(nightStart);
+            return checkInTime.toLocalDate().atTime(nightStart);
         }
 
-        // ca sáng
-        return now.toLocalDate().atTime(8, 0);
+        // ca ngày
+        return checkInTime.toLocalDate().atTime(8, 0);
     }
 
-    public LocalDateTime getShiftEnd(Employee employee, LocalDateTime checkIn) {
+    /**
+     * Tính thời điểm kết thúc ca làm
+     */
+    public LocalDateTime getShiftEnd(Employee employee, LocalDateTime checkInTime) {
         if (employee.getShiftType() == ShiftType.NIGHT) {
-            return getShiftStart(employee, checkIn).plusHours(8);
+            return getShiftStart(employee, checkInTime).plusHours(8);
         }
-        return checkIn.toLocalDate().atTime(17, 0);
+        return checkInTime.toLocalDate().atTime(17, 0);
     }
 
+    /**
+     * Tính số phút đi muộn THỰC TẾ (không grace)
+     */
+    public long calculateLateMinutes(Attendance attendance) {
+        LocalDateTime checkIn = attendance.getCheckInTime();
+        LocalDateTime shiftStart =
+                getShiftStart(attendance.getEmployee(), checkIn);
+
+        long minutes = Duration.between(shiftStart, checkIn).toMinutes();
+        return Math.max(0, minutes);
+    }
+
+    /**
+     * Tính số phút về sớm THỰC TẾ (không grace)
+     */
+    public long calculateEarlyLeaveMinutes(Attendance attendance) {
+        LocalDateTime checkIn = attendance.getCheckInTime();
+        LocalDateTime checkOut = attendance.getCheckOutTime();
+        LocalDateTime shiftEnd =
+                getShiftEnd(attendance.getEmployee(), checkIn);
+
+        long minutes = Duration.between(checkOut, shiftEnd).toMinutes();
+        return Math.max(0, minutes);
+    }
+
+    /**
+     * Tính tổng số phút làm việc thực tế
+     */
+    public long calculateWorkedMinutes(Attendance attendance) {
+        if (attendance.getCheckInTime() == null
+                || attendance.getCheckOutTime() == null) {
+            return 0;
+        }
+
+        return Duration.between(
+                attendance.getCheckInTime(),
+                attendance.getCheckOutTime()
+        ).toMinutes();
+    }
+
+    /**
+     * Tính tổng thời gian nghỉ trùng với OT
+     */
     public long calculateBreakMinutesInOT(
             List<BreakTime> breaks,
             LocalDateTime shiftEnd,
             LocalDateTime checkOut
     ) {
-        long total = 0;
+        long totalMinutes = 0;
 
         for (BreakTime b : breaks) {
             LocalDateTime start = b.getBreakStart().isBefore(shiftEnd)
@@ -62,40 +127,10 @@ public class AttendanceHelper {
                     : b.getBreakEnd();
 
             if (start.isBefore(end)) {
-                total += Duration.between(start, end).toMinutes();
+                totalMinutes += Duration.between(start, end).toMinutes();
             }
         }
 
-        return total;
+        return totalMinutes;
     }
-
-    public long calculateWorkedMinutes(Attendance attendance) {
-        if (attendance.getCheckInTime() == null || attendance.getCheckOutTime() == null) {
-            return 0;
-        }
-        return Duration.between(
-                attendance.getCheckInTime(),
-                attendance.getCheckOutTime()
-        ).toMinutes();
-    }
-
-
-    public long calculateEarlyLeaveMinutes(Attendance attendance, int graceMinutes) {
-        LocalDateTime checkIn = attendance.getCheckInTime();
-        LocalDateTime checkOut = attendance.getCheckOutTime();
-        LocalDateTime shiftEnd = getShiftEnd(attendance.getEmployee(), checkIn);
-
-        long early = Duration.between(checkOut, shiftEnd).toMinutes();
-        return Math.max(0, early - graceMinutes);
-    }
-
-
-    public long calculateLateMinutes(Attendance attendance, int graceMinutes) {
-        LocalDateTime checkIn = attendance.getCheckInTime();
-        LocalDateTime shiftStart = getShiftStart(attendance.getEmployee(), checkIn);
-
-        long late = Duration.between(shiftStart, checkIn).toMinutes();
-        return Math.max(0, late - graceMinutes);
-    }
-
 }
