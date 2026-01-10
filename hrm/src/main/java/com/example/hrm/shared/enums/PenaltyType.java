@@ -11,5 +11,7 @@ public enum PenaltyType {
     LATE,
     EARLY_LEAVE,
     ABSENT_NO_PERMISSION,
-    NO_CHECKOUT
+    NO_CHECKOUT,
+    VOID_BASE_SALARY,
+    VOID_OVERTIME
 }

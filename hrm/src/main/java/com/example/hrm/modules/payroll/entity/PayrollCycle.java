@@ -44,6 +44,9 @@ public class PayrollCycle {
     @Column(name = "end_day", nullable = false)
     private Integer endDay;
 
+    @Column(nullable = false)
+    private Integer workingDays;
+
     /**
      * Ngày trả lương (1–31)
      */

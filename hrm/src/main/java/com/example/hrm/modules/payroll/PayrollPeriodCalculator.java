@@ -1,16 +1,20 @@
 package com.example.hrm.modules.payroll;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 
 import org.springframework.stereotype.Component;
 
-import com.example.hrm.modules.payroll.entity.PayrollCycle;
+import com.example.hrm.modules.attendance.entity.AttendanceOTRate;
+import com.example.hrm.modules.payroll.dto.response.PayrollCycleResponse;
+import com.example.hrm.modules.penalty.dto.response.AttendancePenaltyResult;
 
 @Component
 public class PayrollPeriodCalculator {
 
-    public PayrollPeriod calculate(PayrollCycle cycle, int year, int month) {
+    public PayrollPeriod calculate(PayrollCycleResponse cycle, int year, int month) {
         YearMonth payrollMonth = YearMonth.of(year, month);
 
         int startDay = cycle.getStartDay();
@@ -37,6 +41,9 @@ public class PayrollPeriodCalculator {
 
         return new PayrollPeriod(startDate, endDate);
     }
+
+
+
 
     public record PayrollPeriod(
             LocalDate startDate,

@@ -15,6 +15,7 @@ public class PayrollCycleResponse {
     private Integer startDay;
     private Integer endDay;
     private Integer payday;
+    private Integer workingDays;
     private Boolean active;
     private LocalDateTime createdAt;
 }

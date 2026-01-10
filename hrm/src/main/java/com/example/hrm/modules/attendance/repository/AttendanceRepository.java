@@ -1,6 +1,7 @@
 package com.example.hrm.modules.attendance.repository;
 
 import com.example.hrm.modules.attendance.entity.Attendance;
+import com.example.hrm.modules.attendance.entity.AttendanceOTRate;
 import com.example.hrm.modules.employee.entity.Employee;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -28,6 +31,18 @@ public interface AttendanceRepository extends JpaRepository<Attendance, String> 
             @Param("subDepartmentId") String subDepartmentId
     );
 
+    @Query("SELECT a FROM Attendance a " +
+       "JOIN a.attendanceOTRates ot " +
+       "JOIN ot.otRate r " +
+       "WHERE a.employee.id = :employeeId " +
+       "AND a.workDate BETWEEN :startDate AND :endDate " +
+       "AND ot.isDeleted = false " +
+       "AND r.isDeleted = false")
+    List<Attendance> findOTForEmployee(
+            @Param("employeeId") String employeeId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 
     Optional<Attendance> findTopByEmployeeOrderByCheckInTimeDesc(Employee employee);
 
