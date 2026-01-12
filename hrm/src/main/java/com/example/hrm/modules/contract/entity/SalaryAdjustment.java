@@ -7,6 +7,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -17,31 +19,33 @@ import java.time.LocalDateTime;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SalaryAdjustment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
     Employee employee;
 
-    @Column(nullable = false)
-    String month; // "2025-03"
-
     @Enumerated(EnumType.STRING)
-    AdjustmentType type;
-
     @Column(nullable = false)
-    Double amount;
+    AdjustmentType type; // BONUS / PENALTY
+
+    @Column(nullable = false, precision = 15, scale = 0)
+    BigDecimal amount;
 
     String description;
 
-    @Builder.Default
-    LocalDateTime createdAt = LocalDateTime.now();
+    @Column(nullable = false)
+    LocalDate appliedDate;
 
     @Builder.Default
     @Column(nullable = false)
     Boolean isDeleted = false;
 
     LocalDateTime deletedAt;
+
+    @Builder.Default
+    LocalDateTime createdAt = LocalDateTime.now();
 }

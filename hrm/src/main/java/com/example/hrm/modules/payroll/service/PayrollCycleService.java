@@ -103,6 +103,7 @@ public class PayrollCycleService {
             .endDay(cycle.getEndDay())
             .payday(cycle.getPayday())
             .active(cycle.getActive())
+                .workingDays(cycle.getWorkingDays())
             .createdAt(cycle.getCreatedAt())
             .build();
     }

@@ -60,6 +60,10 @@ public class Employee {
     @Enumerated(EnumType.STRING)
     EmployeeStatus status;
 
+    @ManyToOne
+    @JoinColumn(name = "position_id")
+    Position position;
+
     @OneToMany(mappedBy = "employee")
     @Builder.Default
     List<Contract> contracts = new ArrayList<>();

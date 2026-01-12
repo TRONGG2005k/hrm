@@ -1,13 +1,11 @@
 package com.example.hrm.modules.contract.dto.response;
 
 import com.example.hrm.shared.enums.AdjustmentType;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AccessLevel;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -21,17 +19,12 @@ public class SalaryAdjustmentResponse {
 
     String employeeId;
 
-    String month;
-
     AdjustmentType type;
 
-    Double amount;
+    BigDecimal amount;
 
-    String description;
+    LocalDate appliedDate;
 
     LocalDateTime createdAt;
 
-    Boolean isDeleted;
-
-    LocalDateTime deletedAt;
 }

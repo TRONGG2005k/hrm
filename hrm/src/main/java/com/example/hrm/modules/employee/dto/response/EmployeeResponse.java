@@ -25,36 +25,27 @@ import java.util.List;
 public class EmployeeResponse {
 
     String id;
-
     String code;
-
     String firstName;
-
     String lastName;
-
     LocalDate dateOfBirth;
-
     Gender gender;
-
     String email;
-
     String phone;
 
     List<FileAttachmentResponse> fileAttachmentResponses;
-
     List<ContactResponse> contacts;
 
     EmployeeStatus status;
-
     LocalDate joinDate;
-
     AddressResponse address;
-
     ShiftType shiftType;
 
     SubDepartmentResponse subDepartment;
-    
-    Boolean isDeleted;
 
+    /** ✅ THÊM */
+    PositionResponse position;
+
+    Boolean isDeleted;
     LocalDateTime deletedAt;
 }

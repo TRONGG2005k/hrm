@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PayrollResponse {
 
-     private String payrollId;
+    private String payrollId;
 
     private PeriodResponse period;
 

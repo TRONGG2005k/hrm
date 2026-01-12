@@ -12,6 +12,7 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring", uses = { AddressMapper.class, SubDepartmentMapper.class, FileAttachmentMapper.class })
 public interface EmployeeMapper {
 
+    @Mapping(target = "position", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
@@ -27,6 +28,7 @@ public interface EmployeeMapper {
     @Mapping(source = "subDepartment", target = "subDepartment")
     EmployeeResponse toResponse(Employee entity);
 
+    @Mapping(target = "position", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)

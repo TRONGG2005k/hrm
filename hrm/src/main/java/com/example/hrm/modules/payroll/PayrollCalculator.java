@@ -1,15 +1,90 @@
 package com.example.hrm.modules.payroll;
 
+import com.example.hrm.modules.attendance.entity.Attendance;
 import com.example.hrm.modules.attendance.entity.AttendanceOTRate;
+import com.example.hrm.modules.contract.entity.SalaryAdjustment;
 import com.example.hrm.modules.payroll.dto.response.PayrollCycleResponse;
+import com.example.hrm.modules.payroll.dto.response.PayrollDetailResponse;
+import com.example.hrm.modules.penalty.PenaltyAmountCalculator;
 import com.example.hrm.modules.penalty.dto.response.AttendancePenaltyResult;
+import com.example.hrm.shared.enums.AdjustmentType;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class PayrollCalculator {
+    private final PenaltyAmountCalculator penaltyAmountCalculator;
+
+    public PayrollDetailResponse calculatePayrollDetail(
+            BigDecimal baseSalary,
+            List<Attendance> attendanceList,
+            List<SalaryAdjustment> adjustments,
+            BigDecimal allowance,
+            PayrollCycleResponse cycle) {
+
+        BigDecimal totalSalary = BigDecimal.ZERO;
+        BigDecimal baseSalaryTotal = BigDecimal.ZERO;
+        BigDecimal otTotal = BigDecimal.ZERO;
+        BigDecimal totalBonus = BigDecimal.ZERO;
+        BigDecimal totalPenalty = BigDecimal.ZERO;
+        BigDecimal fullAttendanceBonus = BigDecimal.ZERO;
+
+        long actualWorkingDays = 0;
+
+        for (Attendance att : attendanceList) {
+            AttendancePenaltyResult penalty = penaltyAmountCalculator.applyAttendancePenaltyRule(att);
+
+            if (!penalty.isVoidBaseSalary()) {
+                BigDecimal dailySalary = calculateNetDailySalary(baseSalary, penalty);
+                totalSalary = totalSalary.add(dailySalary);
+                baseSalaryTotal = baseSalaryTotal.add(dailySalary);
+                actualWorkingDays++;
+            }
+
+            if (!penalty.isVoidOvertime()) {
+                for (var otRate : att.getAttendanceOTRates()) {
+                    BigDecimal otMoney = calculateOt(otRate, calculateSalaryPerDay(baseSalary, cycle));
+                    totalSalary = totalSalary.add(otMoney);
+                    otTotal = otTotal.add(otMoney);
+                }
+            }
+        }
+
+        totalSalary = totalSalary.add(allowance);
+
+        for (SalaryAdjustment adj : adjustments) {
+            if (adj.getType() == AdjustmentType.BONUS) {
+                totalSalary = totalSalary.add(adj.getAmount());
+                totalBonus = totalBonus.add(adj.getAmount());
+            } else if (adj.getType() == AdjustmentType.PENALTY) {
+                totalSalary = totalSalary.subtract(adj.getAmount());
+                totalPenalty = totalPenalty.add(adj.getAmount());
+            }
+        }
+
+        if (actualWorkingDays == cycle.getWorkingDays()) {
+            totalSalary = totalSalary.add(BigDecimal.valueOf(500_000));
+            fullAttendanceBonus = BigDecimal.valueOf(500_000);
+        }
+
+        return new PayrollDetailResponse(
+                totalSalary,
+                baseSalaryTotal,
+                otTotal,
+                allowance,
+                totalBonus,
+                totalPenalty,
+                fullAttendanceBonus,
+                actualWorkingDays
+        );
+    }
+
+
     public BigDecimal calculateSalaryPerDay(BigDecimal monthlySalary, PayrollCycleResponse cycle) {
         int workingDays = cycle.getWorkingDays();
         if (workingDays == 0) {
@@ -21,13 +96,6 @@ public class PayrollCalculator {
                 RoundingMode.HALF_UP);
     }
 
-    public BigDecimal calculateSalaryPerHour(BigDecimal monthlySalary, PayrollCycleResponse cycle) {
-        BigDecimal salaryPerDay = calculateSalaryPerDay(monthlySalary, cycle);
-        return salaryPerDay.divide(
-                BigDecimal.valueOf(8),
-                2,
-                RoundingMode.HALF_UP);
-    }
 
     public BigDecimal calculateNetDailySalary(
             BigDecimal salaryPerDay,

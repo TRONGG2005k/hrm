@@ -1,5 +1,6 @@
 package com.example.hrm.modules.payroll.dto.response;
 
+import com.example.hrm.modules.contract.dto.response.SalaryAdjustmentResponse;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -12,9 +13,9 @@ public class EarningsResponse {
 
     private BigDecimal overtimePay;
 
-    private List<AllowanceResponse> allowances;
+    private BigDecimal allowances;
 
-    private List<BonusResponse> bonuses;
+    private List<SalaryAdjustmentResponse> bonuses;
 
     private BigDecimal totalEarnings;
 }

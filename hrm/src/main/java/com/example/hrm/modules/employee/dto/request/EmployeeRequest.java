@@ -53,4 +53,8 @@ public class EmployeeRequest {
     String address;
 
     String subDepartmentId;
+
+    /** ✅ THÊM */
+    String positionId;
 }
+

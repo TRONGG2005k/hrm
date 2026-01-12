@@ -2,6 +2,7 @@ package com.example.hrm.modules.penalty;
 
 import java.math.BigDecimal;
 
+import com.example.hrm.modules.penalty.dto.response.LateAndEarly;
 import org.springframework.stereotype.Component;
 
 import com.example.hrm.modules.attendance.entity.Attendance;
@@ -17,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 public class PenaltyAmountCalculator {
 
     private final PenaltyRuleResolver resolver;
+
+
 
     public AttendancePenaltyResult applyAttendancePenaltyRule(Attendance attendance) {
 

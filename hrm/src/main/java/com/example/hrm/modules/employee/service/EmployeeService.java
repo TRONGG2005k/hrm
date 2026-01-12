@@ -33,6 +33,8 @@ public class EmployeeService {
     private final SubDepartmentRepository subDepartmentRepository;
     private final ContactRepository contactRepository;
     private final ContactMapper contactMapper;
+    private final PositionRepository positionRepository;
+
 
     public Page<EmployeeResponse> getAllEmployees(int page, int size) {
         var employeePage = employeeRepository.findByIsDeletedFalse(PageRequest.of(page, size));
@@ -59,34 +61,52 @@ public class EmployeeService {
 
     @Transactional
     public EmployeeResponse createEmployee(EmployeeRequest request) {
+
         Employee employee = employeeMapper.toEntity(request);
-        var address = addressRepository.findByIdAndIsDeletedFalse(request.getAddress()).orElseThrow(
-                () -> new AppException(ErrorCode.ADDRESS_NOT_FOUND, 404, "address not found "));
+
+        var address = addressRepository.findByIdAndIsDeletedFalse(request.getAddress())
+                .orElseThrow(() -> new AppException(ErrorCode.ADDRESS_NOT_FOUND, 404));
         employee.setAddress(address);
-        var subDepartment = subDepartmentRepository.findByIdAndIsDeletedFalse(request.getSubDepartmentId()).orElseThrow(
-                () -> new AppException(ErrorCode.SUB_DEPARTMENT_NOT_FOUND, 404, "sub department not found "));
+
+        var subDepartment = subDepartmentRepository
+                .findByIdAndIsDeletedFalse(request.getSubDepartmentId())
+                .orElseThrow(() -> new AppException(ErrorCode.SUB_DEPARTMENT_NOT_FOUND, 404));
         employee.setSubDepartment(subDepartment);
-        var savedEmployee = employeeRepository.save(employee);
-        return employeeMapper.toResponse(savedEmployee);
+
+        var position = positionRepository
+                .findByIdAndActiveTrue(request.getPositionId())
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404));
+        employee.setPosition(position);
+
+        return employeeMapper.toResponse(employeeRepository.save(employee));
     }
+
 
     @Transactional
     public EmployeeResponse updateEmployee(String id, EmployeeRequest request) {
-        var employee = employeeRepository.findByIdAndIsDeletedFalse(id)
-                .orElseThrow(
-                        () -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND, 404, "Employee not found with id: " + id
-                                + "or has been deleted"));
+
+        Employee employee = employeeRepository.findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND, 404));
+
         employeeMapper.updateEntity(request, employee);
-        @SuppressWarnings("null")
-        var address = addressRepository.findByIdAndIsDeletedFalse(request.getAddress()).orElseThrow(
-                () -> new AppException(ErrorCode.ADDRESS_NOT_FOUND, 404, "address not found "));
+
+        var address = addressRepository.findByIdAndIsDeletedFalse(request.getAddress())
+                .orElseThrow(() -> new AppException(ErrorCode.ADDRESS_NOT_FOUND, 404));
         employee.setAddress(address);
-        var subDepartment = subDepartmentRepository.findByIdAndIsDeletedFalse(request.getSubDepartmentId()).orElseThrow(
-                () -> new AppException(ErrorCode.SUB_DEPARTMENT_NOT_FOUND, 404, "sub department not found "));
+
+        var subDepartment = subDepartmentRepository
+                .findByIdAndIsDeletedFalse(request.getSubDepartmentId())
+                .orElseThrow(() -> new AppException(ErrorCode.SUB_DEPARTMENT_NOT_FOUND, 404));
         employee.setSubDepartment(subDepartment);
-        Employee updatedEmployee = employeeRepository.save(employee);
-        return employeeMapper.toResponse(updatedEmployee);
+
+        var position = positionRepository
+                .findByIdAndActiveTrue(request.getPositionId())
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404));
+        employee.setPosition(position);
+
+        return employeeMapper.toResponse(employeeRepository.save(employee));
     }
+
 
     @Transactional
     public void deleteEmployee(String id) {
