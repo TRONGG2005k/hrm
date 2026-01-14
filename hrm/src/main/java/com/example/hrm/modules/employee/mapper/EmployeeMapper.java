@@ -5,36 +5,36 @@ import com.example.hrm.modules.employee.dto.response.EmployeeResponse;
 import com.example.hrm.modules.employee.entity.Employee;
 import com.example.hrm.modules.file.mapper.FileAttachmentMapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.*;
 
-@Mapper(componentModel = "spring", uses = { AddressMapper.class, SubDepartmentMapper.class, FileAttachmentMapper.class })
+@Mapper(
+        componentModel = "spring",
+        uses = {
+                AddressMapper.class,
+                SubDepartmentMapper.class,
+                PositionMapper.class,
+                FileAttachmentMapper.class
+        }
+)
 public interface EmployeeMapper {
 
-    @Mapping(target = "position", ignore = true)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "isDeleted", ignore = true)
-    @Mapping(target = "deletedAt", ignore = true)
+    @Mapping(target = "position", ignore = true)
+    @Mapping(target = "subDepartment", ignore = true)
     @Mapping(target = "address", ignore = true)
     @Mapping(target = "contracts", ignore = true)
-    @Mapping(target = "subDepartment", ignore = true)
     @Mapping(target = "files", ignore = true)
-    @Mapping(source = "shiftType", target = "shiftType")
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     Employee toEntity(EmployeeRequest request);
 
-    @Mapping(target = "contacts", ignore = true)
     @Mapping(target = "fileAttachmentResponses", ignore = true)
-    @Mapping(source = "subDepartment", target = "subDepartment")
+    @Mapping(target = "contacts", ignore = true)
     EmployeeResponse toResponse(Employee entity);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "position", ignore = true)
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "isDeleted", ignore = true)
-    @Mapping(target = "deletedAt", ignore = true)
-    @Mapping(target = "address", ignore = true)
-    @Mapping(target = "contracts", ignore = true)
     @Mapping(target = "subDepartment", ignore = true)
-    @Mapping(target = "files", ignore = true)
+    @Mapping(target = "address", ignore = true)
     void updateEntity(EmployeeRequest request, @MappingTarget Employee entity);
 }

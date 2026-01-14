@@ -23,38 +23,36 @@ import java.time.LocalDate;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EmployeeRequest {
 
-    @NotBlank(message = "Mã nhân viên không được để trống")
+    @NotBlank
     String code;
 
-    @NotBlank(message = "Tên không được để trống")
+    @NotBlank
     String firstName;
 
-    @NotBlank(message = "Họ không được để trống")
+    @NotBlank
     String lastName;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
     LocalDate dateOfBirth;
 
     Gender gender;
 
-    @NotBlank(message = "Email không được để trống")
-    @Email(message = "Email không hợp lệ")
+    @Email
     String email;
 
     String phone;
 
     EmployeeStatus status;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
     LocalDate joinDate;
 
     ShiftType shiftType;
 
-    String address;
+    /** đổi tên */
+    String addressId;
 
     String subDepartmentId;
 
-    /** ✅ THÊM */
     String positionId;
 }
+
 

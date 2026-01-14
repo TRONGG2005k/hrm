@@ -4,95 +4,212 @@ import com.example.hrm.modules.contract.dto.request.ContractRequest;
 import com.example.hrm.modules.contract.dto.request.ContractUpdateRequest;
 import com.example.hrm.modules.contract.dto.response.ContractListResponse;
 import com.example.hrm.modules.contract.dto.response.ContractResponse;
+import com.example.hrm.modules.contract.entity.Contract;
+import com.example.hrm.modules.contract.entity.ContractAllowance;
 import com.example.hrm.modules.contract.entity.SalaryContract;
+import com.example.hrm.modules.contract.repository.AllowanceRuleRepository;
+import com.example.hrm.modules.contract.repository.ContractRepository;
+import com.example.hrm.modules.contract.repository.SalaryContractRepository;
+import com.example.hrm.modules.employee.repository.EmployeeRepository;
+import com.example.hrm.modules.file.mapper.FileAttachmentMapper;
+import com.example.hrm.modules.file.repository.FileAttachmentRepository;
 import com.example.hrm.shared.enums.ContractStatus;
 import com.example.hrm.shared.enums.RefType;
+import com.example.hrm.shared.enums.SalaryContractStatus;
 import com.example.hrm.shared.exception.AppException;
 import com.example.hrm.shared.exception.ErrorCode;
 import com.example.hrm.modules.contract.mapper.ContractMapper;
-import com.example.hrm.modules.file.mapper.FileAttachmentMapper;
-import com.example.hrm.modules.contract.repository.ContractRepository;
-import com.example.hrm.modules.employee.repository.EmployeeRepository;
-import com.example.hrm.modules.file.repository.FileAttachmentRepository;
-import com.example.hrm.modules.contract.repository.SalaryContractRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-// import com.example.hrm.shared.enums.SalaryContractStatus;
+
 @Service
 @RequiredArgsConstructor
 public class ContractService {
 
     private final ContractRepository contractRepository;
     private final EmployeeRepository employeeRepository;
-    private final ContractMapper contractMapper;
+    private final SalaryContractRepository salaryContractRepository;
+    private final AllowanceRuleRepository allowanceRuleRepository;
     private final FileAttachmentRepository fileAttachmentRepository;
     private final FileAttachmentMapper fileAttachmentMapper;
-    private final SalaryContractRepository salaryContractRepository;
+    private final ContractMapper contractMapper;
 
-    /** Tạo Contract + SalaryContract */
+    /* ========================= CREATE ========================= */
+
+    /**
+     * Tạo Contract (pháp lý) + SalaryContract (snapshot lương)
+     */
     public ContractResponse create(ContractRequest request) {
+
+        // 1. Lấy employee
         var employee = employeeRepository.findById(request.getEmployeeId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
-
-        var contract = contractMapper.toEntity(request);
+        if (employee.getPosition() == null || employee.getSubDepartment() == null) {
+            throw new AppException(
+                    ErrorCode.INTERNAL_SERVER_ERROR,
+                    400,
+                    "Employee must have position and department before creating contract"
+            );
+        }
+        // 2. Tạo Contract (pháp lý)
+        Contract contract = contractMapper.toEntity(request);
         contract.setEmployee(employee);
         contractRepository.save(contract);
 
-        // Tạo SalaryContract từ request.salaryContract
-        var salaryReq = request.getSalaryContract();
-//        var salaryContract = SalaryContract.builder()
-//                .employee(employee)
-//                .contract(contract)
-//                .baseSalary(salaryReq.getBaseSalary())
-//                .allowance(salaryReq.getAllowance())
-//                .salaryCoefficient(salaryReq.getSalaryCoefficient())
-//                .effectiveDate(salaryReq.getEffectiveDate())
-//                .status(salaryReq.getStatus())
-//                .build();
-//        salaryContractRepository.save(salaryContract);
+        // 3. Deactivate SalaryContract ACTIVE cũ (nếu có)
+        salaryContractRepository.findByEmployeeIdAndIsDeletedFalse(employee.getId())
+                .ifPresent(old -> {
+                    old.setStatus(SalaryContractStatus.INACTIVE);
+                    salaryContractRepository.save(old);
+                });
 
-        // Lấy file employee
-        var files = fileAttachmentRepository
-                .findByRefTypeAndRefIdAndIsDeletedFalse(RefType.EMPLOYEE.getValue(), employee.getId());
-
-        var response = contractMapper.toResponse(contract);
-        response.getEmployee().setFileAttachmentResponses(
-                files.stream().map(fileAttachmentMapper::toResponse).toList()
+        // 4. Lấy allowance rule theo employee
+        var rules = allowanceRuleRepository.findActiveRules(
+                employee.getPosition().getId(),
+                employee.getSubDepartment().getId()
         );
 
-        return response;
+        var salaryReq = request.getSalaryContract();
+
+        // 5. Tạo SalaryContract (snapshot)
+        SalaryContract salaryContract = SalaryContract.builder()
+                .employee(employee)
+                .contract(contract)
+                .baseSalary(salaryReq.getBaseSalary())
+                .salaryCoefficient(salaryReq.getSalaryCoefficient())
+                .effectiveDate(salaryReq.getEffectiveDate())
+                .status(SalaryContractStatus.ACTIVE)
+                .build();
+
+        // 6. Snapshot allowance → ContractAllowance
+        var contractAllowances = rules.stream()
+                .map(rule -> ContractAllowance.builder()
+                        .contract(salaryContract)
+                        .allowance(rule.getAllowance())
+                        .amount(rule.getAmount())
+                        .calculationType(rule.getCalculationType())
+                        .effectiveFrom(salaryContract.getEffectiveDate())
+                        .build()
+                )
+                .toList();
+
+        salaryContract.setAllowances(contractAllowances);
+        salaryContractRepository.save(salaryContract);
+
+        return buildResponse(contract);
     }
 
-    /** Update Contract + SalaryContract */
+    /* ========================= UPDATE ========================= */
+
+    /**
+     * Update Contract + tạo SalaryContract mới nếu có thay đổi lương
+     */
     public ContractResponse update(String id, ContractUpdateRequest request) {
-        var contract = contractRepository.findByIdAndIsDeletedFalse(id)
+
+        Contract contract = contractRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new AppException(ErrorCode.CONTRACT_NOT_FOUND, 404));
 
+        // 1. Update Contract (pháp lý)
         contractMapper.ContractUpdateRequestToEntity(request, contract);
         contractRepository.save(contract);
 
-        // Update hoặc tạo SalaryContract tương ứng
         var salaryReq = request.getSalaryContract();
-        var salaryContract = salaryContractRepository
-                .findByEmployee_IdAndContract_IdAndIsDeletedFalse(
-                        contract.getEmployee().getId(),
-                        contract.getId())
-                .orElse(SalaryContract.builder()
-                        .employee(contract.getEmployee())
-                        .contract(contract)
-                        .build());
 
-        salaryContract.setBaseSalary(salaryReq.getBaseSalary());
-//        salaryContract.setAllowance(salaryReq.getAllowance());
-        salaryContract.setSalaryCoefficient(salaryReq.getSalaryCoefficient());
-        salaryContract.setEffectiveDate(salaryReq.getEffectiveDate());
-        salaryContract.setStatus(salaryReq.getStatus());
-        salaryContractRepository.save(salaryContract);
+        // 2. Không update lương → chỉ update contract
+        if (salaryReq == null) {
+            return buildResponse(contract);
+        }
+
+        // 3. Deactivate SalaryContract ACTIVE cũ
+        salaryContractRepository
+                .findActiveByEmployeeAndContract(
+                        contract.getEmployee().getId(),
+                        contract.getId()
+                )
+                .ifPresent(old -> {
+                    old.setStatus(SalaryContractStatus.INACTIVE);
+                    salaryContractRepository.save(old);
+                });
+
+        // 4. Lấy rule mới theo employee hiện tại
+        var employee = contract.getEmployee();
+        var rules = allowanceRuleRepository.findActiveRules(
+                employee.getPosition().getId(),
+                employee.getSubDepartment().getId()
+        );
+
+        // 5. Tạo SalaryContract MỚI
+        SalaryContract newSalaryContract = SalaryContract.builder()
+                .employee(employee)
+                .contract(contract)
+                .baseSalary(salaryReq.getBaseSalary())
+                .salaryCoefficient(salaryReq.getSalaryCoefficient())
+                .effectiveDate(salaryReq.getEffectiveDate())
+                .status(SalaryContractStatus.ACTIVE)
+                .build();
+
+        // 6. Snapshot allowance mới
+        var contractAllowances = rules.stream()
+                .map(rule -> ContractAllowance.builder()
+                        .contract(newSalaryContract)
+                        .allowance(rule.getAllowance())
+                        .amount(rule.getAmount())
+                        .calculationType(rule.getCalculationType())
+                        .effectiveFrom(newSalaryContract.getEffectiveDate())
+                        .build()
+                )
+                .toList();
+
+        newSalaryContract.setAllowances(contractAllowances);
+        salaryContractRepository.save(newSalaryContract);
+
+        return buildResponse(contract);
+    }
+
+    /* ========================= QUERY ========================= */
+
+    public ContractResponse getById(String id) {
+
+        Contract contract = contractRepository.findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new AppException(ErrorCode.CONTRACT_NOT_FOUND, 404));
+
+        return buildResponse(contract);
+    }
+
+    public Page<ContractListResponse> getAllContractActive(int page, int size) {
+        return contractRepository
+                .findByIsDeletedFalseAndStatus(PageRequest.of(page, size), ContractStatus.ACTIVE)
+                .map(contractMapper::toListResponse);
+    }
+
+    public Page<ContractListResponse> getAllContractNotActive(int page, int size) {
+        return contractRepository
+                .findByIsDeletedFalseAndStatusNot(PageRequest.of(page, size), ContractStatus.ACTIVE)
+                .map(contractMapper::toListResponse);
+    }
+
+    public ContractResponse changeContractStatus(String id, ContractStatus status) {
+
+        Contract contract = contractRepository.findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new AppException(ErrorCode.CONTRACT_NOT_FOUND, 404));
+
+        contract.setStatus(status);
+        contractRepository.save(contract);
+
+        return buildResponse(contract);
+    }
+
+    /* ========================= PRIVATE ========================= */
+
+    private ContractResponse buildResponse(Contract contract) {
 
         var files = fileAttachmentRepository
-                .findByRefTypeAndRefIdAndIsDeletedFalse(RefType.EMPLOYEE.getValue(), contract.getEmployee().getId());
+                .findByRefTypeAndRefIdAndIsDeletedFalse(
+                        RefType.EMPLOYEE.getValue(),
+                        contract.getEmployee().getId()
+                );
 
         var response = contractMapper.toResponse(contract);
         response.getEmployee().setFileAttachmentResponses(
@@ -100,67 +217,5 @@ public class ContractService {
         );
 
         return response;
-    }
-
-    /** Lấy chi tiết Contract */
-    public ContractResponse getById(String id) {
-        var contract = contractRepository.findByIdAndIsDeletedFalse(id)
-                .orElseThrow(() -> new AppException(ErrorCode.CONTRACT_NOT_FOUND, 404));
-
-        var fileEmployees = fileAttachmentRepository
-                .findByRefTypeAndRefIdAndIsDeletedFalse(RefType.EMPLOYEE.getValue(), contract.getEmployee().getId());
-        var fileContracts = fileAttachmentRepository
-                .findByRefTypeAndRefIdAndIsDeletedFalse(RefType.CONTRACT.getValue(), contract.getId());
-
-        var response = contractMapper.toResponse(contract);
-        response.getEmployee().setFileAttachmentResponses(
-                fileEmployees.stream().map(fileAttachmentMapper::toResponse).toList()
-        );
-        response.setFileAttachmentResponses(
-                fileContracts.stream().map(fileAttachmentMapper::toResponse).toList()
-        );
-
-        return response;
-    }
-
-    /** Danh sách Contract Active */
-    public Page<ContractListResponse> getAllContractActive(int page, int size) {
-        var listContract = contractRepository
-                .findByIsDeletedFalseAndStatus(PageRequest.of(page, size), ContractStatus.ACTIVE);
-        return listContract.map(item -> {
-            var response = contractMapper.toListResponse(item);
-            response.setContractCode(item.getCode());
-            response.setContractType(item.getType().name());
-            response.setEmployeeCode(item.getEmployee().getCode());
-            response.setEmployeeId(item.getEmployee().getId());
-            response.setEmployeeName(item.getEmployee().getFirstName());
-            return response;
-        });
-    }
-
-    /** Danh sách Contract Not Active */
-    public Page<ContractListResponse> getAllContractNotActive(int page, int size) {
-        var listContract = contractRepository
-                .findByIsDeletedFalseAndStatusNot(PageRequest.of(page, size), ContractStatus.ACTIVE);
-        return listContract.map(item -> {
-            var response = contractMapper.toListResponse(item);
-            response.setContractCode(item.getCode());
-            response.setContractType(item.getType().name());
-            response.setEmployeeCode(item.getEmployee().getCode());
-            response.setEmployeeId(item.getEmployee().getId());
-            response.setEmployeeName(item.getEmployee().getFirstName());
-            return response;
-        });
-    }
-
-    /** Thay đổi trạng thái Contract */
-    public ContractResponse changeContractStatus(String id, ContractStatus newStatus) {
-        var contract = contractRepository.findByIdAndIsDeletedFalse(id)
-                .orElseThrow(() -> new AppException(ErrorCode.CONTRACT_NOT_FOUND, 404));
-
-        contract.setStatus(newStatus);
-        contractRepository.save(contract);
-
-        return contractMapper.toResponse(contract);
     }
 }

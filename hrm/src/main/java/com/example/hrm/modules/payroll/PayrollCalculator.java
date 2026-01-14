@@ -2,6 +2,7 @@ package com.example.hrm.modules.payroll;
 
 import com.example.hrm.modules.attendance.entity.Attendance;
 import com.example.hrm.modules.attendance.entity.AttendanceOTRate;
+import com.example.hrm.modules.contract.entity.AllowanceRule;
 import com.example.hrm.modules.contract.entity.SalaryAdjustment;
 import com.example.hrm.modules.payroll.dto.response.PayrollCycleResponse;
 import com.example.hrm.modules.payroll.dto.response.PayrollDetailResponse;
@@ -24,7 +25,7 @@ public class PayrollCalculator {
             BigDecimal baseSalary,
             List<Attendance> attendanceList,
             List<SalaryAdjustment> adjustments,
-            BigDecimal allowance,
+            List<AllowanceRule> allowances,
             PayrollCycleResponse cycle) {
 
         BigDecimal totalSalary = BigDecimal.ZERO;
@@ -55,7 +56,8 @@ public class PayrollCalculator {
             }
         }
 
-        totalSalary = totalSalary.add(allowance);
+
+//        totalSalary = totalSalary.add(allowance);
 
         for (SalaryAdjustment adj : adjustments) {
             if (adj.getType() == AdjustmentType.BONUS) {

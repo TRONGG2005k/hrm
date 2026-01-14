@@ -1,8 +1,10 @@
 package com.example.hrm.modules.contract.entity;
 
+import com.example.hrm.shared.enums.AllowanceCalculationType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -31,14 +33,15 @@ public class ContractAllowance {
      * (snapshot – KHÔNG lấy từ rule)
      */
     @Column(nullable = false)
-    private Double amount;
+    private BigDecimal amount;
 
     /**
      * Có thể dùng sau:
      * - PER_DAY
      * - FIXED
      */
-    private String calculationType;
+    @Enumerated(EnumType.STRING)
+    private AllowanceCalculationType calculationType;
 
     @Column(nullable = false)
     private LocalDate effectiveFrom;

@@ -64,22 +64,24 @@ public class EmployeeService {
 
         Employee employee = employeeMapper.toEntity(request);
 
-        var address = addressRepository.findByIdAndIsDeletedFalse(request.getAddress())
-                .orElseThrow(() -> new AppException(ErrorCode.ADDRESS_NOT_FOUND, 404));
-        employee.setAddress(address);
+        employee.setAddress(
+                addressRepository.findByIdAndIsDeletedFalse(request.getAddressId())
+                        .orElseThrow(() -> new AppException(ErrorCode.ADDRESS_NOT_FOUND, 404))
+        );
 
-        var subDepartment = subDepartmentRepository
-                .findByIdAndIsDeletedFalse(request.getSubDepartmentId())
-                .orElseThrow(() -> new AppException(ErrorCode.SUB_DEPARTMENT_NOT_FOUND, 404));
-        employee.setSubDepartment(subDepartment);
+        employee.setSubDepartment(
+                subDepartmentRepository.findByIdAndIsDeletedFalse(request.getSubDepartmentId())
+                        .orElseThrow(() -> new AppException(ErrorCode.SUB_DEPARTMENT_NOT_FOUND, 404))
+        );
 
-        var position = positionRepository
-                .findByIdAndActiveTrue(request.getPositionId())
-                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404));
-        employee.setPosition(position);
+        employee.setPosition(
+                positionRepository.findByIdAndActiveTrue(request.getPositionId())
+                        .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404))
+        );
 
         return employeeMapper.toResponse(employeeRepository.save(employee));
     }
+
 
 
     @Transactional
@@ -90,22 +92,30 @@ public class EmployeeService {
 
         employeeMapper.updateEntity(request, employee);
 
-        var address = addressRepository.findByIdAndIsDeletedFalse(request.getAddress())
-                .orElseThrow(() -> new AppException(ErrorCode.ADDRESS_NOT_FOUND, 404));
-        employee.setAddress(address);
+        if (request.getAddressId() != null) {
+            employee.setAddress(
+                    addressRepository.findByIdAndIsDeletedFalse(request.getAddressId())
+                            .orElseThrow(() -> new AppException(ErrorCode.ADDRESS_NOT_FOUND, 404))
+            );
+        }
 
-        var subDepartment = subDepartmentRepository
-                .findByIdAndIsDeletedFalse(request.getSubDepartmentId())
-                .orElseThrow(() -> new AppException(ErrorCode.SUB_DEPARTMENT_NOT_FOUND, 404));
-        employee.setSubDepartment(subDepartment);
+        if (request.getSubDepartmentId() != null) {
+            employee.setSubDepartment(
+                    subDepartmentRepository.findByIdAndIsDeletedFalse(request.getSubDepartmentId())
+                            .orElseThrow(() -> new AppException(ErrorCode.SUB_DEPARTMENT_NOT_FOUND, 404))
+            );
+        }
 
-        var position = positionRepository
-                .findByIdAndActiveTrue(request.getPositionId())
-                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404));
-        employee.setPosition(position);
+        if (request.getPositionId() != null) {
+            employee.setPosition(
+                    positionRepository.findByIdAndActiveTrue(request.getPositionId())
+                            .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404))
+            );
+        }
 
         return employeeMapper.toResponse(employeeRepository.save(employee));
     }
+
 
 
     @Transactional
