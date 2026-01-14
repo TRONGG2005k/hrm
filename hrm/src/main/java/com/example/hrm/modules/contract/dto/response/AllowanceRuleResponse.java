@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @Data
 public class AllowanceRuleResponse {
 
-    Long id;
+    String id;
     AllowanceResponse allowance;
     PositionResponse position;
     SubDepartmentResponse subDepartment;

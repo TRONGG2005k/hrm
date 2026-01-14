@@ -42,7 +42,7 @@ public class SalaryContractService {
                 .orElseThrow(() -> new RuntimeException("Contract not found"));
 
         contract.setBaseSalary(request.getBaseSalary());
-        contract.setAllowance(request.getAllowance());
+//        contract.setAllowances(request.getAllowance());
         contract.setSalaryCoefficient(request.getSalaryCoefficient());
         contract.setEffectiveDate(request.getEffectiveDate());
         contract.setStatus(request.getStatus());

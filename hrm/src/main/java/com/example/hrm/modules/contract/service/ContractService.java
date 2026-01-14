@@ -42,16 +42,16 @@ public class ContractService {
 
         // Tạo SalaryContract từ request.salaryContract
         var salaryReq = request.getSalaryContract();
-        var salaryContract = SalaryContract.builder()
-                .employee(employee)
-                .contract(contract)
-                .baseSalary(salaryReq.getBaseSalary())
-                .allowance(salaryReq.getAllowance())
-                .salaryCoefficient(salaryReq.getSalaryCoefficient())
-                .effectiveDate(salaryReq.getEffectiveDate())
-                .status(salaryReq.getStatus())
-                .build();
-        salaryContractRepository.save(salaryContract);
+//        var salaryContract = SalaryContract.builder()
+//                .employee(employee)
+//                .contract(contract)
+//                .baseSalary(salaryReq.getBaseSalary())
+//                .allowance(salaryReq.getAllowance())
+//                .salaryCoefficient(salaryReq.getSalaryCoefficient())
+//                .effectiveDate(salaryReq.getEffectiveDate())
+//                .status(salaryReq.getStatus())
+//                .build();
+//        salaryContractRepository.save(salaryContract);
 
         // Lấy file employee
         var files = fileAttachmentRepository
@@ -85,7 +85,7 @@ public class ContractService {
                         .build());
 
         salaryContract.setBaseSalary(salaryReq.getBaseSalary());
-        salaryContract.setAllowance(salaryReq.getAllowance());
+//        salaryContract.setAllowance(salaryReq.getAllowance());
         salaryContract.setSalaryCoefficient(salaryReq.getSalaryCoefficient());
         salaryContract.setEffectiveDate(salaryReq.getEffectiveDate());
         salaryContract.setStatus(salaryReq.getStatus());

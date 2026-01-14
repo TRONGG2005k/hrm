@@ -9,6 +9,8 @@ import com.example.hrm.modules.employee.entity.Employee;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "salary_contract")
@@ -34,7 +36,13 @@ public class SalaryContract {
 
     BigDecimal baseSalary;
 
-    BigDecimal allowance;     // phụ cấp cố định
+    @OneToMany(
+            mappedBy = "contract",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @Builder.Default
+    private List<ContractAllowance> allowances = new ArrayList<>();
 
     Double salaryCoefficient;
 

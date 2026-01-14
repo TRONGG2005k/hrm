@@ -17,7 +17,7 @@ public interface AllowanceRuleRepository
         AND (:deptId IS NULL OR r.subDepartment.id = :deptId OR r.subDepartment IS NULL)
     """)
     List<AllowanceRule> findActiveRules(
-            @Param("positionId") Long positionId,
+            @Param("positionId") String positionId,
             @Param("deptId") String deptId
     );
 }

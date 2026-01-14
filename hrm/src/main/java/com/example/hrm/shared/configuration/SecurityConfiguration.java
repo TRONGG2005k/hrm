@@ -29,7 +29,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/v1/auth/**",
                                 "/api/v1/employees/faces/**").permitAll()
 //                        .requestMatchers(HttpMethod.POST,).permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception

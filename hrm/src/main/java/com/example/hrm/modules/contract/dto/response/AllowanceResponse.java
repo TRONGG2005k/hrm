@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class AllowanceResponse {
-    Long id;
+    String id;
     String code;
     String name;
     String description;

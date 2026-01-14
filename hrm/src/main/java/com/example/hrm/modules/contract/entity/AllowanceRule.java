@@ -15,8 +15,8 @@ import java.math.BigDecimal;
 public class AllowanceRule {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    String id;
 
     @ManyToOne
     @JoinColumn(name = "allowance_id", nullable = false)
