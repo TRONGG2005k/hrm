@@ -48,6 +48,7 @@ public class ContractController {
         return ResponseEntity.ok(contractService.getById(id));
     }
 
+    @GetMapping("/not-active")
     public Page<ContractListResponse> getContractsNotActive(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
@@ -55,25 +56,14 @@ public class ContractController {
         return contractService.getAllContractNotActive(page, size);
     }
 
-    @RestController
-    @RequestMapping("/api/contracts")
-    @RequiredArgsConstructor
-    public class ContractApprovalController {
 
-        private final ContractService contractService;
-
-        /**
-         * Duyệt hợp đồng
-         * @param contractId id hợp đồng
-         * @param newStatus trạng thái mới (vd: ACTIVE, TERMINATED)
-         */
-        @PostMapping("/{contractId}/approve")
-        public ContractResponse approveContract(
-                @PathVariable String contractId,
-                @RequestParam ContractStatus newStatus
-        ) {
-            return contractService.changeContractStatus(contractId, newStatus);
-        }
+    @PostMapping("/{contractId}/approve")
+    public ContractResponse approveContract(
+            @PathVariable String contractId,
+            @RequestParam ContractStatus newStatus
+    ) {
+        return contractService.changeContractStatus(contractId, newStatus);
     }
+
 
 }

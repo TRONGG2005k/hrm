@@ -65,5 +65,5 @@ public class AttendanceDetailResponse {
 
     /* ===================== STATUS ===================== */
 
-    private AttendanceStatus status;
+    private Object status;
 }

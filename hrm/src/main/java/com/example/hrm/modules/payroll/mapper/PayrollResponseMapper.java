@@ -1,0 +1,125 @@
+package com.example.hrm.modules.payroll.mapper;
+
+import com.example.hrm.modules.attendance.dto.response.AttendanceSummaryResponse;
+import com.example.hrm.modules.attendance.entity.Attendance;
+import com.example.hrm.modules.attendance.entity.AttendanceOTRate;
+import com.example.hrm.modules.contract.entity.SalaryAdjustment;
+import com.example.hrm.modules.contract.entity.SalaryContract;
+import com.example.hrm.modules.contract.mapper.SalaryAdjustmentMapper;
+import com.example.hrm.modules.employee.entity.Employee;
+import com.example.hrm.modules.payroll.dto.request.PayrollRequest;
+import com.example.hrm.modules.payroll.dto.response.*;
+import com.example.hrm.shared.enums.AdjustmentType;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Component
+@RequiredArgsConstructor
+public class PayrollResponseMapper {
+
+    private final SalaryAdjustmentMapper salaryAdjustmentMapper;
+
+    public AttendanceSummaryResponse toAttendanceSummary(
+            List<Attendance> attendanceList,
+            PayrollDetailResponse payrollDetail) {
+
+        return AttendanceSummaryResponse.builder()
+                .expectedWorkingDays(attendanceList.size())
+                .actualWorkingDays(payrollDetail.workingDays())
+                .lateDays(attendanceList.stream()
+                        .filter(a -> a.getLateMinutes() > 0)
+                        .count())
+                .earlyLeaveDays(attendanceList.stream()
+                        .filter(a -> a.getEarlyLeaveMinutes() > 0)
+                        .count())
+                .totalOtHours(
+                        (long) attendanceList.stream()
+                                .flatMap(a -> a.getAttendanceOTRates().stream())
+                                .mapToDouble(AttendanceOTRate::getOtHours)
+                                .sum()
+                )
+                .build();
+    }
+
+    public EarningsResponse toEarningsResponse(
+            SalaryContract salaryContract,
+            PayrollDetailResponse payrollDetail,
+            List<SalaryAdjustment> salaryAdjustments) {
+
+        var bonusResponses = salaryAdjustments.stream()
+                .filter(a -> a.getType() == AdjustmentType.BONUS)
+                .map(salaryAdjustmentMapper::toResponse)
+                .toList();
+
+        EarningsResponse earnings = new EarningsResponse();
+        earnings.setBaseSalary(salaryContract.getBaseSalary());
+        earnings.setAllowances(payrollDetail.allowance());
+        earnings.setOvertimePay(payrollDetail.otTotal());
+        earnings.setBonuses(bonusResponses);
+        earnings.setTotalEarnings(
+                payrollDetail.baseSalaryTotal()
+                        .add(payrollDetail.totalAllowance())
+                        .add(payrollDetail.otTotal())
+                        .add(payrollDetail.totalBonus())
+        );
+        return earnings;
+    }
+
+    public DeductionsResponse toDeductionsResponse(
+            List<SalaryAdjustment> salaryAdjustments,
+            PayrollDetailResponse payrollDetail) {
+
+        var penaltyResponses = salaryAdjustments.stream()
+                .filter(a -> a.getType() == AdjustmentType.PENALTY)
+                .map(salaryAdjustmentMapper::toResponse)
+                .toList();
+
+        DeductionsResponse deductions = new DeductionsResponse();
+        deductions.setPenalties(penaltyResponses);
+        deductions.setInsurance(null);
+        deductions.setPersonalIncomeTax(BigDecimal.ZERO);
+        deductions.setAdvanceSalary(BigDecimal.ZERO);
+        deductions.setTotalDeductions(payrollDetail.totalPenalty());
+        return deductions;
+    }
+
+    public PayrollSummaryResponse toPayrollSummary(
+            EarningsResponse earnings,
+            DeductionsResponse deductions) {
+
+        PayrollSummaryResponse summary = new PayrollSummaryResponse();
+        summary.setGrossSalary(earnings.getTotalEarnings());
+        summary.setTotalDeductions(deductions.getTotalDeductions());
+        summary.setNetSalary(
+                earnings.getTotalEarnings()
+                        .subtract(deductions.getTotalDeductions())
+        );
+        return summary;
+    }
+
+    public PeriodResponse toPeriodResponse(PayrollRequest request) {
+        return new PeriodResponse(request.getMonth(), request.getYear());
+    }
+
+    public EmployeePayrollResponse toEmployeeResponse(Employee employee) {
+        return EmployeePayrollResponse.builder()
+                .employeeId(employee.getId())
+                .employeeCode(employee.getCode())
+                .fullName(employee.getLastName() + " " + employee.getFirstName())
+                .subDepartment(employee.getSubDepartment().getName())
+                .build();
+    }
+
+    public PayrollMetadataResponse toMetadata() {
+        PayrollMetadataResponse metadata = new PayrollMetadataResponse();
+        metadata.setStatus("DRAFT");
+        metadata.setVersion(1);
+        metadata.setCalculatedAt(LocalDateTime.now());
+        metadata.setCalculatedBy("SYSTEM");
+        return metadata;
+    }
+}

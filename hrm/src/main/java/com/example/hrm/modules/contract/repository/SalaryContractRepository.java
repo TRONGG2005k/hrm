@@ -16,5 +16,7 @@ public interface SalaryContractRepository extends JpaRepository<SalaryContract, 
     Page<SalaryContract> findByEmployee_IdAndIsDeletedFalse(String employeeId, Pageable pageable);
     Optional<SalaryContract>findByEmployee_IdAndContract_IdAndIsDeletedFalse(String employeeId, String contractId);
     Optional<SalaryContract> findByEmployeeIdAndIsDeletedFalse(String employeeId);
-    Optional<SalaryContract> findActiveByEmployeeAndContract(String employeeId, String contractId);
+
+
+    Optional<SalaryContract> findActiveByEmployee_IdAndContract_Id(String employeeId, String contractId);
 }

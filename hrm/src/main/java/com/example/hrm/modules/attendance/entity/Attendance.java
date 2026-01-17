@@ -1,5 +1,6 @@
 package com.example.hrm.modules.attendance.entity;
 
+import com.example.hrm.shared.enums.AttendanceEvaluation;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -51,6 +52,9 @@ public class Attendance {
 //    @Column(name = "work_date", nullable = false)
     @Column(name = "work_date", nullable = true)
     LocalDate workDate;
+
+    @Enumerated(EnumType.STRING)
+    AttendanceEvaluation evaluation;
 
     // Quan hệ OT
     @OneToMany(mappedBy = "attendance", cascade = CascadeType.ALL, orphanRemoval = true)

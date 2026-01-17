@@ -3,6 +3,7 @@ package com.example.hrm.modules.attendance.service;
 import com.example.hrm.modules.attendance.dto.response.AttendanceRealTimeResponse;
 import com.example.hrm.modules.attendance.entity.Attendance;
 import com.example.hrm.modules.attendance.entity.AttendanceOTRate;
+import com.example.hrm.shared.enums.AttendanceEvaluation;
 import com.example.hrm.shared.enums.AttendanceStatus;
 import com.example.hrm.shared.exception.AppException;
 import com.example.hrm.shared.exception.ErrorCode;
@@ -61,11 +62,11 @@ public class AttendanceCheckOutService {
         long workedMinutes = Duration.between(checkIn, checkOut).toMinutes();
 
         if (workedMinutes < 8 * 60) {
-            attendance.setStatus(AttendanceStatus.LEAVE_EARLY);
+            attendance.setEvaluation(AttendanceEvaluation.LEAVE_EARLY);
         } else if (otHours > 0) {
-            attendance.setStatus(AttendanceStatus.OVER_TIME);
+            attendance.setEvaluation(AttendanceEvaluation.OVER_TIME);
         } else {
-            attendance.setStatus(AttendanceStatus.ON_TIME);
+            attendance.setEvaluation(AttendanceEvaluation.ON_TIME);
         }
 
         attendanceHelper.analyzeAttendance(attendance);

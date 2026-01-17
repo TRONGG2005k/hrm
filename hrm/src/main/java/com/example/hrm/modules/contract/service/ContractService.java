@@ -124,7 +124,7 @@ public class ContractService {
 
         // 3. Deactivate SalaryContract ACTIVE cũ
         salaryContractRepository
-                .findActiveByEmployeeAndContract(
+                .findActiveByEmployee_IdAndContract_Id(
                         contract.getEmployee().getId(),
                         contract.getId()
                 )

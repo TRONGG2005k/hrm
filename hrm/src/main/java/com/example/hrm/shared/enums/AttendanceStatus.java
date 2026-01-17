@@ -1,9 +1,8 @@
 package com.example.hrm.shared.enums;
 
 public enum AttendanceStatus {
-    LATE,
-    LEAVE_EARLY,
-    ON_TIME,
-    OVER_TIME,
-    WORKING,
+    WORKING,     // đang làm việc (chưa checkout)
+    COMPLETED,   // đã checkout
+    LEAVE,       // nghỉ phép
+    ABSENT       // vắng không phép,
 }

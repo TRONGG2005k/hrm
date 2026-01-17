@@ -4,6 +4,7 @@ import com.example.hrm.modules.attendance.dto.response.AttendanceDetailResponse;
 import com.example.hrm.modules.attendance.dto.response.AttendanceListResponse;
 import com.example.hrm.modules.attendance.dto.response.BreakTimeResponse;
 import com.example.hrm.modules.attendance.entity.Attendance;
+import com.example.hrm.shared.enums.AttendanceEvaluation;
 import com.example.hrm.shared.enums.AttendanceStatus;
 import com.example.hrm.shared.enums.OTType;
 import com.example.hrm.shared.exception.AppException;
@@ -83,7 +84,7 @@ public class AttendanceService {
             );
         }
 
-        AttendanceStatus status = resolveStatus(
+        var status = resolveStatus(
                 checkOut,
                 lateMinutes,
                 earlyLeaveMinutes,
@@ -174,7 +175,7 @@ public class AttendanceService {
             );
         }
 
-        AttendanceStatus status = resolveStatus(
+        Object status = resolveStatus(
                 checkOut,
                 lateMinutes,
                 earlyLeaveMinutes,
@@ -203,7 +204,7 @@ public class AttendanceService {
 
     /* ===================== STATUS ===================== */
 
-    private AttendanceStatus resolveStatus(
+    private Object resolveStatus(
             LocalDateTime checkOut,
             long lateMinutes,
             long earlyLeaveMinutes,
@@ -213,15 +214,15 @@ public class AttendanceService {
             return AttendanceStatus.WORKING;
         }
         if (earlyLeaveMinutes > 0) {
-            return AttendanceStatus.LEAVE_EARLY;
+            return AttendanceEvaluation.LEAVE_EARLY;
         }
         if (lateMinutes > 0) {
-            return AttendanceStatus.LATE;
+            return AttendanceEvaluation.LATE;
         }
         if (otMinutes > 0) {
-            return AttendanceStatus.OVER_TIME;
+            return AttendanceEvaluation.OVER_TIME;
         }
-        return AttendanceStatus.ON_TIME;
+        return AttendanceEvaluation.ON_TIME;
     }
 }
 

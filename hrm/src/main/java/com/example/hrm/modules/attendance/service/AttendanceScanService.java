@@ -4,6 +4,7 @@ package com.example.hrm.modules.attendance.service;
 import com.example.hrm.modules.attendance.dto.response.AttendanceRealTimeResponse;
 import com.example.hrm.modules.attendance.entity.Attendance;
 // import com.example.hrm.modules.employee.entity.Employee;
+import com.example.hrm.shared.enums.AttendanceStatus;
 import com.example.hrm.shared.enums.ShiftType;
 import com.example.hrm.shared.exception.AppException;
 import com.example.hrm.shared.exception.ErrorCode;
@@ -39,7 +40,7 @@ public class AttendanceScanService {
 
         var openAttendanceOpt =
                 attendanceRepository
-                        .findTopByEmployeeAndCheckOutTimeIsNullOrderByCheckInTimeDesc(employee);
+                        .findTopByEmployeeAndStatusAndCheckOutTimeIsNullOrderByCheckInTimeDesc(employee, AttendanceStatus.WORKING);
 
         if (openAttendanceOpt.isEmpty()) {
             return attendanceCheckInService.checkIn(employee);

@@ -22,5 +22,5 @@ public class AttendanceListResponse {
     private long otMinutes;
     private double otRate;
 
-    private AttendanceStatus status;
+    private Object status;
 }

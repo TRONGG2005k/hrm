@@ -5,6 +5,7 @@ import com.example.hrm.modules.attendance.entity.Attendance;
 import com.example.hrm.modules.attendance.entity.AttendanceOTRate;
 import com.example.hrm.modules.employee.entity.Employee;
 import com.example.hrm.modules.attendance.entity.OTRate;
+import com.example.hrm.shared.enums.AttendanceEvaluation;
 import com.example.hrm.shared.enums.AttendanceStatus;
 import com.example.hrm.shared.enums.OTType;
 import com.example.hrm.shared.enums.ShiftType;
@@ -38,10 +39,11 @@ public class AttendanceCheckInService {
 
         LocalDateTime shiftStart = attendancePolicy.getShiftStart(employee, now);
 
-        AttendanceStatus status =
+
+        AttendanceEvaluation evaluation =
                 now.isAfter(shiftStart)
-                        ? AttendanceStatus.LATE
-                        : AttendanceStatus.ON_TIME;
+                        ? AttendanceEvaluation.LATE
+                        : AttendanceEvaluation.ON_TIME;
 
         LocalDate workDate;
         if (employee.getShiftType() == ShiftType.NIGHT
@@ -55,7 +57,8 @@ public class AttendanceCheckInService {
                 .workDate(LocalDate.now())
                 .employee(employee)
                 .checkInTime(now)
-                .status(status)
+                .status(AttendanceStatus.WORKING)
+                .evaluation(evaluation)
                 .isDeleted(false)
                 .breaks(new ArrayList<>())
                 .attendanceOTRates(new ArrayList<>())
@@ -96,9 +99,9 @@ public class AttendanceCheckInService {
                 .employeeCode(employee.getCode())
                 .employeeName(employee.getFirstName() + " " + employee.getLastName())
                 .time(now)
-                .status(status)
+                .status(AttendanceStatus.WORKING)
                 .message(
-                        status == AttendanceStatus.LATE
+                        evaluation == AttendanceEvaluation.LATE
                                 ? "Bạn đã đi trễ"
                                 : "Check-in thành công"
                 )

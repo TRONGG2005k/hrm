@@ -3,6 +3,7 @@ package com.example.hrm.modules.attendance.repository;
 import com.example.hrm.modules.attendance.entity.Attendance;
 import com.example.hrm.modules.attendance.entity.AttendanceOTRate;
 import com.example.hrm.modules.employee.entity.Employee;
+import com.example.hrm.shared.enums.AttendanceStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -48,7 +49,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, String> 
 
     Optional<Attendance> findByIdAndIsDeletedFalse(String id);
 
-    Optional<Attendance> findTopByEmployeeAndCheckOutTimeIsNullOrderByCheckInTimeDesc(Employee employee );
+    Optional<Attendance> findTopByEmployeeAndStatusAndCheckOutTimeIsNullOrderByCheckInTimeDesc(Employee employee, AttendanceStatus attendanceStatus);
 
     Page<Attendance> findByEmployeeIdAndIsDeletedFalse(String employeeId, Pageable pageable);
 }
