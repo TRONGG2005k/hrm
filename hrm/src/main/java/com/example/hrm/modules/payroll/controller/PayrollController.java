@@ -1,11 +1,15 @@
 package com.example.hrm.modules.payroll.controller;
 
 
+import com.example.hrm.modules.payroll.dto.request.PayrollApprovalRequest;
 import com.example.hrm.modules.payroll.dto.request.PayrollRequest;
+import com.example.hrm.modules.payroll.dto.response.ApprovedPayrollListResponse;
 import com.example.hrm.modules.payroll.dto.response.PayrollListItemResponse;
+import com.example.hrm.modules.payroll.dto.response.PayrollListResponse;
 import com.example.hrm.modules.payroll.dto.response.PayrollResponse;
 import com.example.hrm.modules.payroll.service.PayrollService;
-import lombok.Getter;
+import com.example.hrm.shared.enums.PayrollStatus;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -68,6 +72,35 @@ public class PayrollController {
         // Sau này có thể tạo service getPayrollByEmployeeAndMonth
         PayrollRequest request = new PayrollRequest(employeeId, month, year);
         PayrollResponse response = payrollService.getDetailByEmployee(employeeId, month, year); // Tạm thời dùng create, về sau dùng get
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    /**
+     * Duyệt hoặc từ chối bảng lương hàng loạt
+     * @param request Thông tin duyệt bảng lương: month, year, status, comment
+     * @return ApprovedPayrollListResponse danh sách bảng lương đã duyệt
+     */
+    @PostMapping("/approval")
+    public ResponseEntity<ApprovedPayrollListResponse> salaryApproval(@Valid @RequestBody PayrollApprovalRequest request) throws JsonProcessingException {
+        ApprovedPayrollListResponse response = payrollService.salaryApproval(request);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    /**
+     * Lấy danh sách bảng lương theo trạng thái
+     * @param month Tháng
+     * @param year Năm
+     * @param status Trạng thái bảng lương
+     * @return PayrollListResponse danh sách bảng lương
+     */
+    @GetMapping("/list")
+    public ResponseEntity<PayrollListResponse> getPayrollList(
+            @RequestParam Integer month,
+            @RequestParam Integer year,
+            @RequestParam PayrollStatus status
+    ) {
+        PayrollApprovalRequest request = new PayrollApprovalRequest(month, year, null, status);
+        PayrollListResponse response = payrollService.getPayrollList(request);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
