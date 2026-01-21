@@ -5,7 +5,6 @@ import com.example.hrm.shared.MessageResponse;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -13,7 +12,11 @@ import java.util.Objects;
 @Service
 public class CallApiFaceRecognition {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public CallApiFaceRecognition(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     private static final String REGISTER_API  = "http://127.0.0.1:8000/facial-recognition/register-face";
     private static final String RECOGNIZE_API = "http://127.0.0.1:8000/facial-recognition/face-recognition";

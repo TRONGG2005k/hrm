@@ -19,7 +19,7 @@ public interface LeaveRequestMapper {
     @Mapping(target = "status", constant = "PENDING")
     @Mapping(target = "approvedAt", ignore = true)
     @Mapping(target = "approvedBy", ignore = true)
-    @Mapping(target = "createdAt", expression = "java(LocalDateTime.now())")
+    @Mapping(target = "createdAt", expression = "java(java.time.LocalDateTime.now())")
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "isDeleted", constant = "false")
     LeaveRequest toEntity(LeaveRequestCreateRequest request, Employee employee);

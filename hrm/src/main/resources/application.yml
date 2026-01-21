@@ -24,8 +24,8 @@ spring:
     password: ${SPRING_REDIS_PASSWORD:mypassword}
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: validate
+    show-sql: false
   servlet:
     multipart:
       max-file-size: 50MB
@@ -53,6 +53,3 @@ app:
     activation-duration: 900         # activation token (15 phút)
   mail:
     baseUrl: http://localhost:5173/active-account
-
-
-

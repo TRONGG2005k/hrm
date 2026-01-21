@@ -24,9 +24,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -40,9 +43,13 @@ public class LeaveRequestService {
 
     public  LeaveRequestDetailResponse create(LeaveRequestCreateRequest request){
 
-
         Employee employee = employeeRepository.findByIdAndIsDeletedFalse(request.getEmployeeId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
+
+        // Check for overlapping approved leaves
+        if (leaveRequestRepository.existsOverlappingApprovedLeave(employee.getId(), request.getStartDate(), request.getEndDate(), LeaveStatus.APPROVED, "")) {
+            throw new AppException(ErrorCode.INVALID_STATE, 400, "Đã có đơn nghỉ phép được duyệt trong khoảng thời gian này");
+        }
 
         LeaveRequest leaveRequest = leaveRequestMapper.toEntity(request, employee);
         leaveRequestRepository.save(leaveRequest);
@@ -71,6 +78,11 @@ public class LeaveRequestService {
         UserAccount user = userAccountRepository.findByUsernameAndIsDeletedFalse(name)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
 
+        // Check for overlapping approved leaves, excluding current request
+        if (leaveRequestRepository.existsOverlappingApprovedLeave(employee.getId(), request.getStartDate(), request.getEndDate(), LeaveStatus.APPROVED, leaveId)) {
+            throw new AppException(ErrorCode.INVALID_STATE, 400, "Đã có đơn nghỉ phép được duyệt trong khoảng thời gian này");
+        }
+
         leaveRequest.setEmployee(employee);
         leaveRequest.setUpdatedAt(LocalDateTime.now());
         leaveRequest.setReason(request.getReason());
@@ -85,6 +97,7 @@ public class LeaveRequestService {
         return  response;
     }
 
+    @Transactional
     public LeaveRequestDetailResponse approveLeave(
             LeaveRequestApprovalRequest request,
             String leaveId
@@ -129,6 +142,7 @@ public class LeaveRequestService {
             LocalDate start = leaveRequest.getStartDate();
             LocalDate end = leaveRequest.getEndDate();
 
+            List<Attendance> attendances = new ArrayList<>();
             for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
                 Attendance attendance = Attendance.builder()
                         .employee(employee)
@@ -138,9 +152,9 @@ public class LeaveRequestService {
                         .checkInTime(null)
                         .checkOutTime(null)
                         .build();
-
-                attendanceRepository.save(attendance);
+                attendances.add(attendance);
             }
+            attendanceRepository.saveAll(attendances);
         }
 
         return leaveRequestMapper.toDetailResponse(leaveRequest);
