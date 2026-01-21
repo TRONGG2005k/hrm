@@ -26,4 +26,21 @@ public class AllowanceController {
     public List<AllowanceResponse> getAll() {
         return service.getAll();
     }
+
+    @GetMapping("/{id}")
+    public AllowanceResponse getById(@PathVariable String id) {
+        return service.getById(id);
+    }
+
+    @PutMapping("/{id}")
+    public AllowanceResponse update(
+            @PathVariable String id,
+            @RequestBody @Valid AllowanceRequest request) {
+        return service.update(id, request);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable String id) {
+        service.delete(id);
+    }
 }

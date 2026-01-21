@@ -1,24 +1,43 @@
 package com.example.hrm.modules.payroll.service;
 
+import com.example.hrm.modules.attendance.entity.Attendance;
 import com.example.hrm.modules.attendance.repository.AttendanceRepository;
+import com.example.hrm.modules.contract.entity.AllowanceRule;
+import com.example.hrm.modules.contract.entity.SalaryAdjustment;
+import com.example.hrm.modules.contract.entity.SalaryContract;
 import com.example.hrm.modules.contract.repository.AllowanceRuleRepository;
 import com.example.hrm.modules.contract.repository.SalaryContractRepository;
 import com.example.hrm.modules.contract.service.SalaryAdjustmentService;
+import com.example.hrm.modules.employee.entity.Employee;
 import com.example.hrm.modules.employee.repository.EmployeeRepository;
 import com.example.hrm.modules.payroll.PayrollCalculator;
 import com.example.hrm.modules.payroll.PayrollPeriodCalculator;
+import com.example.hrm.modules.payroll.dto.request.PayrollApprovalRequest;
 import com.example.hrm.modules.payroll.dto.request.PayrollRequest;
 import com.example.hrm.modules.payroll.dto.response.*;
 import com.example.hrm.modules.payroll.entity.Payroll;
+import com.example.hrm.modules.payroll.entity.PayrollApprovalHistory;
 import com.example.hrm.modules.payroll.mapper.PayrollResponseMapper;
+import com.example.hrm.modules.payroll.repository.PayrollApprovalHistoryRepository;
 import com.example.hrm.modules.payroll.repository.PayrollRepository;
+import com.example.hrm.modules.user.entity.UserAccount;
+import com.example.hrm.modules.user.repository.UserAccountRepository;
+import com.example.hrm.shared.enums.PayrollApprovalStatus;
 import com.example.hrm.shared.enums.PayrollStatus;
 import com.example.hrm.shared.exception.AppException;
 import com.example.hrm.shared.exception.ErrorCode;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -33,72 +52,225 @@ public class PayrollService {
     private final PayrollCalculator payrollCalculator;
     private final AllowanceRuleRepository allowanceRuleRepository;
     private final PayrollResponseMapper payrollResponseMapper;
-
+    private final PayrollApprovalHistoryRepository payrollApprovalHistoryRepository;
+    private final UserAccountRepository userAccountRepository;
+    private final ObjectMapper objectMapper;
     public PayrollResponse create(PayrollRequest request) {
 
         var cycle = payrollCycleService.getActive();
-        var period = new PayrollPeriodCalculator()
-                .calculate(cycle, request.getYear(), request.getMonth());
+        var period = calculatePeriod(cycle, request.getYear(), request.getMonth());
 
-        var employee = employeeRepository
-                .findByIdAndIsDeletedFalse(request.getEmployeeId())
-                .orElseThrow(() -> new AppException(
-                        ErrorCode.EMPLOYEE_NOT_FOUND, 404
-                ));
+        var employee = getEmployee(request.getEmployeeId());
+        checkPayrollExists(employee.getId(), request.getYear(), request.getMonth());
 
-        var salaryContract = salaryContractRepository
+        var salaryContract = getSalaryContract(employee);
+        var attendanceList = getAttendanceList(employee, period);
+        var salaryAdjustments = getSalaryAdjustments(employee, period);
+        var allowance = getAllowance(employee);
+        var payrollDetail = calculatePayrollDetail(salaryContract, attendanceList, salaryAdjustments, allowance, cycle);
+
+        Payroll payroll = buildAndSavePayroll(employee, request, payrollDetail);
+
+        return buildPayrollResponse(request, employee, period, salaryContract, attendanceList, salaryAdjustments, allowance, cycle, payrollDetail, payroll.getId(), PayrollStatus.DRAFT);
+    }
+
+    public List<PayrollListItemResponse> createForAllEmployees(int month, int year) {
+
+        var employees = employeeRepository.findAllByIsDeletedFalse();
+        List<PayrollListItemResponse> results = new ArrayList<>();
+
+        for (var employee : employees) {
+            try {
+                PayrollRequest request = new PayrollRequest();
+                request.setEmployeeId(employee.getId());
+                request.setMonth(month);
+                request.setYear(year);
+
+                PayrollResponse response = create(request);
+                results.add(payrollResponseMapper.toListResponse(response));
+
+            } catch (AppException ex) {
+                if (ex.getErrorCode() == ErrorCode.PAYROLL_ALREADY_EXISTS) {
+                    // Bỏ qua nhân viên đã có payroll trong kỳ
+                    continue;
+                }
+                // Lỗi khác thì vẫn ném ra
+                throw ex;
+            }
+        }
+
+        return results;
+    }
+
+    public Page<PayrollListItemResponse> getAll(int page, int size){
+        var listResponse = payrollRepository.findByIsDeletedFalse(PageRequest.of(page, size));
+        return listResponse.map(payrollResponseMapper::toListResponse);
+    }
+
+    public PayrollResponse getDetailByEmployee(String employeeId, int month, int year){
+        String monthStr = String.format("%04d-%02d", year, month);
+        Payroll payroll = payrollRepository.findByEmployeeIdAndMonthAndIsDeletedFalse(
+                employeeId, monthStr).orElseThrow(() ->new AppException(ErrorCode.PAYROLL_NOT_FOUND, 404));
+
+        PayrollRequest request = new PayrollRequest(employeeId, month, year);
+        var cycle = payrollCycleService.getActive();
+        var period = calculatePeriod(cycle, request.getYear(), request.getMonth());
+
+        var employee = getEmployee(employeeId);
+        var salaryContract = getSalaryContract(employee);
+        var attendanceList = getAttendanceList(employee, period);
+        var salaryAdjustments = getSalaryAdjustments(employee, period);
+        var allowance = getAllowance(employee);
+        var payrollDetail = calculatePayrollDetail(salaryContract, attendanceList, salaryAdjustments, allowance, cycle);
+
+        return buildPayrollResponse(request, employee, period, salaryContract, attendanceList, salaryAdjustments, allowance, cycle, payrollDetail, payroll.getId(), PayrollStatus.DRAFT);
+    }
+
+
+    public ApprovedPayrollListResponse salaryApproval(PayrollApprovalRequest request) throws JsonProcessingException {
+
+        UserAccount user = userAccountRepository.findByUsernameAndIsDeletedFalse(
+                SecurityContextHolder.getContext().getAuthentication().getName())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
+
+
+        String monthStr = String.format("%04d-%02d", request.getYear(), request.getMonth());
+
+        List<Payroll> payrollList = payrollRepository
+                .findAllByMonthAndStatusAndIsDeletedFalse(monthStr, PayrollStatus.DRAFT);
+
+        if (payrollList.isEmpty()) {
+            throw new AppException(ErrorCode.PAYROLL_NOT_FOUND, 404,
+                    "không tìm thấy bảng lương nào chưa duyệt trong kỳ"  + monthStr);
+        }
+
+        BigDecimal totalPayrollAmount = BigDecimal.ZERO;
+
+        PayrollStatus newStatus = request.getStatus(); // nếu DTO dùng enum
+
+        for (Payroll item : payrollList) {
+            item.setStatus(newStatus);
+            totalPayrollAmount = totalPayrollAmount.add(item.getTotalSalary());
+        }
+
+        payrollRepository.saveAll(payrollList);
+
+        // Lưu lịch sử duyệt
+        PayrollApprovalHistory history = PayrollApprovalHistory.builder()
+                .month(request.getMonth())
+                .year(request.getYear())
+                .totalAmount(totalPayrollAmount.doubleValue())
+                .status(newStatus == PayrollStatus.APPROVED
+                        ? PayrollApprovalStatus.APPROVED
+                        : PayrollApprovalStatus.REJECTED)
+                .comment(request.getComment())
+                .approvedBy(user.getEmployee()) // hoặc từ context
+                .payrollSnapshot(objectMapper.writeValueAsString(payrollList))
+                .build();
+
+        payrollApprovalHistoryRepository.save(history);
+
+        return new ApprovedPayrollListResponse(
+                monthStr,
+                totalPayrollAmount,
+                payrollList.stream()
+                        .map(payrollResponseMapper::toListResponse)
+                        .toList()
+        );
+    }
+
+
+
+    private PayrollPeriodCalculator.PayrollPeriod calculatePeriod(PayrollCycleResponse cycle, int year, int month) {
+        return new PayrollPeriodCalculator().calculate(cycle, year, month);
+    }
+
+    private Employee getEmployee(String employeeId) {
+        return employeeRepository.findByIdAndIsDeletedFalse(employeeId)
+                .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND, 404));
+    }
+
+    private void checkPayrollExists(String employeeId, int year, int month) {
+        String monthStr = String.format("%04d-%02d", year, month);
+        if (payrollRepository.existsByEmployeeIdAndMonthAndIsDeletedFalse(employeeId, monthStr)) {
+            throw new AppException(ErrorCode.PAYROLL_ALREADY_EXISTS, 400);
+        }
+    }
+
+    private SalaryContract getSalaryContract(Employee employee) {
+        return salaryContractRepository
                 .findByEmployee_IdAndContract_IdAndIsDeletedFalse(
                         employee.getId(),
                         employee.getContracts().getFirst().getId()
                 )
-                .orElseThrow(() -> new AppException(
-                        ErrorCode.SALARY_CONTRACT_NOT_FOUND, 404
-                ));
+                .orElseThrow(() -> new AppException(ErrorCode.SALARY_CONTRACT_NOT_FOUND, 404));
+    }
 
-        var attendanceList = attendanceRepository.findOTForEmployee(
+    private List<Attendance> getAttendanceList(Employee employee, PayrollPeriodCalculator.PayrollPeriod period) {
+        return attendanceRepository.findOTForEmployee(
                 employee.getId(),
                 period.startDate(),
                 period.endDate()
         );
+    }
 
-        var salaryAdjustments = salaryAdjustmentService.getForPayroll(
+    private List<SalaryAdjustment> getSalaryAdjustments(Employee employee, PayrollPeriodCalculator.PayrollPeriod period) {
+        return salaryAdjustmentService.getForPayroll(
                 employee.getId(),
                 period.startDate(),
                 period.endDate()
         );
+    }
 
-        var allowance = allowanceRuleRepository.findActiveRules(
+    private List<AllowanceRule> getAllowance(Employee employee) {
+        return allowanceRuleRepository.findActiveRules(
                 employee.getPosition().getId(),
                 employee.getSubDepartment().getId()
         );
+    }
 
-        var payrollDetail = payrollCalculator.calculatePayrollDetail(
+    private PayrollDetailResponse calculatePayrollDetail(SalaryContract salaryContract, List<Attendance> attendanceList, List<SalaryAdjustment> salaryAdjustments, List<AllowanceRule> allowance, PayrollCycleResponse cycle) {
+        return payrollCalculator.calculatePayrollDetail(
                 salaryContract.getBaseSalary(),
                 attendanceList,
                 salaryAdjustments,
                 allowance,
                 cycle
         );
+    }
 
+    private Payroll buildAndSavePayroll(Employee employee, PayrollRequest request, PayrollDetailResponse payrollDetail) {
         Payroll payroll = Payroll.builder()
                 .employee(employee)
-                .month(String.format("%04d-%02d",
-                        request.getYear(), request.getMonth()))
-                .baseSalary(payrollDetail.baseSalaryTotal().doubleValue())
-                .allowance(payrollDetail.totalAllowance().doubleValue())
+                .month(String.format("%04d-%02d", request.getYear(), request.getMonth()))
+                .baseSalary(payrollDetail.baseSalaryTotal())
+                .allowance(payrollDetail.totalAllowance())
                 .overtime(payrollDetail.otTotal().doubleValue())
-                .bonus(payrollDetail.totalBonus().doubleValue())
-                .penalty(payrollDetail.totalPenalty().doubleValue())
-                .totalSalary(payrollDetail.totalSalary().doubleValue())
+                .bonus(payrollDetail.totalBonus())
+                .penalty(payrollDetail.totalPenalty())
+                .totalSalary(payrollDetail.totalSalary())
                 .status(PayrollStatus.DRAFT)
                 .createdAt(LocalDateTime.now())
                 .isDeleted(false)
                 .build();
 
-        payrollRepository.save(payroll);
+        return payrollRepository.save(payroll);
+    }
 
+    private PayrollResponse buildPayrollResponse(
+            PayrollRequest request,
+            Employee employee,
+            PayrollPeriodCalculator.PayrollPeriod period,
+            SalaryContract salaryContract,
+            List<Attendance> attendanceList,
+            List<SalaryAdjustment> salaryAdjustments,
+            List<AllowanceRule> allowance,
+            PayrollCycleResponse cycle,
+            PayrollDetailResponse payrollDetail,
+            String payrollId,
+            PayrollStatus status) {
         return PayrollResponse.builder()
-                .payrollId(payroll.getId())
+                .payrollId(payrollId)
                 .period(payrollResponseMapper.toPeriodResponse(request))
                 .employee(payrollResponseMapper.toEmployeeResponse(employee))
                 .attendanceSummary(
@@ -125,8 +297,7 @@ public class PayrollService {
                         )
                 )
                 .metadata(payrollResponseMapper.toMetadata())
+                .status(status)
                 .build();
     }
 }
-
-

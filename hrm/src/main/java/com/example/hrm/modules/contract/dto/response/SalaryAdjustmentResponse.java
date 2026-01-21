@@ -27,4 +27,6 @@ public class SalaryAdjustmentResponse {
 
     LocalDateTime createdAt;
 
+    String description;
+
 }

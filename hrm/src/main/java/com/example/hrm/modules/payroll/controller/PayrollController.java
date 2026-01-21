@@ -2,14 +2,19 @@ package com.example.hrm.modules.payroll.controller;
 
 
 import com.example.hrm.modules.payroll.dto.request.PayrollRequest;
+import com.example.hrm.modules.payroll.dto.response.PayrollListItemResponse;
 import com.example.hrm.modules.payroll.dto.response.PayrollResponse;
 import com.example.hrm.modules.payroll.service.PayrollService;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("${app.api-prefix}/payroll")
@@ -29,6 +34,25 @@ public class PayrollController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @PostMapping()
+    public ResponseEntity<List<PayrollListItemResponse>> createPayrollForAllEmployee(
+            @RequestParam int month,
+            @RequestParam int year
+    ) {
+        List<PayrollListItemResponse> response = payrollService.createForAllEmployees(month, year);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<PayrollListItemResponse>> getPayroll(
+            @RequestParam Integer page,
+            @RequestParam Integer size
+    ) {
+        // Sau này có thể tạo service getPayrollByEmployeeAndMonth
+
+        Page<PayrollListItemResponse> response = payrollService.getAll(page, size); // Tạm thời dùng create, về sau dùng get
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
     /**
      * Lấy chi tiết lương của một nhân viên trong một tháng
      * @param employeeId ID nhân viên
@@ -43,7 +67,7 @@ public class PayrollController {
     ) {
         // Sau này có thể tạo service getPayrollByEmployeeAndMonth
         PayrollRequest request = new PayrollRequest(employeeId, month, year);
-        PayrollResponse response = payrollService.create(request); // Tạm thời dùng create, về sau dùng get
+        PayrollResponse response = payrollService.getDetailByEmployee(employeeId, month, year); // Tạm thời dùng create, về sau dùng get
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

@@ -9,6 +9,7 @@ import com.example.hrm.modules.contract.mapper.SalaryAdjustmentMapper;
 import com.example.hrm.modules.employee.entity.Employee;
 import com.example.hrm.modules.payroll.dto.request.PayrollRequest;
 import com.example.hrm.modules.payroll.dto.response.*;
+import com.example.hrm.modules.payroll.entity.Payroll;
 import com.example.hrm.shared.enums.AdjustmentType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -121,5 +122,36 @@ public class PayrollResponseMapper {
         metadata.setCalculatedAt(LocalDateTime.now());
         metadata.setCalculatedBy("SYSTEM");
         return metadata;
+    }
+
+    public PayrollListItemResponse toListResponse(PayrollResponse item){
+        return new PayrollListItemResponse(
+                item.getPayrollId(),
+                item.getEmployee().getEmployeeId(),
+                item.getEmployee().getEmployeeCode(),
+                item.getEmployee().getFullName(),
+                item.getPeriod(),
+                item.getEarnings().getBaseSalary(),
+                item.getSummary().getNetSalary(),
+                item.getStatus(),
+                item.getMetadata().getCalculatedAt()
+        );
+    }
+
+    public PayrollListItemResponse toListResponse(Payroll item){
+        String[] parts  = item.getMonth().split("-");
+
+        var periodResponse = new PeriodResponse(Integer.parseInt(parts[1]), Integer.parseInt(parts[0]));
+        return new PayrollListItemResponse(
+                item.getId(),
+                item.getEmployee().getId(),
+                item.getEmployee().getCode(),
+                item.getEmployee().getLastName() + item.getEmployee().getFirstName(),
+                periodResponse,
+                item.getBaseSalary(),
+                item.getTotalSalary(),
+                item.getStatus(),
+                item.getCreatedAt()
+        );
     }
 }

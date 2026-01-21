@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.example.hrm.modules.employee.entity.Employee;
@@ -41,14 +42,14 @@ public class Payroll {
     @Column(nullable = false, length = 7)
     String month;  // yyyy-MM
 
-    Double baseSalary;
-    Double allowance;
+    BigDecimal baseSalary;
+    BigDecimal allowance;
     Double overtime;
-    Double bonus;
-    Double penalty;
-    Double unpaidLeave;
+    BigDecimal bonus;
+    BigDecimal penalty;
+    BigDecimal unpaidLeave;
 
-    Double totalSalary;
+    BigDecimal totalSalary;
 
     String note;
 

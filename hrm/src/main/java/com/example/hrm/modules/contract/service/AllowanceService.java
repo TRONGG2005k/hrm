@@ -38,4 +38,44 @@ public class AllowanceService {
                 .map(mapper::toResponse)
                 .toList();
     }
+
+    public AllowanceResponse getById(String id) {
+        Allowance allowance = repository.findById(id)
+                .orElseThrow(() -> new AppException(
+                        ErrorCode.ALLOWANCE_NOT_FOUND, 404
+                ));
+
+        return mapper.toResponse(allowance);
+    }
+
+    public AllowanceResponse update(String id, AllowanceRequest request) {
+        Allowance existingAllowance = repository.findById(id)
+                .orElseThrow(() -> new AppException(
+                        ErrorCode.ALLOWANCE_NOT_FOUND, 404
+                ));
+
+        // Check if code is being changed and if it conflicts with another allowance
+        if (!existingAllowance.getCode().equals(request.getCode()) &&
+            repository.existsByCodeAndActiveTrue(request.getCode())) {
+            throw new AppException(
+                    ErrorCode.ALLOWANCE_CODE_EXISTS, 400
+            );
+        }
+
+        existingAllowance.setCode(request.getCode());
+        existingAllowance.setName(request.getName());
+        existingAllowance.setDescription(request.getDescription());
+
+        return mapper.toResponse(repository.save(existingAllowance));
+    }
+
+    public void delete(String id) {
+        Allowance allowance = repository.findById(id)
+                .orElseThrow(() -> new AppException(
+                        ErrorCode.ALLOWANCE_NOT_FOUND, 404
+                ));
+
+        allowance.setActive(false);
+        repository.save(allowance);
+    }
 }

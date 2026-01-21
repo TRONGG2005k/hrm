@@ -132,6 +132,7 @@ public enum ErrorCode {
 
 
     // ALLOWANCE errors (90000-900020)
+    ALLOWANCE_NOT_FOUND("E90001", "Phụ cấp không tìm thấy"),
     ALLOWANCE_CODE_EXISTS("E900001", "ALLOWANCE CODE EXISTS"),
     // Penalty Rule errors (17000-17999)
     PENALTY_RULE_NOT_FOUND("E17001", "Quy tắc phạt không tìm thấy"),
