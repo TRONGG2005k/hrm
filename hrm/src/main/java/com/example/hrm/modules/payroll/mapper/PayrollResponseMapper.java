@@ -47,7 +47,7 @@ public class PayrollResponseMapper {
     }
 
     public EarningsResponse toEarningsResponse(
-            SalaryContract salaryContract,
+
             PayrollDetailResponse payrollDetail,
             List<SalaryAdjustment> salaryAdjustments) {
 
@@ -57,7 +57,7 @@ public class PayrollResponseMapper {
                 .toList();
 
         EarningsResponse earnings = new EarningsResponse();
-        earnings.setBaseSalary(salaryContract.getBaseSalary());
+        earnings.setBaseSalaryTotal(payrollDetail.baseSalaryTotal());
         earnings.setAllowances(payrollDetail.allowance());
         earnings.setOvertimePay(payrollDetail.otTotal());
         earnings.setBonuses(bonusResponses);
@@ -131,7 +131,7 @@ public class PayrollResponseMapper {
                 item.getEmployee().getEmployeeCode(),
                 item.getEmployee().getFullName(),
                 item.getPeriod(),
-                item.getEarnings().getBaseSalary(),
+                item.getEarnings().getBaseSalaryTotal(),
                 item.getSummary().getNetSalary(),
                 item.getStatus(),
                 item.getMetadata().getCalculatedAt()
@@ -139,9 +139,9 @@ public class PayrollResponseMapper {
     }
 
     public PayrollListItemResponse toListResponse(Payroll item){
-        String[] parts  = item.getMonth().split("-");
+//        String[] parts  = item.getMonth().split("-");
 
-        var periodResponse = new PeriodResponse(Integer.parseInt(parts[1]), Integer.parseInt(parts[0]));
+        var periodResponse = new PeriodResponse(item.getMonth().getYear(), item.getMonth().getMonthValue());
         return new PayrollListItemResponse(
                 item.getId(),
                 item.getEmployee().getId(),

@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -110,7 +111,7 @@ public class PayrollService {
     public PayrollResponse getDetailByEmployee(String employeeId, int month, int year){
         String monthStr = String.format("%04d-%02d", year, month);
         Payroll payroll = payrollRepository.findByEmployeeIdAndMonthAndIsDeletedFalse(
-                employeeId, monthStr).orElseThrow(() ->new AppException(ErrorCode.PAYROLL_NOT_FOUND, 404));
+                employeeId, YearMonth.of(year, month)).orElseThrow(() ->new AppException(ErrorCode.PAYROLL_NOT_FOUND, 404));
 
         PayrollRequest request = new PayrollRequest(employeeId, month, year);
         var cycle = payrollCycleService.getActive();
@@ -137,7 +138,7 @@ public class PayrollService {
         String monthStr = String.format("%04d-%02d", request.getYear(), request.getMonth());
 
         List<Payroll> payrollList = payrollRepository
-                .findAllByMonthAndStatusAndIsDeletedFalse(monthStr, PayrollStatus.DRAFT);
+                .findAllByMonthAndStatusAndIsDeletedFalse(YearMonth.of(request.getYear(), request.getMonth()), PayrollStatus.DRAFT);
 
         if (payrollList.isEmpty()) {
             throw new AppException(ErrorCode.PAYROLL_NOT_FOUND, 404,
@@ -183,7 +184,7 @@ public class PayrollService {
 
         String monthStr = String.format("%04d-%02d", request.getYear(), request.getMonth());
         List<Payroll> payrollList = payrollRepository
-                .findAllByMonthAndStatusAndIsDeletedFalse(monthStr, request.getStatus());
+                .findAllByMonthAndStatusAndIsDeletedFalse(YearMonth.of(request.getYear(), request.getMonth()), request.getStatus());
 
         if (payrollList.isEmpty()) {
             throw new AppException(ErrorCode.PAYROLL_NOT_FOUND, 404,
@@ -215,7 +216,7 @@ public class PayrollService {
 
     private void checkPayrollExists(String employeeId, int year, int month) {
         String monthStr = String.format("%04d-%02d", year, month);
-        if (payrollRepository.existsByEmployeeIdAndMonthAndIsDeletedFalse(employeeId, monthStr)) {
+        if (payrollRepository.existsByEmployeeIdAndMonthAndIsDeletedFalse(employeeId, YearMonth.of(year, month))) {
             throw new AppException(ErrorCode.PAYROLL_ALREADY_EXISTS, 400);
         }
     }
@@ -273,7 +274,7 @@ public class PayrollService {
     private Payroll buildAndSavePayroll(Employee employee, PayrollRequest request, PayrollDetailResponse payrollDetail) {
         Payroll payroll = Payroll.builder()
                 .employee(employee)
-                .month(String.format("%04d-%02d", request.getYear(), request.getMonth()))
+                .month(YearMonth.of(request.getYear(), request.getMonth()))
                 .baseSalary(payrollDetail.baseSalaryTotal())
                 .allowance(payrollDetail.totalAllowance())
                 .overtime(payrollDetail.otTotal().doubleValue())
@@ -309,7 +310,7 @@ public class PayrollService {
                 )
                 .earnings(
                         payrollResponseMapper.toEarningsResponse(
-                                salaryContract, payrollDetail, salaryAdjustments
+                              payrollDetail, salaryAdjustments
                         )
                 )
                 .deductions(
@@ -320,7 +321,7 @@ public class PayrollService {
                 .summary(
                         payrollResponseMapper.toPayrollSummary(
                                 payrollResponseMapper.toEarningsResponse(
-                                        salaryContract, payrollDetail, salaryAdjustments
+                                       payrollDetail, salaryAdjustments
                                 ),
                                 payrollResponseMapper.toDeductionsResponse(
                                         salaryAdjustments, payrollDetail

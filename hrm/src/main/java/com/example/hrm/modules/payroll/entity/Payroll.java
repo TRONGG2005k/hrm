@@ -8,6 +8,7 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 
 import com.example.hrm.modules.employee.entity.Employee;
 import com.example.hrm.shared.enums.PayrollStatus;
@@ -40,7 +41,7 @@ public class Payroll {
     Employee employee;
 
     @Column(nullable = false, length = 7)
-    String month;  // yyyy-MM
+    YearMonth month;  // yyyy-MM
 
     BigDecimal baseSalary;
     BigDecimal allowance;

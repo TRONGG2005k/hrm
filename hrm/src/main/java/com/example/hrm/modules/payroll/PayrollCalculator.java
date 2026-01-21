@@ -16,9 +16,11 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -43,25 +45,40 @@ public class PayrollCalculator {
         long otHours = 0;
         BigDecimal salaryPerDay = calculateSalaryPerDay(baseSalary, cycle);
 
-        for (Attendance att : attendanceList) {
-            AttendancePenaltyResult penalty = penaltyAmountCalculator.applyAttendancePenaltyRule(att);
+        Map<LocalDate, List<Attendance>> attendanceByDate =
+                attendanceList.stream()
+                        .collect(Collectors.groupingBy(Attendance::getWorkDate));
 
-            if (!penalty.isVoidBaseSalary()) {
-                BigDecimal dailySalary = calculateNetDailySalary(salaryPerDay, penalty);
-                totalSalary = totalSalary.add(dailySalary);
-                baseSalaryTotal = baseSalaryTotal.add(dailySalary);
-                actualWorkingDays++;
-            }
+        for (var entry : attendanceByDate.entrySet()) {
+            List<Attendance> dayAttendances = entry.getValue();
 
-            if (!penalty.isVoidOvertime()) {
-                for (var otRate : att.getAttendanceOTRates()) {
-                    otHours += otRate.getOtHours();
-                    BigDecimal otMoney = calculateOt(otRate, salaryPerDay);
-                    totalSalary = totalSalary.add(otMoney);
-                    otTotal = otTotal.add(otMoney);
+            boolean hasValidWork = false;
+
+            for (Attendance att : dayAttendances) {
+                AttendancePenaltyResult penalty = penaltyAmountCalculator.applyAttendancePenaltyRule(att);
+
+                if (!penalty.isVoidBaseSalary()) {
+                    BigDecimal dailySalary = calculateNetDailySalary(salaryPerDay, penalty);
+                    totalSalary = totalSalary.add(dailySalary);
+                    baseSalaryTotal = baseSalaryTotal.add(dailySalary);
+                    hasValidWork = true;
+                }
+
+                if (!penalty.isVoidOvertime()) {
+                    for (var otRate : att.getAttendanceOTRates()) {
+                        otHours += otRate.getOtHours();
+                        BigDecimal otMoney = calculateOt(otRate, salaryPerDay);
+                        totalSalary = totalSalary.add(otMoney);
+                        otTotal = otTotal.add(otMoney);
+                    }
                 }
             }
+
+            if (hasValidWork) {
+                actualWorkingDays++;
+            }
         }
+
         var mapAllowance = calculateAllowanceTotalsByType(allowances, cycle.getWorkingDays(), actualWorkingDays, otHours);
         var totalAllowance = mapAllowance.values().stream()
                 .map(AllowanceSummary::amount)

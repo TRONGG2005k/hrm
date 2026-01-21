@@ -12,7 +12,7 @@ import java.util.Map;
 @Data
 public class EarningsResponse {
 
-    private BigDecimal baseSalary;
+    private BigDecimal baseSalaryTotal;
 
     private BigDecimal overtimePay;
 

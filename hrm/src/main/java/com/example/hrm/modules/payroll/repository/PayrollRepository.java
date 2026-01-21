@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,9 +18,9 @@ import java.util.Optional;
 public interface PayrollRepository extends JpaRepository<Payroll, String> {
     Page<Payroll> findByIsDeletedFalse(Pageable pageable);
     Page<Payroll> findByEmployeeIdAndIsDeletedFalse(String employeeId, Pageable pageable);
-    Optional<Payroll> findByEmployeeIdAndMonthAndIsDeletedFalse(String employeeId, String month);
-    boolean existsByEmployeeIdAndMonthAndIsDeletedFalse(String employeeId, String month);
-    List<Payroll> findAllByMonthAndStatusAndIsDeletedFalse(String month, PayrollStatus status);
+    Optional<Payroll> findByEmployeeIdAndMonthAndIsDeletedFalse(String employeeId, YearMonth month);
+    boolean existsByEmployeeIdAndMonthAndIsDeletedFalse(String employeeId, YearMonth month);
+    List<Payroll> findAllByMonthAndStatusAndIsDeletedFalse(YearMonth month, PayrollStatus status);
     @Query("""
         SELECT COALESCE(SUM(p.totalSalary), 0)
         FROM Payroll p

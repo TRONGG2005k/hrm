@@ -22,11 +22,17 @@ public class PenaltyRuleServiceImpl implements PenaltyRuleService {
     @Override
     public PenaltyRuleResponse create(PenaltyRuleRequest request) {
         PenaltyRule penaltyRule = penaltyRuleMapper.toEntity(request);
+
+        if (penaltyRule.getEffectiveFrom() == null) {
+            penaltyRule.setEffectiveFrom(LocalDateTime.now());
+        }
+
         penaltyRule.setCreatedAt(LocalDateTime.now());
         penaltyRule.setUpdatedAt(LocalDateTime.now());
-        
+
         return penaltyRuleMapper.toResponse(penaltyRuleRepository.save(penaltyRule));
     }
+
 
     @Override
     public PenaltyRuleResponse update(String id, PenaltyRuleRequest request) {
