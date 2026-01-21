@@ -40,7 +40,8 @@ public class AttendanceScanService {
 
         var openAttendanceOpt =
                 attendanceRepository
-                        .findTopByEmployeeAndStatusAndCheckOutTimeIsNullOrderByCheckInTimeDesc(employee, AttendanceStatus.WORKING);
+                        .findTopByEmployeeAndStatusAndCheckOutTimeIsNullOrderByCheckInTimeDesc(
+                                employee, AttendanceStatus.WORKING);
 
         if (openAttendanceOpt.isEmpty()) {
             return attendanceCheckInService.checkIn(employee);

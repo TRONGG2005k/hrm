@@ -139,6 +139,10 @@ public enum ErrorCode {
     PENALTY_RULE_CODE_ALREADY_EXISTS("E17002", "Mã quy tắc phạt đã tồn tại"),
     PENALTY_RULE_INVALID_VALUE("E17003", "Giá trị quy tắc phạt không hợp lệ"),
 
+    NOT_ENOUGH_LEAVE("E99996", "NOT_ENOUGH_LEAVE"),
+
+    INVALID_STATE("E99997", "INVALID_STATE"),
+
     DUPLICATE_CODE("E99998", "DUPLICATE"),
     // Unknown error
     UNKNOWN_ERROR("E99999", "Lỗi không xác định");

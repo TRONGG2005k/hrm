@@ -5,5 +5,5 @@ public enum AttendanceEvaluation {
     LEAVE_EARLY,
     ON_TIME,
     OVER_TIME,
-
+    LEAVE_APPROVED
 }

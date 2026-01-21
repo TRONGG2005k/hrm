@@ -1,5 +1,5 @@
 package com.example.hrm.shared.enums;
 
 public enum LeaveType {
-    ANNUAL, SICK, UNPAID, MATERNITY, BEREAVEMENT
+    ANNUAL, SICK, UNPAID, MATERNITY, BEREAVEMENT,
 }
