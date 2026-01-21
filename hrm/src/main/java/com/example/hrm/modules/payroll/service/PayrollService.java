@@ -179,7 +179,30 @@ public class PayrollService {
         );
     }
 
+    public PayrollListResponse getPayrollList(PayrollApprovalRequest request){
 
+        String monthStr = String.format("%04d-%02d", request.getYear(), request.getMonth());
+        List<Payroll> payrollList = payrollRepository
+                .findAllByMonthAndStatusAndIsDeletedFalse(monthStr, request.getStatus());
+
+        if (payrollList.isEmpty()) {
+            throw new AppException(ErrorCode.PAYROLL_NOT_FOUND, 404,
+                    "Không tìm thấy bảng lương với trạng thái "
+                            + request.getStatus() + " trong kỳ " + monthStr);
+        }
+
+        BigDecimal totalPayrollAmount = getTotalPayrollAmountByStatus(request);
+
+        PayrollStatus newStatus = request.getStatus(); // nếu DTO dùng enum
+
+        return new PayrollListResponse(
+                monthStr,
+                totalPayrollAmount,
+                payrollList.stream()
+                        .map(payrollResponseMapper::toListResponse)
+                        .toList()
+        );
+    }
 
     private PayrollPeriodCalculator.PayrollPeriod calculatePeriod(PayrollCycleResponse cycle, int year, int month) {
         return new PayrollPeriodCalculator().calculate(cycle, year, month);
@@ -237,6 +260,14 @@ public class PayrollService {
                 allowance,
                 cycle
         );
+    }
+
+    public BigDecimal getTotalPayrollAmountByStatus(PayrollApprovalRequest request) {
+        String monthStr = String.format("%04d-%02d", request.getYear(), request.getMonth());
+
+        return payrollRepository
+                .sumTotalSalaryByMonthAndStatusAndIsDeletedFalse(monthStr, request.getStatus())
+                .orElse(BigDecimal.ZERO);
     }
 
     private Payroll buildAndSavePayroll(Employee employee, PayrollRequest request, PayrollDetailResponse payrollDetail) {

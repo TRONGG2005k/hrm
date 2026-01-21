@@ -5,8 +5,11 @@ import com.example.hrm.shared.enums.PayrollStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,4 +20,16 @@ public interface PayrollRepository extends JpaRepository<Payroll, String> {
     Optional<Payroll> findByEmployeeIdAndMonthAndIsDeletedFalse(String employeeId, String month);
     boolean existsByEmployeeIdAndMonthAndIsDeletedFalse(String employeeId, String month);
     List<Payroll> findAllByMonthAndStatusAndIsDeletedFalse(String month, PayrollStatus status);
+    @Query("""
+        SELECT COALESCE(SUM(p.totalSalary), 0)
+        FROM Payroll p
+        WHERE p.month = :month
+          AND p.status = :status
+          AND p.isDeleted = false
+    """)
+    Optional<BigDecimal> sumTotalSalaryByMonthAndStatusAndIsDeletedFalse(
+            @Param("month") String month,
+            @Param("status") PayrollStatus status
+    );
+
 }
