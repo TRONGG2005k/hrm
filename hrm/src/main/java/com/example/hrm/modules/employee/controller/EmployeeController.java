@@ -25,6 +25,39 @@ public class EmployeeController {
     private final EmployeeService employeeService;
 
     /**
+     * Export employee data to Excel file
+     * @param page page number (0-based)
+     * @param size page size
+     * @return Excel file as byte array
+     */
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportEmployees(
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "1000") Integer size
+    ) throws IOException {
+        byte[] excelData = employeeService.exportEmployeesToExcel(page, size);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "employee_data.xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(excelData);
+    }
+
+    /**
+     * Import employee data from Excel file
+     * @param file Excel file to import
+     * @return import result with success/error details
+     */
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<EmployeeImportResponse> importEmployees(@RequestParam("file") MultipartFile file) throws IOException {
+        EmployeeImportResponse response = employeeService.importEmployeesFromExcel(file);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
      * Lấy danh sách tất cả nhân viên (có phân trang)
      *
      * @param page Trang (mặc định 0)
@@ -45,12 +78,11 @@ public class EmployeeController {
      * @param id ID của nhân viên
      * @return Thông tin nhân viên
      */
-    @GetMapping("/{id}")
+    @GetMapping("/{id:^(?!export$|import$).+}")
     public ResponseEntity<EmployeeResponse> getEmployeeById(@PathVariable String id) {
         EmployeeResponse employee = employeeService.getEmployeeById(id);
         return ResponseEntity.ok(employee);
     }
-
     /**
      * Tạo nhân viên mới
      *
@@ -90,36 +122,5 @@ public class EmployeeController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Export employee data to Excel file
-     * @param page page number (0-based)
-     * @param size page size
-     * @return Excel file as byte array
-     */
-    @GetMapping("/export")
-    public ResponseEntity<byte[]> exportEmployees(
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "1000") Integer size
-    ) throws IOException {
-        byte[] excelData = employeeService.exportEmployeesToExcel(page, size);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        headers.setContentDispositionFormData("attachment", "employee_data.xlsx");
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(excelData);
-    }
-
-    /**
-     * Import employee data from Excel file
-     * @param file Excel file to import
-     * @return import result with success/error details
-     */
-    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<EmployeeImportResponse> importEmployees(@RequestParam("file") MultipartFile file) throws IOException {
-        EmployeeImportResponse response = employeeService.importEmployeesFromExcel(file);
-        return ResponseEntity.ok(response);
-    }
 }
