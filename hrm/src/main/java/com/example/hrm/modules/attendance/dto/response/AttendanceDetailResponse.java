@@ -1,6 +1,5 @@
 package com.example.hrm.modules.attendance.dto.response;
 
-import com.example.hrm.shared.enums.AttendanceStatus;
 import com.example.hrm.shared.enums.OTType;
 import com.example.hrm.shared.enums.ShiftType;
 import lombok.*;

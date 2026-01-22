@@ -4,7 +4,6 @@ import com.example.hrm.modules.attendance.dto.response.AttendanceSummaryResponse
 import com.example.hrm.modules.attendance.entity.Attendance;
 import com.example.hrm.modules.attendance.entity.AttendanceOTRate;
 import com.example.hrm.modules.contract.entity.SalaryAdjustment;
-import com.example.hrm.modules.contract.entity.SalaryContract;
 import com.example.hrm.modules.contract.mapper.SalaryAdjustmentMapper;
 import com.example.hrm.modules.employee.entity.Employee;
 import com.example.hrm.modules.payroll.dto.request.PayrollRequest;
@@ -15,8 +14,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -28,15 +30,28 @@ public class PayrollResponseMapper {
             List<Attendance> attendanceList,
             PayrollDetailResponse payrollDetail) {
 
+        Map<LocalDate, List<Attendance>> attendanceByDate =
+                attendanceList.stream()
+                        .collect(Collectors.groupingBy(Attendance::getWorkDate));
+
+        long lateDays = attendanceByDate.values().stream()
+                .filter(list ->
+                        list.stream().anyMatch(a -> a.getLateMinutes() > 0)
+                )
+                .count();
+
+        long earlyLeaveDays = attendanceByDate.values().stream()
+                .filter(list ->
+                        list.stream().anyMatch(a -> a.getEarlyLeaveMinutes() > 0)
+                )
+                .count();
+
+
         return AttendanceSummaryResponse.builder()
-                .expectedWorkingDays(attendanceList.size())
+                .expectedWorkingDays(attendanceByDate.size())
                 .actualWorkingDays(payrollDetail.workingDays())
-                .lateDays(attendanceList.stream()
-                        .filter(a -> a.getLateMinutes() > 0)
-                        .count())
-                .earlyLeaveDays(attendanceList.stream()
-                        .filter(a -> a.getEarlyLeaveMinutes() > 0)
-                        .count())
+                .lateDays(lateDays)
+                .earlyLeaveDays(earlyLeaveDays)
                 .totalOtHours(
                         (long) attendanceList.stream()
                                 .flatMap(a -> a.getAttendanceOTRates().stream())

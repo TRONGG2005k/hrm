@@ -6,7 +6,6 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.example.hrm.modules.penalty.dto.response.PenaltyResponse;
 
 @Data
 public class DeductionsResponse {

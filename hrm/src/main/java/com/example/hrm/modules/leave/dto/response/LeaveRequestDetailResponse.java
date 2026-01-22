@@ -3,7 +3,6 @@ package com.example.hrm.modules.leave.dto.response;
 import com.example.hrm.shared.enums.LeaveStatus;
 import com.example.hrm.shared.enums.LeaveType;
 import lombok.Data;
-import lombok.Value;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

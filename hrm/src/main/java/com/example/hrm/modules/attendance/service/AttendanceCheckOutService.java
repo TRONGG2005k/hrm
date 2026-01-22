@@ -4,7 +4,6 @@ import com.example.hrm.modules.attendance.dto.response.AttendanceRealTimeRespons
 import com.example.hrm.modules.attendance.entity.Attendance;
 import com.example.hrm.modules.attendance.entity.AttendanceOTRate;
 import com.example.hrm.shared.enums.AttendanceEvaluation;
-import com.example.hrm.shared.enums.AttendanceStatus;
 import com.example.hrm.shared.exception.AppException;
 import com.example.hrm.shared.exception.ErrorCode;
 import com.example.hrm.modules.attendance.repository.AttendanceRepository;

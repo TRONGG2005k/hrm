@@ -2,7 +2,6 @@ package com.example.hrm.modules.penalty;
 
 import java.math.BigDecimal;
 
-import com.example.hrm.modules.penalty.dto.response.LateAndEarly;
 import org.springframework.stereotype.Component;
 
 import com.example.hrm.modules.attendance.entity.Attendance;

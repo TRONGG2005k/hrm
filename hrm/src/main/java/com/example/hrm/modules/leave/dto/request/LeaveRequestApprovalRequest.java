@@ -3,7 +3,6 @@ package com.example.hrm.modules.leave.dto.request;
 import com.example.hrm.shared.enums.LeaveStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.Value;
 
 
 @Data

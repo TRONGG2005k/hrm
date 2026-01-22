@@ -4,7 +4,6 @@ import com.example.hrm.shared.enums.LeaveType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import lombok.Value;
 
 import java.time.LocalDate;
 

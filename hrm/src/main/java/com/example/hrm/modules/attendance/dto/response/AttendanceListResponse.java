@@ -1,6 +1,5 @@
 package com.example.hrm.modules.attendance.dto.response;
 
-import com.example.hrm.shared.enums.AttendanceStatus;
 import lombok.Builder;
 import lombok.Data;
 

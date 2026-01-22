@@ -17,6 +17,8 @@ import java.util.Optional;
 @Repository
 public interface PayrollRepository extends JpaRepository<Payroll, String> {
     Page<Payroll> findByIsDeletedFalse(Pageable pageable);
+    Page<Payroll> findByIsDeletedFalse(Pageable pageable, YearMonth month);
+    Optional<Payroll> findByIdAndIsDeletedFalse(String id);
     Page<Payroll> findByEmployeeIdAndIsDeletedFalse(String employeeId, Pageable pageable);
     Optional<Payroll> findByEmployeeIdAndMonthAndIsDeletedFalse(String employeeId, YearMonth month);
     boolean existsByEmployeeIdAndMonthAndIsDeletedFalse(String employeeId, YearMonth month);

@@ -1,7 +1,6 @@
 package com.example.hrm.modules.attendance.repository;
 
 import com.example.hrm.modules.attendance.entity.Attendance;
-import com.example.hrm.modules.attendance.entity.AttendanceOTRate;
 import com.example.hrm.modules.employee.entity.Employee;
 import com.example.hrm.shared.enums.AttendanceStatus;
 import org.springframework.data.domain.Page;

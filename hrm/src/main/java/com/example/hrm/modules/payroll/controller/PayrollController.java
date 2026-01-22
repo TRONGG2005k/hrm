@@ -3,21 +3,22 @@ package com.example.hrm.modules.payroll.controller;
 
 import com.example.hrm.modules.payroll.dto.request.PayrollApprovalRequest;
 import com.example.hrm.modules.payroll.dto.request.PayrollRequest;
-import com.example.hrm.modules.payroll.dto.response.ApprovedPayrollListResponse;
-import com.example.hrm.modules.payroll.dto.response.PayrollListItemResponse;
-import com.example.hrm.modules.payroll.dto.response.PayrollListResponse;
-import com.example.hrm.modules.payroll.dto.response.PayrollResponse;
+import com.example.hrm.modules.payroll.dto.response.*;
 import com.example.hrm.modules.payroll.service.PayrollService;
 import com.example.hrm.shared.enums.PayrollStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -103,4 +104,69 @@ public class PayrollController {
         PayrollListResponse response = payrollService.getPayrollList(request);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @GetMapping("/employee/{employeeId}")
+    public ResponseEntity<Page<PayrollListItemResponse>> getPayrollByEmployee(
+            @PathVariable String employeeId,
+            @RequestParam Integer page,
+            @RequestParam Integer size
+    ) {
+        Page<PayrollListItemResponse> response =
+                payrollService.getAllByEmployeeId(employeeId, page, size);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/month")
+    public ResponseEntity<Page<PayrollListItemResponse>> getPayrollByMonth(
+            @RequestParam Integer month,
+            @RequestParam Integer year,
+            @RequestParam Integer page,
+            @RequestParam Integer size
+    ) {
+        Page<PayrollListItemResponse> response =
+                payrollService.getAllByMouth(page, size, month, year);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/detail/{payrollId}")
+    public ResponseEntity<PayrollResponse> getPayrollById(
+            @PathVariable String payrollId
+    ) {
+        PayrollResponse response = payrollService.getById(payrollId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Export payroll data to Excel file
+     * @param page page number (0-based)
+     * @param size page size
+     * @return Excel file as byte array
+     */
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportPayroll(
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "1000") Integer size
+    ) throws IOException {
+        byte[] excelData = payrollService.exportPayrollToExcel(page, size);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "payroll_data.xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(excelData);
+    }
+
+    /**
+     * Import payroll data from Excel file
+     * @param file Excel file to import
+     * @return import result with success/error details
+     */
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<PayrollImportResponse> importPayroll(@RequestParam("file") MultipartFile file) throws IOException {
+        PayrollImportResponse response = payrollService.importPayrollFromExcel(file);
+        return ResponseEntity.ok(response);
+    }
+
 }

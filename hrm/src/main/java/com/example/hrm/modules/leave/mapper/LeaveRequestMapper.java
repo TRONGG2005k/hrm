@@ -5,10 +5,8 @@ import com.example.hrm.modules.leave.dto.request.LeaveRequestCreateRequest;
 import com.example.hrm.modules.leave.dto.response.LeaveRequestDetailResponse;
 import com.example.hrm.modules.leave.dto.response.LeaveRequestListItemResponse;
 import com.example.hrm.modules.leave.entity.LeaveRequest;
-import com.example.hrm.shared.enums.LeaveStatus;
 import org.mapstruct.*;
 
-import java.time.LocalDateTime;
 
 @Mapper(componentModel = "spring")
 public interface LeaveRequestMapper {
