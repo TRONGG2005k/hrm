@@ -14,4 +14,6 @@ public interface SubDepartmentRepository extends JpaRepository<SubDepartment, St
     Page<SubDepartment> findByDepartmentIdAndIsDeletedFalse(String departmentId, Pageable pageable);
     SubDepartment findByDepartmentIdAndNameAndIsDeletedFalse(String departmentId, String name);
     Optional<SubDepartment> findByIdAndIsDeletedFalse(String id);
+    Optional<SubDepartment> findByNameAndIsDeletedFalse(String name);
+    boolean existsByNameAndIsDeletedFalse(String name);
 }
