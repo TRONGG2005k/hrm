@@ -38,7 +38,7 @@ public class EmployeeExcelMapper {
                         : EmployeeStatus.ACTIVE
         );
         employee.setJoinDate(dto.getJoinDate() != null ? dto.getJoinDate() : employee.getJoinDate());
-
+        employee.setShiftType(dto.getShiftType());
         // ===== Address =====
         Address address = addressResolverService.resolveAddress(
                 dto.getProvince(),
@@ -60,9 +60,50 @@ public class EmployeeExcelMapper {
         );
 
         // ===== Defaults =====
-        employee.setShiftType(null); // nếu Excel chưa có ca làm
+//        employee.setShiftType(null); // nếu Excel chưa có ca làm
         employee.setIsDeleted(false);
 
         return employee;
     }
+
+    public void updateEntity(Employee employee, EmployeeExcelImportDto dto) {
+
+        // ===== Required fields =====
+        employee.setFirstName(dto.getFirstName());
+        employee.setLastName(dto.getLastName());
+        employee.setEmail(dto.getEmail());
+
+        // ===== Optional fields =====
+        employee.setDateOfBirth(dto.getDateOfBirth());
+        employee.setPhone(dto.getPhone());
+        employee.setGender(enumMapper.mapGender(dto.getGender()));
+        employee.setStatus(
+                dto.getStatus() != null
+                        ? enumMapper.mapEmployeeStatus(dto.getStatus())
+                        : employee.getStatus()
+        );
+        employee.setJoinDate(dto.getJoinDate());
+        employee.setShiftType(dto.getShiftType());
+
+        // ===== Address =====
+        Address address = addressResolverService.resolveAddress(
+                dto.getProvince(),
+                dto.getDistrict(),
+                dto.getWard(),
+                dto.getStreet()
+        );
+        employee.setAddress(address);
+
+        // ===== Organization =====
+        employee.setSubDepartment(
+                subDepartmentRepository.findByNameAndIsDeletedFalse(dto.getDepartmentName())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy phòng ban: " + dto.getDepartmentName()))
+        );
+
+        employee.setPosition(
+                positionRepository.findByNameAndIsDeletedFalse(dto.getPositionName())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy chức vụ: " + dto.getPositionName()))
+        );
+    }
+
 }

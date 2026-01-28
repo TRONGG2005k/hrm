@@ -19,7 +19,7 @@ public class StartUpTask {
     private final RoleRepository roleRepository;
     private final UserAccountRepository userAccountRepository;
 
-    @PostConstruct
+//    @PostConstruct
     public void init(){
         Role role = roleRepository.findByNameAndIsDeletedFalse(com.example.hrm.shared.enums.Role.ROLE_ADMIN.name()).orElseGet(
                 ()->roleRepository.save(

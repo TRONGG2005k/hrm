@@ -25,6 +25,7 @@ public class PositionService {
         }
 
         Position position = mapper.toEntity(request);
+        position.setIsDeleted(false);
         return mapper.toResponse(repository.save(position));
     }
 

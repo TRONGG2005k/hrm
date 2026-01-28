@@ -2,6 +2,7 @@ package com.example.hrm.modules.employee.excel.validator;
 
 import com.example.hrm.modules.employee.excel.dto.EmployeeExcelImportDto;
 import com.example.hrm.modules.employee.excel.util.EmployeeUtil;
+import com.example.hrm.modules.employee.repository.EmployeeRepository;
 import com.example.hrm.modules.employee.repository.PositionRepository;
 import com.example.hrm.modules.organization.repository.SubDepartmentRepository;
 import com.example.hrm.shared.enums.EmployeeStatus;
@@ -20,6 +21,7 @@ public class EmployeeValidator {
     private final EmployeeUtil employeeUtil;
     private final SubDepartmentRepository subDepartmentRepository;
     private final PositionRepository positionRepository;
+    private final EmployeeRepository employeeRepository;
 
     public List<String> validateEmployee(EmployeeExcelImportDto dto, int rowNumber) {
         List<String> errors = new ArrayList<>();
@@ -27,6 +29,8 @@ public class EmployeeValidator {
         // Code
         if (employeeUtil.isBlank(dto.getCode())) {
             errors.add(error(rowNumber, "Code không được để trống"));
+        } else if (employeeRepository.existsByCodeAndIsDeletedFalse(dto.getCode())) {
+            errors.add(error(rowNumber, "Mã nhân viên đã tồn tại: " + dto.getCode()));
         }
 
         // First name

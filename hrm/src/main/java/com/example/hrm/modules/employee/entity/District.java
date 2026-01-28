@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "districts", indexes = {
     @Index(columnList = "province_id")
+}, uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"province_id", "name"})
 })
 @Builder
 @Data
@@ -18,6 +20,7 @@ import java.time.LocalDateTime;
 
 public class District {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     String id;
 
     @Column(nullable = false)

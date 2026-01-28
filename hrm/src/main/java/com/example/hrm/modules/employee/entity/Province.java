@@ -1,11 +1,7 @@
 package com.example.hrm.modules.employee.entity;
 
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Column;
-import jakarta.persistence.PreUpdate;
+import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -21,9 +17,10 @@ import java.time.LocalDateTime;
 
 public class Province {
     @Id
+            @GeneratedValue(strategy = GenerationType.UUID)
     String id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     String name;
 
     @Builder.Default

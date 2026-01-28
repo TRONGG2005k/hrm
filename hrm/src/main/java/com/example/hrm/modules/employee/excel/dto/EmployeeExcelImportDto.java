@@ -1,5 +1,6 @@
 package com.example.hrm.modules.employee.excel.dto;
 
+import com.example.hrm.shared.enums.ShiftType;
 import lombok.Data;
 import java.time.LocalDate;
 
@@ -16,7 +17,7 @@ public class EmployeeExcelImportDto {
     private String phone;
     private String status;          // ACTIVE / INACTIVE
     private LocalDate joinDate;
-
+    private ShiftType shiftType;
     // Địa chỉ
     private String street;
     private String ward;

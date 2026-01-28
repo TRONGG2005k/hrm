@@ -1,67 +1,97 @@
 package com.example.hrm.modules.employee.excel.util;
 
 import com.example.hrm.modules.employee.excel.dto.EmployeeExcelImportDto;
+import com.example.hrm.modules.employee.excel.mapper.EnumMapper;
+import com.example.hrm.shared.enums.ShiftType;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class EmployeeUtil{
+public class EmployeeUtil {
 
-    // ================== READ CELL ==================
+    private final DataFormatter formatter = new DataFormatter();
+    private final EnumMapper enumMapper;
 
-    public List<EmployeeExcelImportDto> buildToDto(Sheet sheet){
+    public EmployeeUtil(EnumMapper enumMapper) {
+        this.enumMapper = enumMapper;
+    }
+
+    // ================== READ SHEET ==================
+
+    public List<EmployeeExcelImportDto> buildToDto(Sheet sheet) {
         List<EmployeeExcelImportDto> dtos = new ArrayList<>();
 
-        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) { // dòng 0 là header
             Row row = sheet.getRow(i);
             if (row == null) continue;
 
             EmployeeExcelImportDto dto = new EmployeeExcelImportDto();
             dto.setCode(getString(row.getCell(0)));
-            dto.setFirstName( getString(row.getCell(1)));
-            dto.setLastName( getString(row.getCell(2)));
-            dto.setDateOfBirth( getLocalDate(row.getCell(3)));
-            dto.setGender( getString(row.getCell(4)));
-            dto.setEmail( getString(row.getCell(5)));
-            dto.setPhone( getString(row.getCell(6)));
-            dto.setStatus( getString(row.getCell(7)));
-            dto.setJoinDate( getLocalDate(row.getCell(8)));
+            dto.setFirstName(getString(row.getCell(1)));
+            dto.setLastName(getString(row.getCell(2)));
+            dto.setDateOfBirth(getLocalDate(row.getCell(3)));
+            dto.setGender(getString(row.getCell(4)));
+            dto.setEmail(getString(row.getCell(5)));
+            dto.setPhone(getString(row.getCell(6)));
+            dto.setStatus(getString(row.getCell(7)));
+            dto.setJoinDate(getLocalDate(row.getCell(8)));
+            dto.setShiftType(getShiftType(row.getCell(9)));
 
-            dto.setStreet( getString(row.getCell(9)));
-            dto.setWard( getString(row.getCell(10)));
-            dto.setDistrict( getString(row.getCell(11)));
-            dto.setProvince( getString(row.getCell(12)));
+            dto.setStreet(getString(row.getCell(10)));
+            dto.setWard(getString(row.getCell(11)));
+            dto.setDistrict(getString(row.getCell(12)));
+            dto.setProvince(getString(row.getCell(13)));
 
-            dto.setDepartmentName( getString(row.getCell(13)));
-            dto.setPositionName( getString(row.getCell(14)));
+            dto.setDepartmentName(getString(row.getCell(14)));
+            dto.setPositionName(getString(row.getCell(15)));
 
             dtos.add(dto);
         }
         return dtos;
     }
 
+    // ================== CELL READ ==================
+
     public String getString(Cell cell) {
         if (cell == null) return null;
-        cell.setCellType(CellType.STRING);
-        String value = cell.getStringCellValue().trim();
+        String value = formatter.formatCellValue(cell).trim();
         return value.isEmpty() ? null : value;
     }
 
     public LocalDate getLocalDate(Cell cell) {
         if (cell == null) return null;
 
+        // Nếu là kiểu Date trong Excel
         if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
             return cell.getLocalDateTimeCellValue().toLocalDate();
         }
 
+        // Nếu là text
         String value = getString(cell);
         if (value == null) return null;
 
-        return LocalDate.parse(value); // yêu cầu yyyy-MM-dd
+        // Thử các format phổ biến
+        try {
+            return LocalDate.parse(value); // yyyy-MM-dd
+        } catch (Exception e) {
+            try {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                return LocalDate.parse(value, formatter);
+            } catch (Exception ex) {
+                return null;
+            }
+        }
+    }
+
+    public ShiftType getShiftType(Cell cell) {
+        String value = getString(cell);
+        if (value == null) return null;
+        return enumMapper.mapShiftType(value);
     }
 
     public Integer getInteger(Cell cell) {
@@ -74,7 +104,11 @@ public class EmployeeUtil{
         String value = getString(cell);
         if (value == null) return null;
 
-        return Integer.parseInt(value);
+        try {
+            return Integer.parseInt(value);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public Double getDouble(Cell cell) {
@@ -87,7 +121,11 @@ public class EmployeeUtil{
         String value = getString(cell);
         if (value == null) return null;
 
-        return Double.parseDouble(value);
+        try {
+            return Double.parseDouble(value);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // ================== VALIDATE ==================

@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "wards", indexes = {
     @Index(columnList = "district_id")
+}, uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"district_id", "name"})
 })
 @Builder
 @Data
@@ -19,6 +21,7 @@ import java.time.LocalDateTime;
 
 public class Ward {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     String id;
 
     @Column(nullable = false)
@@ -44,5 +47,3 @@ public class Ward {
         updatedAt = LocalDateTime.now();
     }
 }
-
-

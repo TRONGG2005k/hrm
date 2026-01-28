@@ -1,5 +1,6 @@
 package com.example.hrm.shared.exception;
 
+import com.example.hrm.modules.employee.excel.exception.ExcelImportException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -10,6 +11,7 @@ import org.springframework.web.multipart.MultipartException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -66,6 +68,30 @@ public class GlobalExceptionHandler {
                 .error(ErrorCode.FILE_UPLOAD_FAILED.getCode())
                 .message(ErrorCode.FILE_UPLOAD_FAILED.getMessage())
                 .details("Lỗi xử lý upload file: " + ex.getMessage())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ExcelImportException.class)
+    public ResponseEntity<ErrorResponse> handleExcelImportException(
+            ExcelImportException ex,
+            WebRequest request) {
+
+        Map<String, String> errors = new HashMap<>();
+        List<String> errorList = ex.getErrors();
+        for (int i = 0; i < errorList.size(); i++) {
+            errors.put("error_" + i, errorList.get(i));
+        }
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(400)
+                .error(ErrorCode.VALIDATION_ERROR.getCode())
+                .message(ErrorCode.VALIDATION_ERROR.getMessage())
+                .details("Lỗi import Excel: " + ex.getMessage())
+                .validationErrors(errors)
                 .path(request.getDescription(false).replace("uri=", ""))
                 .build();
 

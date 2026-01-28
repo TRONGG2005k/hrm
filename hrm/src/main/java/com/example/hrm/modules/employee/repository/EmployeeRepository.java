@@ -20,7 +20,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
     Page<Employee> findByIsDeletedFalse(Pageable pageable);
     List<Employee> findAllByIsDeletedFalse();
     Optional<Employee> findByIdAndIsDeletedFalse(String id);
-
+    boolean existsByCodeAndIsDeletedFalse(String codee);
     Optional<Employee> findByCodeAndIsDeletedFalse(String id);
     @Query("""
                 SELECT e FROM Employee e

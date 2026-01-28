@@ -3,11 +3,14 @@ package com.example.hrm.modules.employee.controller;
 import com.example.hrm.modules.employee.dto.request.EmployeeRequest;
 import com.example.hrm.modules.employee.dto.response.EmployeeResponse;
 import com.example.hrm.modules.employee.service.EmployeeService;
+import com.example.hrm.modules.employee.excel.EmployeeExcelService;
+import com.example.hrm.modules.employee.excel.dto.ExcelImportResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 
@@ -17,6 +20,7 @@ import jakarta.validation.Valid;
 public class EmployeeController {
 
     private final EmployeeService employeeService;
+    private final EmployeeExcelService employeeExcelService;
 
     /**
      * Lấy danh sách tất cả nhân viên (có phân trang)
@@ -81,6 +85,18 @@ public class EmployeeController {
     public ResponseEntity<Void> deleteEmployee(@PathVariable String id) {
         employeeService.deleteEmployee(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Import nhân viên từ file Excel
+     *
+     * @param file File Excel chứa dữ liệu nhân viên
+     * @return Kết quả import
+     */
+    @PostMapping("/import")
+    public ResponseEntity<ExcelImportResult> importEmployees(@RequestParam("file") MultipartFile file) {
+        ExcelImportResult result = employeeExcelService.importEmployees(file);
+        return ResponseEntity.ok(result);
     }
 
 

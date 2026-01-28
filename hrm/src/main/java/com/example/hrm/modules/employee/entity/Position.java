@@ -24,6 +24,8 @@ public class Position {
 
     private Boolean active = true;
 
+    private Boolean isDeleted;
+
     // getter / setter
 }
 
