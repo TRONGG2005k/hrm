@@ -7,12 +7,16 @@ import com.example.hrm.modules.employee.excel.EmployeeExcelService;
 import com.example.hrm.modules.employee.excel.dto.ExcelImportResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 @RestController
 @RequestMapping("${app.api-prefix}/employees")
@@ -97,6 +101,37 @@ public class EmployeeController {
     public ResponseEntity<ExcelImportResult> importEmployees(@RequestParam("file") MultipartFile file) {
         ExcelImportResult result = employeeExcelService.importEmployees(file);
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Import hoặc cập nhật nhân viên từ file Excel
+     *
+     * @param file File Excel chứa dữ liệu nhân viên
+     * @return Kết quả import hoặc update
+     */
+    @PostMapping("/import-or-update")
+    public ResponseEntity<ExcelImportResult> importOrUpdateEmployees(@RequestParam("file") MultipartFile file) {
+        ExcelImportResult result = employeeExcelService.importOrUpdateEmployees(file);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Export danh sách nhân viên ra file Excel
+     *
+     * @return File Excel chứa danh sách nhân viên
+     */
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportEmployees() throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        employeeExcelService.export(outputStream);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "employees.xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(outputStream.toByteArray());
     }
 
 

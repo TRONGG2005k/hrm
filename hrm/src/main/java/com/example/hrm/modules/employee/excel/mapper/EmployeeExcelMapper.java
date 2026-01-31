@@ -2,11 +2,15 @@ package com.example.hrm.modules.employee.excel.mapper;
 
 import com.example.hrm.modules.employee.entity.Address;
 import com.example.hrm.modules.employee.entity.Employee;
+import com.example.hrm.modules.employee.excel.dto.EmployeeExcelExportDto;
 import com.example.hrm.modules.employee.excel.dto.EmployeeExcelImportDto;
 import com.example.hrm.modules.employee.repository.PositionRepository;
+import com.example.hrm.modules.organization.entity.SubDepartment;
 import com.example.hrm.modules.organization.repository.SubDepartmentRepository;
 import com.example.hrm.modules.employee.service.AddressResolverService;
 import com.example.hrm.shared.enums.EmployeeStatus;
+import com.example.hrm.shared.exception.AppException;
+import com.example.hrm.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -106,4 +110,27 @@ public class EmployeeExcelMapper {
         );
     }
 
+    public EmployeeExcelExportDto toDto(Employee employee){
+        SubDepartment subDepartment = subDepartmentRepository.findByIdAndIsDeletedFalse(
+                employee.getSubDepartment().getId())
+                .orElseThrow(() -> new AppException(ErrorCode.SUB_DEPARTMENT_NOT_FOUND, 404));
+        return EmployeeExcelExportDto.builder()
+                .code(employee.getCode())
+                .firstName(employee.getFirstName())
+                .lastName(employee.getLastName())
+                .dateOfBirth(employee.getDateOfBirth())
+                .gender(employee.getGender().toString())
+                .email(employee.getEmail())
+                .phone(employee.getPhone())
+                .status(employee.getStatus().toString())
+                .joinDate(employee.getJoinDate())
+                .shiftType(employee.getShiftType())
+                .street(employee.getAddress().getStreet())
+                .ward(employee.getAddress().getWard().getName())
+                .district(employee.getAddress().getWard().getDistrict().getName())
+                .province(employee.getAddress().getWard().getDistrict().getProvince().getName())
+                .departmentName(subDepartment.getName())
+                .positionName(employee.getPosition().getName())
+                .build();
+    }
 }

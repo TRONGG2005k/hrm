@@ -1,17 +1,26 @@
 package com.example.hrm.modules.employee.excel;
 
 import com.example.hrm.modules.employee.entity.Employee;
+import com.example.hrm.modules.employee.excel.dto.EmployeeExcelExportDto;
 import com.example.hrm.modules.employee.excel.dto.EmployeeExcelImportDto;
 import com.example.hrm.modules.employee.excel.dto.ExcelImportResult;
 import com.example.hrm.modules.employee.excel.parser.EmployeeExcelImportService;
+import com.example.hrm.modules.employee.excel.util.EmployeeUtil;
 import com.example.hrm.modules.employee.excel.validator.EmployeeValidator;
 import com.example.hrm.modules.employee.excel.mapper.EmployeeExcelMapper;
 import com.example.hrm.modules.employee.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +34,7 @@ public class EmployeeExcelService {
     private final EmployeeValidator employeeValidator;
     private final EmployeeExcelMapper employeeExcelMapper;
     private final EmployeeRepository employeeRepository;
+    private final EmployeeUtil employeeUtil;
 
 //    @Transactional
     public ExcelImportResult importEmployees(MultipartFile file) {
@@ -103,4 +113,47 @@ public class EmployeeExcelService {
         return new ExcelImportResult(successCount, errors);
     }
 
+    public void export(OutputStream outputStream) throws IOException {
+
+        List<Employee> employees = employeeRepository.findAllByIsDeletedFalse();
+        Workbook workbook = new XSSFWorkbook();
+        String sheetName = "Employees_" + LocalDateTime.now().toLocalDate();
+        Sheet sheet = workbook.createSheet(sheetName);
+
+        Row header = sheet.createRow(0);
+
+        String[] headers = {
+                "Code",
+                "First Name",
+                "Last Name",
+                "Date of Birth",
+                "Gender",
+                "Email",
+                "Phone",
+                "Status",
+                "Join Date",
+                "Shift Type",
+                "Street",
+                "Ward",
+                "District",
+                "Province",
+                "Department Name",
+                "Position Name"
+        };
+
+        for (int i = 0; i < headers.length; i++) {
+            header.createCell(i).setCellValue(headers[i]);
+        }
+
+        int rowIndex = 1;
+
+        for (var employee : employees){
+            Row row = sheet.createRow(rowIndex++);
+            EmployeeExcelExportDto excelExportDto = employeeExcelMapper.toDto(employee);
+            employeeUtil.buildRow(row, excelExportDto);
+        }
+        workbook.write(outputStream);
+        workbook.close();
+
+    }
 }

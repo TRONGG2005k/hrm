@@ -1,5 +1,6 @@
 package com.example.hrm.modules.employee.excel.util;
 
+import com.example.hrm.modules.employee.excel.dto.EmployeeExcelExportDto;
 import com.example.hrm.modules.employee.excel.dto.EmployeeExcelImportDto;
 import com.example.hrm.modules.employee.excel.mapper.EnumMapper;
 import com.example.hrm.shared.enums.ShiftType;
@@ -55,6 +56,27 @@ public class EmployeeUtil {
         return dtos;
     }
 
+    public void buildRow(Row row, EmployeeExcelExportDto dto){
+        row.createCell(0).setCellValue(dto.getCode());
+        row.createCell(1).setCellValue(dto.getFirstName());
+        row.createCell(2).setCellValue(dto.getLastName());
+        row.createCell(3).setCellValue(
+                dto.getDateOfBirth() != null ? dto.getDateOfBirth().toString() : ""
+        );
+        row.createCell(4).setCellValue(dto.getGender());
+        row.createCell(5).setCellValue(dto.getEmail());
+        row.createCell(6).setCellValue(dto.getPhone());
+        row.createCell(7).setCellValue(dto.getStatus());
+        row.createCell(8).setCellValue(dto.getJoinDate().toString());
+        row.createCell(9).setCellValue(dto.getShiftType().name());
+        row.createCell(10).setCellValue(dto.getStreet());
+        row.createCell(11).setCellValue(dto.getWard());
+        row.createCell(12).setCellValue(dto.getDistrict());
+        row.createCell(13).setCellValue(dto.getProvince());
+        row.createCell(14).setCellValue(dto.getDepartmentName());
+        row.createCell(15).setCellValue(dto.getPositionName());
+
+    }
     // ================== CELL READ ==================
 
     public String getString(Cell cell) {
