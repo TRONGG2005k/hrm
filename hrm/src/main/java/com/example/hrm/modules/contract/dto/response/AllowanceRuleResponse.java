@@ -1,6 +1,6 @@
 package com.example.hrm.modules.contract.dto.response;
 
-import com.example.hrm.modules.employee.dto.response.PositionResponse;
+import com.example.hrm.modules.organization.dto.response.PositionResponse;
 import com.example.hrm.modules.organization.dto.response.SubDepartmentResponse;
 import com.example.hrm.shared.enums.AllowanceCalculationType;
 import lombok.Data;

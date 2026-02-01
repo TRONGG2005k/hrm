@@ -1,4 +1,4 @@
-package com.example.hrm.modules.employee.entity;
+package com.example.hrm.modules.organization.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

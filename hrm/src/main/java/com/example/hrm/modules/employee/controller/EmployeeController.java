@@ -4,7 +4,7 @@ import com.example.hrm.modules.employee.dto.request.EmployeeRequest;
 import com.example.hrm.modules.employee.dto.response.EmployeeResponse;
 import com.example.hrm.modules.employee.service.EmployeeService;
 import com.example.hrm.modules.employee.excel.EmployeeExcelService;
-import com.example.hrm.modules.employee.excel.dto.ExcelImportResult;
+import com.example.hrm.shared.ExcelImportResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;

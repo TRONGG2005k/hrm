@@ -1,8 +1,8 @@
-package com.example.hrm.modules.employee.mapper;
+package com.example.hrm.modules.organization.mapper;
 
-import com.example.hrm.modules.employee.dto.request.PositionRequest;
-import com.example.hrm.modules.employee.dto.response.PositionResponse;
-import com.example.hrm.modules.employee.entity.Position;
+import com.example.hrm.modules.organization.entity.Position;
+import com.example.hrm.modules.organization.dto.request.PositionRequest;
+import com.example.hrm.modules.organization.dto.response.PositionResponse;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")

@@ -3,6 +3,7 @@ package com.example.hrm.modules.employee.service;
 import com.example.hrm.modules.employee.entity.*;
 import com.example.hrm.modules.file.dto.response.FileAttachmentResponse;
 import com.example.hrm.modules.file.entity.FileAttachment;
+import com.example.hrm.modules.organization.repository.PositionRepository;
 import com.example.hrm.shared.enums.RefType;
 // import com.example.hrm.modules.employee.mapper.AddressMapper;
 import com.example.hrm.modules.employee.mapper.ContactMapper;
@@ -21,7 +22,6 @@ import com.example.hrm.shared.exception.AppException;
 import com.example.hrm.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @Service

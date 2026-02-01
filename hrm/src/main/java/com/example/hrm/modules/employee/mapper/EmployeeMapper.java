@@ -5,6 +5,7 @@ import com.example.hrm.modules.employee.dto.response.EmployeeResponse;
 import com.example.hrm.modules.employee.entity.Employee;
 import com.example.hrm.modules.file.mapper.FileAttachmentMapper;
 
+import com.example.hrm.modules.organization.mapper.PositionMapper;
 import org.mapstruct.*;
 
 @Mapper(

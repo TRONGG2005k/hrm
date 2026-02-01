@@ -1,4 +1,4 @@
-package com.example.hrm.modules.employee.dto.request;
+package com.example.hrm.modules.organization.dto.request;
 
 public record PositionRequest(
         String code,

@@ -1,6 +1,6 @@
-package com.example.hrm.modules.employee.repository;
+package com.example.hrm.modules.organization.repository;
 
-import com.example.hrm.modules.employee.entity.Position;
+import com.example.hrm.modules.organization.entity.Position;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

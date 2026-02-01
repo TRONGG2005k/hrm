@@ -1,5 +1,6 @@
 package com.example.hrm.modules.employee.entity;
 
+import com.example.hrm.modules.organization.entity.Position;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;

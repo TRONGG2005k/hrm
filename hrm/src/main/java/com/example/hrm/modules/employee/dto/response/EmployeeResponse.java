@@ -1,5 +1,6 @@
 package com.example.hrm.modules.employee.dto.response;
 
+import com.example.hrm.modules.organization.dto.response.PositionResponse;
 import com.example.hrm.shared.enums.EmployeeStatus;
 import com.example.hrm.shared.enums.Gender;
 import com.example.hrm.shared.enums.ShiftType;

@@ -6,7 +6,7 @@ import com.example.hrm.modules.contract.entity.AllowanceRule;
 import com.example.hrm.modules.contract.mapper.AllowanceRuleMapper;
 import com.example.hrm.modules.contract.repository.AllowanceRepository;
 import com.example.hrm.modules.contract.repository.AllowanceRuleRepository;
-import com.example.hrm.modules.employee.repository.PositionRepository;
+import com.example.hrm.modules.organization.repository.PositionRepository;
 import com.example.hrm.modules.organization.repository.SubDepartmentRepository;
 import com.example.hrm.shared.exception.AppException;
 import com.example.hrm.shared.exception.ErrorCode;

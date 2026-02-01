@@ -1,8 +1,11 @@
-package com.example.hrm.modules.employee.excel.exception;
+package com.example.hrm.shared.exception;
 
+
+import lombok.Getter;
 
 import java.util.List;
 
+@Getter
 public class ExcelImportException extends RuntimeException {
 
     private final List<String> errors;
@@ -12,7 +15,4 @@ public class ExcelImportException extends RuntimeException {
         this.errors = errors;
     }
 
-    public List<String> getErrors() {
-        return errors;
-    }
 }

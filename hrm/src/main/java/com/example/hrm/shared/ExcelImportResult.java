@@ -1,4 +1,4 @@
-package com.example.hrm.modules.employee.excel.dto;
+package com.example.hrm.shared;
 
 
 import lombok.AllArgsConstructor;

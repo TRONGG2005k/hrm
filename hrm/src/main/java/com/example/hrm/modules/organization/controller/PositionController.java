@@ -1,8 +1,8 @@
-package com.example.hrm.modules.employee.controller;
+package com.example.hrm.modules.organization.controller;
 
-import com.example.hrm.modules.employee.dto.request.PositionRequest;
-import com.example.hrm.modules.employee.dto.response.PositionResponse;
-import com.example.hrm.modules.employee.service.PositionService;
+import com.example.hrm.modules.organization.dto.request.PositionRequest;
+import com.example.hrm.modules.organization.dto.response.PositionResponse;
+import com.example.hrm.modules.organization.service.PositionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

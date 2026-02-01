@@ -1,6 +1,6 @@
 package com.example.hrm.modules.contract.entity;
 
-import com.example.hrm.modules.employee.entity.Position;
+import com.example.hrm.modules.organization.entity.Position;
 import com.example.hrm.modules.organization.entity.SubDepartment;
 import com.example.hrm.shared.enums.AllowanceCalculationType;
 import jakarta.persistence.*;

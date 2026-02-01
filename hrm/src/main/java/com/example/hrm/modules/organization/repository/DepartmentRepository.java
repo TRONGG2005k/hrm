@@ -16,4 +16,6 @@ public interface DepartmentRepository extends JpaRepository<Department, String> 
     Department findByNameAndIsDeletedFalse(String name);
     @Query("SELECT d FROM Department d LEFT JOIN FETCH d.subDepartments WHERE d.id = :id")
     Optional<Department> findByIdWithSubDepartments(@Param("id") String id);
+
+    boolean existsByNameAndIsDeletedFalseAndIdNot(String code, String id);
 }

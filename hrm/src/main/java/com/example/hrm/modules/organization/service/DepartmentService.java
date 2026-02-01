@@ -60,13 +60,20 @@ public class DepartmentService {
 
     @Transactional
     public DepartmentResponse updateDepartment(String id, DepartmentRequest request) {
+
+        if (departmentRepository.existsByNameAndIsDeletedFalseAndIdNot(request.getName(), id)) {
+            throw new AppException(ErrorCode.DEPARTMENT_NAME_ALREADY_EXISTS, 500);
+        }
+
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Department not found"));
+
         department.setName(request.getName());
         department.setDescription(request.getDescription());
-        departmentRepository.save(department);
+
         return toResponse(department);
     }
+
 
     @Transactional
     public void deleteDepartment(String id) {

@@ -1,11 +1,11 @@
-package com.example.hrm.modules.employee.service;
+package com.example.hrm.modules.organization.service;
 
 
-import com.example.hrm.modules.employee.dto.request.PositionRequest;
-import com.example.hrm.modules.employee.dto.response.PositionResponse;
-import com.example.hrm.modules.employee.entity.Position;
-import com.example.hrm.modules.employee.mapper.PositionMapper;
-import com.example.hrm.modules.employee.repository.PositionRepository;
+import com.example.hrm.modules.organization.dto.request.PositionRequest;
+import com.example.hrm.modules.organization.dto.response.PositionResponse;
+import com.example.hrm.modules.organization.entity.Position;
+import com.example.hrm.modules.organization.mapper.PositionMapper;
+import com.example.hrm.modules.organization.repository.PositionRepository;
 import com.example.hrm.shared.exception.AppException;
 import com.example.hrm.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;

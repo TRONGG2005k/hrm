@@ -1,4 +1,4 @@
-package com.example.hrm.modules.employee.dto.response;
+package com.example.hrm.modules.organization.dto.response;
 
 public record PositionResponse(
         String id,

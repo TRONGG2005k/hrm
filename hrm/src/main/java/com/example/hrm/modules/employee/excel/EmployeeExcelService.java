@@ -3,12 +3,11 @@ package com.example.hrm.modules.employee.excel;
 import com.example.hrm.modules.employee.entity.Employee;
 import com.example.hrm.modules.employee.excel.dto.EmployeeExcelExportDto;
 import com.example.hrm.modules.employee.excel.dto.EmployeeExcelImportDto;
-import com.example.hrm.modules.employee.excel.dto.ExcelImportResult;
-import com.example.hrm.modules.employee.excel.parser.EmployeeExcelImportService;
-import com.example.hrm.modules.employee.excel.util.EmployeeUtil;
+import com.example.hrm.shared.ExcelImportResult;
 import com.example.hrm.modules.employee.excel.validator.EmployeeValidator;
 import com.example.hrm.modules.employee.excel.mapper.EmployeeExcelMapper;
 import com.example.hrm.modules.employee.repository.EmployeeRepository;
+import com.example.hrm.shared.excel.ExcelHelper;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -30,15 +29,15 @@ import java.util.List;
 public class EmployeeExcelService {
 
 
-    private final EmployeeExcelImportService employeeExcelImportService;
     private final EmployeeValidator employeeValidator;
     private final EmployeeExcelMapper employeeExcelMapper;
     private final EmployeeRepository employeeRepository;
-    private final EmployeeUtil employeeUtil;
 
 //    @Transactional
     public ExcelImportResult importEmployees(MultipartFile file) {
-        List<EmployeeExcelImportDto> dtos = employeeExcelImportService.parseExcel(file);
+
+
+        List<EmployeeExcelImportDto> dtos = parseExcel(file);
 
         List<String> errors = new ArrayList<>();
         int successCount = 0;
@@ -69,7 +68,7 @@ public class EmployeeExcelService {
     }
 
     public ExcelImportResult importOrUpdateEmployees(MultipartFile file) {
-        List<EmployeeExcelImportDto> dtos = employeeExcelImportService.parseExcel(file);
+        List<EmployeeExcelImportDto> dtos = parseExcel(file);
 
         List<String> errors = new ArrayList<>();
         int successCount = 0;
@@ -150,10 +149,77 @@ public class EmployeeExcelService {
         for (var employee : employees){
             Row row = sheet.createRow(rowIndex++);
             EmployeeExcelExportDto excelExportDto = employeeExcelMapper.toDto(employee);
-            employeeUtil.buildRow(row, excelExportDto);
+            buildRow(row, excelExportDto);
         }
         workbook.write(outputStream);
         workbook.close();
+
+    }
+    private  List<EmployeeExcelImportDto> parseExcel(MultipartFile file) {
+        List<EmployeeExcelImportDto> dtos = new ArrayList<>();
+
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+
+            dtos = buildToDto(sheet);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi đọc file Excel: " + e.getMessage(), e);
+        }
+        return dtos;
+    }
+
+    public List<EmployeeExcelImportDto> buildToDto(Sheet sheet) {
+        List<EmployeeExcelImportDto> dtos = new ArrayList<>();
+
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) { // dòng 0 là header
+            Row row = sheet.getRow(i);
+            if (row == null) continue;
+
+            EmployeeExcelImportDto dto = new EmployeeExcelImportDto();
+            dto.setCode(ExcelHelper.getString(row.getCell(0)));
+            dto.setFirstName(ExcelHelper.getString(row.getCell(1)));
+            dto.setLastName(ExcelHelper.getString(row.getCell(2)));
+            dto.setDateOfBirth(ExcelHelper.getLocalDate(row.getCell(3)));
+            dto.setGender(ExcelHelper.getString(row.getCell(4)));
+            dto.setEmail(ExcelHelper.getString(row.getCell(5)));
+            dto.setPhone(ExcelHelper.getString(row.getCell(6)));
+            dto.setStatus(ExcelHelper.getString(row.getCell(7)));
+            dto.setJoinDate(ExcelHelper.getLocalDate(row.getCell(8)));
+            dto.setShiftType(ExcelHelper.getShiftType(row.getCell(9)));
+
+            dto.setStreet(ExcelHelper.getString(row.getCell(10)));
+            dto.setWard(ExcelHelper.getString(row.getCell(11)));
+            dto.setDistrict(ExcelHelper.getString(row.getCell(12)));
+            dto.setProvince(ExcelHelper.getString(row.getCell(13)));
+
+            dto.setDepartmentName(ExcelHelper.getString(row.getCell(14)));
+            dto.setPositionName(ExcelHelper.getString(row.getCell(15)));
+
+            dtos.add(dto);
+        }
+        return dtos;
+    }
+
+    public void buildRow(Row row, EmployeeExcelExportDto dto){
+        row.createCell(0).setCellValue(dto.getCode());
+        row.createCell(1).setCellValue(dto.getFirstName());
+        row.createCell(2).setCellValue(dto.getLastName());
+        row.createCell(3).setCellValue(
+                dto.getDateOfBirth() != null ? dto.getDateOfBirth().toString() : ""
+        );
+        row.createCell(4).setCellValue(dto.getGender());
+        row.createCell(5).setCellValue(dto.getEmail());
+        row.createCell(6).setCellValue(dto.getPhone());
+        row.createCell(7).setCellValue(dto.getStatus());
+        row.createCell(8).setCellValue(dto.getJoinDate().toString());
+        row.createCell(9).setCellValue(dto.getShiftType().name());
+        row.createCell(10).setCellValue(dto.getStreet());
+        row.createCell(11).setCellValue(dto.getWard());
+        row.createCell(12).setCellValue(dto.getDistrict());
+        row.createCell(13).setCellValue(dto.getProvince());
+        row.createCell(14).setCellValue(dto.getDepartmentName());
+        row.createCell(15).setCellValue(dto.getPositionName());
 
     }
 }
