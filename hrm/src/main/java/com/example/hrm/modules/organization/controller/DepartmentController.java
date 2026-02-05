@@ -51,7 +51,10 @@ public class DepartmentController {
         departmentService.deleteDepartment(id);
     }
 
-    @PostMapping("/import")
+    @PostMapping(
+            value = "/import",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ResponseEntity<ExcelResult> importDepartments(@RequestParam("file") MultipartFile file) {
         ExcelResult result = departmentExcelService.importFile(file);
         return ResponseEntity.ok(result);

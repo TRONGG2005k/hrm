@@ -50,7 +50,10 @@ public class PositionController {
         return service.getById(id);
     }
 
-    @PostMapping("/import")
+    @PostMapping(
+            value = "/import",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ResponseEntity<ExcelResult> importFile(@RequestParam("file") MultipartFile file) {
         ExcelResult result = service1.importFile(file);
         return ResponseEntity.ok(result);
