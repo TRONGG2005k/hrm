@@ -4,7 +4,7 @@ import com.example.hrm.modules.employee.dto.request.EmployeeRequest;
 import com.example.hrm.modules.employee.dto.response.EmployeeResponse;
 import com.example.hrm.modules.employee.service.EmployeeService;
 import com.example.hrm.modules.employee.excel.EmployeeExcelService;
-import com.example.hrm.shared.ExcelImportResult;
+import com.example.hrm.shared.ExcelResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
@@ -98,8 +98,8 @@ public class EmployeeController {
      * @return Kết quả import
      */
     @PostMapping("/import")
-    public ResponseEntity<ExcelImportResult> importEmployees(@RequestParam("file") MultipartFile file) {
-        ExcelImportResult result = employeeExcelService.importEmployees(file);
+    public ResponseEntity<ExcelResult> importEmployees(@RequestParam("file") MultipartFile file) {
+        ExcelResult result = employeeExcelService.importEmployees(file);
         return ResponseEntity.ok(result);
     }
 
@@ -110,8 +110,8 @@ public class EmployeeController {
      * @return Kết quả import hoặc update
      */
     @PostMapping("/import-or-update")
-    public ResponseEntity<ExcelImportResult> importOrUpdateEmployees(@RequestParam("file") MultipartFile file) {
-        ExcelImportResult result = employeeExcelService.importOrUpdateEmployees(file);
+    public ResponseEntity<ExcelResult> importOrUpdateEmployees(@RequestParam("file") MultipartFile file) {
+        ExcelResult result = employeeExcelService.importOrUpdateEmployees(file);
         return ResponseEntity.ok(result);
     }
 

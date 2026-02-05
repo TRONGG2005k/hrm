@@ -1,5 +1,6 @@
 package com.example.hrm.modules.organization.excel;
 
+import com.example.hrm.modules.employee.excel.dto.EmployeeExcelExportDto;
 import com.example.hrm.modules.organization.dto.request.DepartmentRequest;
 import com.example.hrm.modules.organization.entity.Department;
 import com.example.hrm.modules.organization.excel.dto.DepartmentExcelDto;
@@ -7,7 +8,7 @@ import com.example.hrm.modules.organization.excel.mapper.DepartmentExcelMapper;
 import com.example.hrm.modules.organization.excel.validator.DepartmentExcelValidator;
 import com.example.hrm.modules.organization.repository.DepartmentRepository;
 import com.example.hrm.modules.organization.service.DepartmentService;
-import com.example.hrm.shared.ExcelImportResult;
+import com.example.hrm.shared.ExcelResult;
 import com.example.hrm.shared.excel.ExcelHelper;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.Row;
@@ -18,6 +19,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +34,7 @@ public class DepartmentExcelService {
     private final DepartmentExcelValidator validator;
     private final DepartmentExcelMapper mapper;
 
-    public ExcelImportResult importFile(MultipartFile file) {
+    public ExcelResult importFile(MultipartFile file) {
         List<DepartmentExcelDto> dtos = parseExcel(file);
 
         List<String> errors = new ArrayList<>();
@@ -69,9 +73,34 @@ public class DepartmentExcelService {
             rowNumber++;
         }
 
-        return new ExcelImportResult(successCount, errors);
+        return new ExcelResult(successCount, errors);
     }
 
+    public void exportFile(OutputStream outputStream) throws IOException {
+        List<Department> departmentList = departmentRepository.findByIsDeletedFalse();
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("department" + LocalDate.now());
+        String[] headers = {
+                "name",
+                "description"
+        };
+        Row header = sheet.createRow(0);
+        for (int i = 0; i < headers.length; i++) {
+            header.createCell(i).setCellValue(headers[i]);
+        }
+
+        int rowIndex = 1;
+
+        for (var department : departmentList){
+            Row row = sheet.createRow(rowIndex++);
+            DepartmentExcelDto dto = mapper.toDto(department);
+            buildRow(row, dto);
+        }
+
+        workbook.write(outputStream);
+        workbook.close();
+
+    }
     public List<DepartmentExcelDto> parseExcel(MultipartFile file) {
         try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
@@ -94,5 +123,10 @@ public class DepartmentExcelService {
             dtos.add(dto);
         }
         return dtos;
+    }
+
+    public void buildRow(Row row, DepartmentExcelDto dto){
+        row.createCell(0).setCellValue(dto.getName());
+        row.createCell(1).setCellValue(dto.getDescription());
     }
 }

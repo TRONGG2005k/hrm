@@ -3,7 +3,7 @@ package com.example.hrm.modules.employee.excel;
 import com.example.hrm.modules.employee.entity.Employee;
 import com.example.hrm.modules.employee.excel.dto.EmployeeExcelExportDto;
 import com.example.hrm.modules.employee.excel.dto.EmployeeExcelImportDto;
-import com.example.hrm.shared.ExcelImportResult;
+import com.example.hrm.shared.ExcelResult;
 import com.example.hrm.modules.employee.excel.validator.EmployeeValidator;
 import com.example.hrm.modules.employee.excel.mapper.EmployeeExcelMapper;
 import com.example.hrm.modules.employee.repository.EmployeeRepository;
@@ -34,7 +34,7 @@ public class EmployeeExcelService {
     private final EmployeeRepository employeeRepository;
 
 //    @Transactional
-    public ExcelImportResult importEmployees(MultipartFile file) {
+    public ExcelResult importEmployees(MultipartFile file) {
 
 
         List<EmployeeExcelImportDto> dtos = parseExcel(file);
@@ -64,10 +64,10 @@ public class EmployeeExcelService {
             rowNumber++;
         }
 
-        return new ExcelImportResult(successCount, errors);
+        return new ExcelResult(successCount, errors);
     }
 
-    public ExcelImportResult importOrUpdateEmployees(MultipartFile file) {
+    public ExcelResult importOrUpdateEmployees(MultipartFile file) {
         List<EmployeeExcelImportDto> dtos = parseExcel(file);
 
         List<String> errors = new ArrayList<>();
@@ -109,7 +109,7 @@ public class EmployeeExcelService {
             rowNumber++;
         }
 
-        return new ExcelImportResult(successCount, errors);
+        return new ExcelResult(successCount, errors);
     }
 
     public void export(OutputStream outputStream) throws IOException {

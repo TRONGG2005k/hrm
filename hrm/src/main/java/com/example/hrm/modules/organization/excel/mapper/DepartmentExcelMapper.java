@@ -13,4 +13,8 @@ public class DepartmentExcelMapper {
         department.setDescription(dto.getDescription());
         return department;
     }
+
+    public DepartmentExcelDto toDto(Department department){
+        return new DepartmentExcelDto(department.getName(), department.getDescription());
+    }
 }

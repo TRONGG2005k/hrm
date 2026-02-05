@@ -8,7 +8,7 @@ import java.util.List;
 
 @Data
 @AllArgsConstructor
-public class ExcelImportResult {
+public class ExcelResult {
     private int successCount;
     private List<String> errors;
 }
