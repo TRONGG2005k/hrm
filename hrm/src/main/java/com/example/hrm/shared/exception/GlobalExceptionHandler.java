@@ -97,6 +97,57 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity<ErrorResponse> handleNullPointerException(
+            NullPointerException ex,
+            WebRequest request) {
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(500)
+                .error(ErrorCode.INTERNAL_SERVER_ERROR.getCode())
+                .message(ErrorCode.INTERNAL_SERVER_ERROR.getMessage())
+                .details("Lỗi máy chủ nội bộ - Null reference")
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+            IllegalArgumentException ex,
+            WebRequest request) {
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(400)
+                .error(ErrorCode.INVALID_INPUT.getCode())
+                .message(ErrorCode.INVALID_INPUT.getMessage())
+                .details(ex.getMessage() != null ? ex.getMessage() : "Dữ liệu đầu vào không hợp lệ")
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalStateException(
+            IllegalStateException ex,
+            WebRequest request) {
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(409)
+                .error(ErrorCode.INVALID_STATE.getCode())
+                .message(ErrorCode.INVALID_STATE.getMessage())
+                .details(ex.getMessage() != null ? ex.getMessage() : "Trạng thái không hợp lệ")
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(
             Exception ex,
@@ -107,7 +158,7 @@ public class GlobalExceptionHandler {
                 .status(500)
                 .error(ErrorCode.INTERNAL_SERVER_ERROR.getCode())
                 .message(ErrorCode.INTERNAL_SERVER_ERROR.getMessage())
-                .details(ex.getMessage() != null ? ex.getMessage() : "Lỗi máy chủ nội bộ")
+                .details("Lỗi máy chủ nội bộ")
                 .path(request.getDescription(false).replace("uri=", ""))
                 .build();
 

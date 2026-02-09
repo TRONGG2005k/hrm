@@ -4,6 +4,7 @@ import com.example.hrm.shared.enums.TokenType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @Component
@@ -17,9 +18,9 @@ public class JwtKeyStore {
             @Value("${app.jwt.signerKeyActivation}") String activation
     ) {
         keys = Map.of(
-                TokenType.ACCESS.name(), access.getBytes(),
-                TokenType.REFRESH.name(), refresh.getBytes(),
-                TokenType.ACTIVATION.name(), activation.getBytes()
+                TokenType.ACCESS.name(), access.getBytes(StandardCharsets.UTF_8),
+                TokenType.REFRESH.name(), refresh.getBytes(StandardCharsets.UTF_8),
+                TokenType.ACTIVATION.name(), activation.getBytes(StandardCharsets.UTF_8)
         );
     }
 

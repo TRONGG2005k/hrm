@@ -11,12 +11,14 @@ import com.example.hrm.modules.penalty.PenaltyAmountCalculator;
 import com.example.hrm.modules.penalty.dto.response.AttendancePenaltyResult;
 import com.example.hrm.shared.enums.AdjustmentType;
 import com.example.hrm.shared.enums.AllowanceCalculationType;
+import com.example.hrm.shared.enums.ShiftType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class PayrollCalculator {
+
     private final PenaltyAmountCalculator penaltyAmountCalculator;
 
     public PayrollDetailResponse calculatePayrollDetail(
@@ -43,33 +46,50 @@ public class PayrollCalculator {
 
         long actualWorkingDays = 0;
         long otHours = 0;
+
         BigDecimal salaryPerDay = calculateSalaryPerDay(baseSalary, cycle);
 
-        Map<LocalDate, List<Attendance>> attendanceByDate =
+        // 🔑 Group theo (employee + payrollDate logic)
+        Map<EmployeeWorkDayKey, List<Attendance>> attendanceByWorkDay =
                 attendanceList.stream()
-                        .collect(Collectors.groupingBy(Attendance::getWorkDate));
+                        .collect(Collectors.groupingBy(att ->
+                                new EmployeeWorkDayKey(
+                                        att.getEmployee().getId(),
+                                        resolvePayrollDate(att)
+                                )
+                        ));
 
-        for (var entry : attendanceByDate.entrySet()) {
-            List<Attendance> dayAttendances = entry.getValue();
+        for (var entry : attendanceByWorkDay.entrySet()) {
+            List<Attendance> attendances = entry.getValue();
 
             boolean hasValidWork = false;
 
-            for (Attendance att : dayAttendances) {
-                AttendancePenaltyResult penalty = penaltyAmountCalculator.applyAttendancePenaltyRule(att);
+            for (Attendance att : attendances) {
+                AttendancePenaltyResult penalty =
+                        penaltyAmountCalculator.applyAttendancePenaltyRule(att);
 
+                // Base salary
                 if (!penalty.isVoidBaseSalary()) {
-                    BigDecimal dailySalary = calculateNetDailySalary(salaryPerDay, penalty);
+                    BigDecimal dailySalary =
+                            calculateNetDailySalary(salaryPerDay, penalty);
+
                     totalSalary = totalSalary.add(dailySalary);
                     baseSalaryTotal = baseSalaryTotal.add(dailySalary);
                     hasValidWork = true;
                 }
 
+                // OT
                 if (!penalty.isVoidOvertime()) {
-                    for (var otRate : att.getAttendanceOTRates()) {
-                        otHours += otRate.getOtHours();
-                        BigDecimal otMoney = calculateOt(otRate, salaryPerDay);
-                        totalSalary = totalSalary.add(otMoney);
-                        otTotal = otTotal.add(otMoney);
+                    for (AttendanceOTRate otRate : att.getAttendanceOTRates()) {
+                        if (otRate.getOtRate() != null) {
+                            otHours += otRate.getOtHours();
+
+                            BigDecimal otMoney =
+                                    calculateOt(otRate, salaryPerDay);
+
+                            totalSalary = totalSalary.add(otMoney);
+                            otTotal = otTotal.add(otMoney);
+                        }
                     }
                 }
             }
@@ -79,14 +99,22 @@ public class PayrollCalculator {
             }
         }
 
-        var mapAllowance = calculateAllowanceTotalsByType(allowances, cycle.getWorkingDays(), actualWorkingDays, otHours);
-        var totalAllowance = mapAllowance.values().stream()
+        // Allowance
+        Map<AllowanceCalculationType, AllowanceSummary> allowanceMap =
+                calculateAllowanceTotalsByType(
+                        allowances,
+                        cycle.getWorkingDays(),
+                        actualWorkingDays,
+                        otHours
+                );
+
+        BigDecimal totalAllowance = allowanceMap.values().stream()
                 .map(AllowanceSummary::amount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         totalSalary = totalSalary.add(totalAllowance);
 
-
+        // Adjustment
         for (SalaryAdjustment adj : adjustments) {
             if (adj.getType() == AdjustmentType.BONUS) {
                 totalSalary = totalSalary.add(adj.getAmount());
@@ -97,16 +125,17 @@ public class PayrollCalculator {
             }
         }
 
+        // Full attendance bonus
         if (actualWorkingDays == cycle.getWorkingDays()) {
-            totalSalary = totalSalary.add(BigDecimal.valueOf(500_000));
             fullAttendanceBonus = BigDecimal.valueOf(500_000);
+            totalSalary = totalSalary.add(fullAttendanceBonus);
         }
 
         return new PayrollDetailResponse(
                 totalSalary,
                 baseSalaryTotal,
                 otTotal,
-                mapAllowance,
+                allowanceMap,
                 totalAllowance,
                 totalBonus,
                 totalPenalty,
@@ -115,19 +144,21 @@ public class PayrollCalculator {
         );
     }
 
+    /* ===================== ALLOWANCE ===================== */
+
     public Map<AllowanceCalculationType, AllowanceSummary> calculateAllowanceTotalsByType(
             List<AllowanceRule> allowances,
             int standardWorkingDays,
             long actualWorkingDays,
-            long otHours
-    ) {
-        Map<AllowanceCalculationType, AllowanceSummary> totals = new EnumMap<>(AllowanceCalculationType.class);
+            long otHours) {
+
+        Map<AllowanceCalculationType, AllowanceSummary> totals =
+                new EnumMap<>(AllowanceCalculationType.class);
 
         for (AllowanceRule allowance : allowances) {
             BigDecimal amount = switch (allowance.getCalculationType()) {
                 case FIXED, PER_DAY -> allowance.getAmount();
                 case PER_WORKING_DAY -> allowance.getAmount()
-                        .divide(BigDecimal.valueOf(standardWorkingDays), 2, RoundingMode.HALF_UP)
                         .multiply(BigDecimal.valueOf(actualWorkingDays));
                 case PER_OT_HOUR -> allowance.getAmount()
                         .multiply(BigDecimal.valueOf(otHours));
@@ -135,35 +166,44 @@ public class PayrollCalculator {
 
             totals.merge(
                     allowance.getCalculationType(),
-                    new AllowanceSummary(allowance.getAllowance().getName(), amount),
-                    (oldVal, newVal) -> new AllowanceSummary(
-                            oldVal.name(),
-                            oldVal.amount().add(newVal.amount())
-                    )
+                    new AllowanceSummary(
+                            allowance.getAllowance().getName(),
+                            amount
+                    ),
+                    (oldVal, newVal) ->
+                            new AllowanceSummary(
+                                    oldVal.name(),
+                                    oldVal.amount().add(newVal.amount())
+                            )
             );
         }
 
         return totals;
     }
 
+    /* ===================== SALARY ===================== */
 
+    public BigDecimal calculateSalaryPerDay(
+            BigDecimal monthlySalary,
+            PayrollCycleResponse cycle) {
 
-
-    public BigDecimal calculateSalaryPerDay(BigDecimal monthlySalary, PayrollCycleResponse cycle) {
-        int workingDays = cycle.getWorkingDays();
-        if (workingDays == 0) {
-            throw new IllegalArgumentException("Working days in payroll cycle cannot be zero");
+        if (cycle.getWorkingDays() == 0) {
+            throw new IllegalArgumentException(
+                    "Working days in payroll cycle cannot be zero"
+            );
         }
-        return monthlySalary.divide(
-                BigDecimal.valueOf(workingDays),
-                2,
-                RoundingMode.HALF_UP);
-    }
 
+        return monthlySalary.divide(
+                BigDecimal.valueOf(cycle.getWorkingDays()),
+                2,
+                RoundingMode.HALF_UP
+        );
+    }
 
     public BigDecimal calculateNetDailySalary(
             BigDecimal salaryPerDay,
             AttendancePenaltyResult penaltyResult) {
+
         BigDecimal penalty = BigDecimal
                 .valueOf(penaltyResult.getPenaltyAmount())
                 .min(salaryPerDay);
@@ -173,23 +213,38 @@ public class PayrollCalculator {
 
     public BigDecimal calculateOt(
             AttendanceOTRate otRate,
-            BigDecimal salaryPerDay
-    ) {
+            BigDecimal salaryPerDay) {
+
         BigDecimal salaryPerHour = salaryPerDay.divide(
                 BigDecimal.valueOf(8),
                 6,
                 RoundingMode.HALF_UP
         );
 
-        BigDecimal rate =
-                BigDecimal.valueOf(otRate.getOtRate().getRate());
-
-        BigDecimal otHours =
-                BigDecimal.valueOf(otRate.getOtHours());
-
         return salaryPerHour
-                .multiply(rate)
-                .multiply(otHours)
-                .setScale(0, RoundingMode.HALF_UP); // tiền → làm tròn
+                .multiply(BigDecimal.valueOf(otRate.getOtRate().getRate()))
+                .multiply(BigDecimal.valueOf(otRate.getOtHours()))
+                .setScale(0, RoundingMode.HALF_UP);
     }
+
+    /* ===================== SHIFT LOGIC ===================== */
+
+    private LocalDate resolvePayrollDate(Attendance att) {
+        ShiftType shift = att.getEmployee().getShiftType();
+        LocalDateTime checkIn = att.getCheckInTime();
+
+        if (shift == ShiftType.NIGHT) {
+            // Ca đêm → tính theo ngày bắt đầu ca
+            return checkIn.toLocalDate();
+        }
+
+        return att.getWorkDate();
+    }
+
+    /* ===================== KEY ===================== */
+
+    private record EmployeeWorkDayKey(
+            String employeeId,
+            LocalDate workDate
+    ) {}
 }

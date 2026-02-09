@@ -19,9 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
 
-import jakarta.transaction.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -96,19 +94,22 @@ public class AttendanceService {
                 otMinutes
         );
 
-        double otRate = attendance.getAttendanceOTRates().isEmpty()
-                ? 0
-                : attendance.getAttendanceOTRates()
-                .getFirst()
-                .getOtRate()
-                .getRate();
-
-        OTType otType = attendance.getAttendanceOTRates().isEmpty()
-                ? null
-                : attendance.getAttendanceOTRates()
-                .getFirst()
-                .getOtRate()
-                .getType();
+        // Cache OT rate data để tránh gọi getFirst() nhiều lần
+        final double otRate;
+        final OTType otType;
+        if (attendance.getAttendanceOTRates() == null || attendance.getAttendanceOTRates().isEmpty()) {
+            otRate = 0;
+            otType = null;
+        } else {
+            var firstOtRate = attendance.getAttendanceOTRates().getFirst();
+            if (firstOtRate != null && firstOtRate.getOtRate() != null) {
+                otRate = firstOtRate.getOtRate().getRate();
+                otType = firstOtRate.getOtRate().getType();
+            } else {
+                otRate = 0;
+                otType = null;
+            }
+        }
 
         var breakResponses = attendance.getBreaks()
                 .stream()
@@ -187,12 +188,16 @@ public class AttendanceService {
                 otMinutes
         );
 
-        double otRate = attendance.getAttendanceOTRates().isEmpty()
-                ? 1.0
-                : attendance.getAttendanceOTRates()
-                .getFirst()
-                .getOtRate()
-                .getRate();
+        // Cache OT rate để tránh gọi getFirst() nhiều lần và xử lý null
+        final double otRate;
+        if (attendance.getAttendanceOTRates() == null || attendance.getAttendanceOTRates().isEmpty()) {
+            otRate = 1.0;
+        } else {
+            var firstOtRate = attendance.getAttendanceOTRates().getFirst();
+            otRate = (firstOtRate != null && firstOtRate.getOtRate() != null)
+                    ? firstOtRate.getOtRate().getRate()
+                    : 1.0;
+        }
 
         return AttendanceListResponse.builder()
                 .employeeCode(attendance.getEmployee().getCode())

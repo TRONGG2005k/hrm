@@ -26,9 +26,9 @@ public class PenaltyAmountCalculator {
         long early = attendance.getEarlyLeaveMinutes();
 
         PenaltyRule lateRule =
-                resolver.resolve(BasedOn.LATE_MINUTES, late);
+                resolver.resolve(BasedOn.MINUTE, late);
         PenaltyRule earlyRule =
-                resolver.resolve(BasedOn.EARLY_LEAVE_MINUTES, early);
+                resolver.resolve(BasedOn.MINUTE, early);
 
         BigDecimal totalPenalty = BigDecimal.ZERO;
         boolean voidBaseSalary = false;

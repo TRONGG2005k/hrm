@@ -28,8 +28,6 @@ public class SalaryContractRequest {
 
     BigDecimal baseSalary;
 
-    BigDecimal allowance;
-
     Double salaryCoefficient;
 
     @NotNull(message = "Ngày hiệu lực không được để trống")

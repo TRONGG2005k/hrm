@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +42,7 @@ public class ContractService {
     /**
      * Tạo Contract (pháp lý) + SalaryContract (snapshot lương)
      */
+    @Transactional
     public ContractResponse create(ContractRequest request) {
 
         // 1. Lấy employee
@@ -58,12 +60,14 @@ public class ContractService {
         contract.setEmployee(employee);
         contractRepository.save(contract);
 
-        // 3. Deactivate SalaryContract ACTIVE cũ (nếu có)
-        salaryContractRepository.findByEmployeeIdAndIsDeletedFalse(employee.getId())
-                .ifPresent(old -> {
-                    old.setStatus(SalaryContractStatus.INACTIVE);
-                    salaryContractRepository.save(old);
-                });
+        // 3. Deactivate SalaryContract ACTIVE cũ (nếu có) - Lấy danh sách và deactivate tất cả
+        var existingContracts = salaryContractRepository.findAllByEmployeeIdAndIsDeletedFalse(employee.getId());
+        for (SalaryContract old : existingContracts) {
+            if (old.getStatus() == SalaryContractStatus.ACTIVE) {
+                old.setStatus(SalaryContractStatus.INACTIVE);
+                salaryContractRepository.save(old);
+            }
+        }
 
         // 4. Lấy allowance rule theo employee
         var rules = allowanceRuleRepository.findActiveRules(
@@ -106,6 +110,7 @@ public class ContractService {
     /**
      * Update Contract + tạo SalaryContract mới nếu có thay đổi lương
      */
+    @Transactional
     public ContractResponse update(String id, ContractUpdateRequest request) {
 
         Contract contract = contractRepository.findByIdAndIsDeletedFalse(id)

@@ -29,7 +29,15 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) throws ParseException, JOSEException {
+        if (request == null || request.getUsername() == null || request.getPassword() == null) {
+            throw new AppException(ErrorCode.INVALID_INPUT, 400, "Username và password không được để trống");
+        }
+
         var response = authService.login(request);
+
+        if (response == null || response.getRefreshToken() == null) {
+            throw new AppException(ErrorCode.INVALID_TOKEN, 500, "Lỗi tạo token");
+        }
 
         var cookie = jwtService.createRefreshCookie(response.getRefreshToken());
 
@@ -87,8 +95,17 @@ public class AuthController {
     public ResponseEntity<LoginResponse> refreshToken(
             @CookieValue(name = "refresh_token", required = false) String refreshToken
     ){
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new AppException(ErrorCode.INVALID_TOKEN, 400, "Refresh token không được để trống");
+        }
+
         try {
             var response = authService.refreshToken(refreshToken);
+
+            if (response == null || response.getRefreshToken() == null) {
+                throw new AppException(ErrorCode.INVALID_TOKEN, 500, "Lỗi refresh token");
+            }
+
             var cookie = jwtService.createRefreshCookie(response.getRefreshToken());
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, cookie.toString())
@@ -109,8 +126,16 @@ public class AuthController {
     public ResponseEntity<UserAccountResponse> activateAccount(
             @RequestBody ActivateAccountRequest request
     ) throws ParseException {
+        if (request == null || request.getToken() == null || request.getToken().isBlank()) {
+            throw new AppException(ErrorCode.INVALID_TOKEN, 400, "Token kích hoạt không được để trống");
+        }
 
         UserAccountResponse response = authService.activeAccount(request);
+
+        if (response == null) {
+            throw new AppException(ErrorCode.USER_NOT_FOUND, 500, "Lỗi kích hoạt tài khoản");
+        }
+
         return ResponseEntity.ok(response);
     }
 }

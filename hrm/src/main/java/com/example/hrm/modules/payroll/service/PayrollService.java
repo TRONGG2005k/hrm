@@ -33,6 +33,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+// import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -56,6 +57,8 @@ public class PayrollService {
     private final PayrollApprovalHistoryRepository payrollApprovalHistoryRepository;
     private final UserAccountRepository userAccountRepository;
     private final ObjectMapper objectMapper;
+
+//    @Transactional
     public PayrollResponse create(PayrollRequest request) {
 
         var cycle = payrollCycleService.getActive();
@@ -253,10 +256,22 @@ public class PayrollService {
     }
 
     private SalaryContract getSalaryContract(Employee employee) {
+        // Kiểm tra employee có contracts không
+        if (employee.getContracts() == null || employee.getContracts().isEmpty()) {
+            throw new AppException(ErrorCode.CONTRACT_NOT_FOUND, 404,
+                    "Nhân viên chưa có hợp đồng nào");
+        }
+
+        var contract = employee.getContracts().get(0);
+        if (contract == null) {
+            throw new AppException(ErrorCode.CONTRACT_NOT_FOUND, 404,
+                    "Hợp đồng không hợp lệ");
+        }
+
         return salaryContractRepository
                 .findByEmployee_IdAndContract_IdAndIsDeletedFalse(
                         employee.getId(),
-                        employee.getContracts().getFirst().getId()
+                        contract.getId()
                 )
                 .orElseThrow(() -> new AppException(ErrorCode.SALARY_CONTRACT_NOT_FOUND, 404));
     }

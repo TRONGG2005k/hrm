@@ -7,9 +7,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -23,6 +25,28 @@ public class FileUploadService {
 
     private static final String[] ALLOWED_EXTENSIONS = {
             "jpg", "jpeg", "png", "gif", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx"
+    };
+
+    private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    );
+
+    private static final byte[][] FILE_SIGNATURES = {
+            {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF}, // JPEG
+            {(byte) 0x89, 0x50, 0x4E, 0x47}, // PNG
+            {0x47, 0x49, 0x46, 0x38}, // GIF
+            {(byte) 0x25, 0x50, 0x44, 0x46}, // PDF
+            {(byte) 0xD0, (byte) 0xCF, 0x11, (byte) 0xE0}, // DOC, XLS, PPT (old Office)
+            {0x50, 0x4B, 0x03, 0x04}  // DOCX, XLSX, PPTX (new Office - ZIP based)
     };
 
     public String uploadFile(MultipartFile file) {
@@ -40,6 +64,17 @@ public class FileUploadService {
         String fileName = file.getOriginalFilename();
         if (fileName == null || !isAllowedFileType(fileName)) {
             throw new AppException(ErrorCode.FILE_INVALID_TYPE, 400, "Loại file không được hỗ trợ");
+        }
+
+        // Kiểm tra MIME type
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_MIME_TYPES.contains(contentType)) {
+            throw new AppException(ErrorCode.FILE_INVALID_TYPE, 400, "MIME type không được hỗ trợ");
+        }
+
+        // Kiểm tra file signature (magic number)
+        if (!isValidFileSignature(file)) {
+            throw new AppException(ErrorCode.FILE_INVALID_TYPE, 400, "Nội dung file không hợp lệ");
         }
 
         try {
@@ -116,5 +151,33 @@ public class FileUploadService {
         String extension = getFileExtension(originalFileName);
         String uuid = UUID.randomUUID().toString();
         return uuid + "." + extension;
+    }
+
+    private boolean isValidFileSignature(MultipartFile file) {
+        try (InputStream is = file.getInputStream()) {
+            byte[] header = new byte[4];
+            int bytesRead = is.read(header);
+            if (bytesRead < 4) {
+                return false;
+            }
+
+            for (byte[] signature : FILE_SIGNATURES) {
+                if (headerMatches(header, signature)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    private boolean headerMatches(byte[] header, byte[] signature) {
+        for (int i = 0; i < signature.length; i++) {
+            if (header[i] != signature[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }

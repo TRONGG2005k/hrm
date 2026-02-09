@@ -31,13 +31,17 @@ public interface AttendanceRepository extends JpaRepository<Attendance, String> 
             @Param("subDepartmentId") String subDepartmentId
     );
 
-    @Query("SELECT a FROM Attendance a " +
-       "JOIN a.attendanceOTRates ot " +
-       "JOIN ot.otRate r " +
+    /**
+     * Tìm attendance với OT rates đã được fetch sẵn để tránh N+1 query
+     */
+    @Query("SELECT DISTINCT a FROM Attendance a " +
+       "LEFT JOIN FETCH a.attendanceOTRates ot " +
+       "LEFT JOIN FETCH ot.otRate r " +
        "WHERE a.employee.id = :employeeId " +
        "AND a.workDate BETWEEN :startDate AND :endDate " +
-       "AND ot.isDeleted = false " +
-       "AND r.isDeleted = false")
+       "AND a.isDeleted = false " +
+       "AND (ot.isDeleted = false OR ot.isDeleted IS NULL) " +
+       "AND (r.isDeleted = false OR r.isDeleted IS NULL)")
     List<Attendance> findOTForEmployee(
             @Param("employeeId") String employeeId,
             @Param("startDate") LocalDate startDate,

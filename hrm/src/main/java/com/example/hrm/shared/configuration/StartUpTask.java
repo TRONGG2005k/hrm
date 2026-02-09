@@ -5,7 +5,7 @@ import com.example.hrm.modules.user.entity.UserAccount;
 import com.example.hrm.shared.enums.UserStatus;
 import com.example.hrm.modules.user.repository.RoleRepository;
 import com.example.hrm.modules.user.repository.UserAccountRepository;
-import jakarta.annotation.PostConstruct;
+// import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
