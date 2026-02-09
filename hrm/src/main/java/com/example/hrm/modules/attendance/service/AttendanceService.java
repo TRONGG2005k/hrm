@@ -4,7 +4,7 @@ import com.example.hrm.modules.attendance.dto.response.AttendanceDetailResponse;
 import com.example.hrm.modules.attendance.dto.response.AttendanceListResponse;
 import com.example.hrm.modules.attendance.dto.response.BreakTimeResponse;
 import com.example.hrm.modules.attendance.entity.Attendance;
-import com.example.hrm.modules.employee.repository.EmployeeRepository;
+// import com.example.hrm.modules.employee.repository.EmployeeRepository;
 import com.example.hrm.shared.enums.AttendanceEvaluation;
 import com.example.hrm.shared.enums.AttendanceStatus;
 import com.example.hrm.shared.enums.OTType;
@@ -29,7 +29,7 @@ public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
     private final AttendanceHelper attendanceHelper;
-    private final EmployeeRepository employeeRepository;
+//     private final EmployeeRepository employeeRepository;
 
     public Page<AttendanceListResponse> getAll(int page, int size) {
         return attendanceRepository

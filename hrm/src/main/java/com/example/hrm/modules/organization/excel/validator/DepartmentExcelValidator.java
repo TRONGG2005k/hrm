@@ -1,7 +1,7 @@
 package com.example.hrm.modules.organization.excel.validator;
 
 import com.example.hrm.modules.organization.excel.dto.DepartmentExcelDto;
-import com.example.hrm.modules.organization.repository.DepartmentRepository;
+// import com.example.hrm.modules.organization.repository.DepartmentRepository;
 import com.example.hrm.shared.excel.ExcelHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -12,7 +12,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class DepartmentExcelValidator {
-    private final DepartmentRepository departmentRepository;
+    // private final DepartmentRepository departmentRepository;
 
     public List<String>  valid(DepartmentExcelDto dto, int row){
         List<String> errorCode = new ArrayList<>();
