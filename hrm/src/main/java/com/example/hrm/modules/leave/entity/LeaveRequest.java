@@ -4,10 +4,9 @@ import com.example.hrm.modules.employee.entity.Employee;
 import com.example.hrm.shared.enums.LeaveStatus;
 import com.example.hrm.shared.enums.LeaveType;
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -16,6 +15,8 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "leave_request")
+@AllArgsConstructor
+@NoArgsConstructor
 public class LeaveRequest {
 
     @Id
@@ -47,4 +48,7 @@ public class LeaveRequest {
 
     @Builder.Default
     private Boolean isDeleted = false;
+
+    private BigDecimal totalDays;
+
 }

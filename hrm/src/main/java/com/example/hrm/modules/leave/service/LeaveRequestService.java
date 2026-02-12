@@ -11,6 +11,7 @@ import com.example.hrm.modules.leave.dto.response.LeaveRequestListItemResponse;
 import com.example.hrm.modules.leave.entity.LeaveRequest;
 import com.example.hrm.modules.leave.mapper.LeaveRequestMapper;
 import com.example.hrm.modules.leave.repository.LeaveRequestRepository;
+import com.example.hrm.modules.leave.util.LeaveUtil;
 import com.example.hrm.modules.user.entity.UserAccount;
 import com.example.hrm.modules.user.repository.UserAccountRepository;
 import com.example.hrm.shared.enums.AttendanceEvaluation;
@@ -52,6 +53,7 @@ public class LeaveRequestService {
         }
 
         LeaveRequest leaveRequest = leaveRequestMapper.toEntity(request, employee);
+        leaveRequest.setTotalDays(LeaveUtil.calculateTotalDays(leaveRequest.getStartDate(), leaveRequest.getEndDate()));
         leaveRequestRepository.save(leaveRequest);
 
         var response = leaveRequestMapper.toDetailResponse(leaveRequest);
@@ -188,5 +190,6 @@ public class LeaveRequestService {
             return response;
         });
     }
+
 
 }

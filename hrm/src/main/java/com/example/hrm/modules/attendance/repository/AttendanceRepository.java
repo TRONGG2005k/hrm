@@ -17,7 +17,7 @@ import java.util.Optional;
 @Repository
 public interface AttendanceRepository extends JpaRepository<Attendance, String> {
     Page<Attendance> findByIsDeletedFalse(Pageable pageable);
-
+    boolean existsByEmployeeAndWorkDate(Employee employee, LocalDate startDate);
     @Query("""
         select a
         from Attendance a

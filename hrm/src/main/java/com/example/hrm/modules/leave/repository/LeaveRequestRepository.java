@@ -25,4 +25,8 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Stri
     boolean existsOverlappingApprovedLeave(@Param("employeeId") String employeeId, @Param("startDate") LocalDate startDate,
                                            @Param("endDate") LocalDate endDate, @Param("status") LeaveStatus status,
                                            @Param("excludeId") String excludeId);
+
+    boolean existsByEmployee_CodeAndStartDateLessThanEqualAndEndDateGreaterThanEqualAndIsDeletedFalse(
+            String code, LocalDate start, LocalDate end
+    );
 }

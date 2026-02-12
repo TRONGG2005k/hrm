@@ -15,6 +15,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -33,7 +34,7 @@ public class EmployeeExcelService {
     private final EmployeeExcelMapper employeeExcelMapper;
     private final EmployeeRepository employeeRepository;
 
-//    @Transactional
+    @Transactional
     public ExcelResult importEmployees(MultipartFile file) {
 
 

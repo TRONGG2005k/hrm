@@ -5,8 +5,10 @@ import com.example.hrm.modules.attendance.dto.response.AttendanceListResponse;
 import com.example.hrm.modules.attendance.dto.response.BreakTimeResponse;
 import com.example.hrm.modules.attendance.entity.Attendance;
 // import com.example.hrm.modules.employee.repository.EmployeeRepository;
+import com.example.hrm.modules.leave.entity.LeaveRequest;
 import com.example.hrm.shared.enums.AttendanceEvaluation;
 import com.example.hrm.shared.enums.AttendanceStatus;
+import com.example.hrm.shared.enums.LeaveType;
 import com.example.hrm.shared.enums.OTType;
 import com.example.hrm.shared.exception.AppException;
 import com.example.hrm.shared.exception.ErrorCode;
@@ -18,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -234,4 +237,37 @@ public class AttendanceService {
         }
         return AttendanceEvaluation.ON_TIME;
     }
+
+    public void generateFromLeave(LeaveRequest leave) {
+
+        LocalDate current = leave.getStartDate();
+
+        while (!current.isAfter(leave.getEndDate())) {
+
+            if (attendanceRepository.existsByEmployeeAndWorkDate(
+                    leave.getEmployee(), current)) {
+                current = current.plusDays(1);
+                continue;
+            }
+
+            Attendance attendance = new Attendance();
+            attendance.setEmployee(leave.getEmployee());
+            attendance.setWorkDate(current);
+
+            if (leave.getType() == LeaveType.UNPAID) {
+                attendance.setStatus(AttendanceStatus.LEAVE_UNPAID);
+            } else {
+                attendance.setStatus(AttendanceStatus.LEAVE);
+            }
+
+            attendance.setCheckInTime(null);
+            attendance.setCheckOutTime(null);
+
+            attendanceRepository.save(attendance);
+
+            current = current.plusDays(1);
+        }
+    }
+
+
 }
