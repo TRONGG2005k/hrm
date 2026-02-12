@@ -5,7 +5,9 @@ import com.example.hrm.modules.attendance.dto.response.AttendanceListResponse;
 import com.example.hrm.modules.attendance.dto.response.BreakTimeResponse;
 import com.example.hrm.modules.attendance.entity.Attendance;
 // import com.example.hrm.modules.employee.repository.EmployeeRepository;
+import com.example.hrm.modules.leave.entity.LeaveBalance;
 import com.example.hrm.modules.leave.entity.LeaveRequest;
+import com.example.hrm.modules.leave.repository.LeaveBalanceRepository;
 import com.example.hrm.shared.enums.AttendanceEvaluation;
 import com.example.hrm.shared.enums.AttendanceStatus;
 import com.example.hrm.shared.enums.LeaveType;
@@ -33,6 +35,7 @@ public class AttendanceService {
     private final AttendanceRepository attendanceRepository;
     private final AttendanceHelper attendanceHelper;
 //     private final EmployeeRepository employeeRepository;
+    private final LeaveBalanceRepository leaveBalanceRepository;
 
     public Page<AttendanceListResponse> getAll(int page, int size) {
         return attendanceRepository
@@ -241,6 +244,10 @@ public class AttendanceService {
     public void generateFromLeave(LeaveRequest leave) {
 
         LocalDate current = leave.getStartDate();
+        LeaveBalance leaveBalance = leaveBalanceRepository
+                .findByEmployeeAndYearAndIsDeletedFalse(
+                        leave.getEmployee(), leave.getStartDate().getYear())
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404, "Không tìm thấy leaveBalance"));
 
         while (!current.isAfter(leave.getEndDate())) {
 
@@ -254,11 +261,7 @@ public class AttendanceService {
             attendance.setEmployee(leave.getEmployee());
             attendance.setWorkDate(current);
 
-            if (leave.getType() == LeaveType.UNPAID) {
-                attendance.setStatus(AttendanceStatus.LEAVE_UNPAID);
-            } else {
-                attendance.setStatus(AttendanceStatus.LEAVE);
-            }
+            setStatusAndUpdateBalance(leave, leaveBalance, attendance);
 
             attendance.setCheckInTime(null);
             attendance.setCheckOutTime(null);
@@ -266,6 +269,23 @@ public class AttendanceService {
             attendanceRepository.save(attendance);
 
             current = current.plusDays(1);
+        }
+
+        leaveBalanceRepository.save(leaveBalance); // cập nhật số dư sau khi xử lý xong
+    }
+
+    private void setStatusAndUpdateBalance(LeaveRequest leave,
+                                           LeaveBalance leaveBalance,
+                                           Attendance attendance) {
+        if (leave.getType() == LeaveType.UNPAID) {
+            attendance.setStatus(AttendanceStatus.LEAVE_UNPAID);
+        } else {
+            if (leaveBalance.getRemaining() > 0) {
+                attendance.setStatus(AttendanceStatus.LEAVE);
+                leaveBalance.setRemaining(leaveBalance.getRemaining() - 1); // trừ phép
+            } else {
+                attendance.setStatus(AttendanceStatus.LEAVE_UNPAID);
+            }
         }
     }
 
