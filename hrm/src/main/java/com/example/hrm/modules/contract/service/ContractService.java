@@ -7,6 +7,7 @@ import com.example.hrm.modules.contract.dto.response.ContractResponse;
 import com.example.hrm.modules.contract.entity.Contract;
 import com.example.hrm.modules.contract.entity.ContractAllowance;
 import com.example.hrm.modules.contract.entity.SalaryContract;
+import com.example.hrm.modules.contract.excel.dto.ContractExcelDto;
 import com.example.hrm.modules.contract.repository.AllowanceRuleRepository;
 import com.example.hrm.modules.contract.repository.ContractRepository;
 import com.example.hrm.modules.contract.repository.SalaryContractRepository;
@@ -24,6 +25,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -223,4 +226,8 @@ public class ContractService {
 
         return response;
     }
+    public List<ContractExcelDto> getAllForExcel() {
+        return contractRepository.findAllForExcel();
+    }
+
 }

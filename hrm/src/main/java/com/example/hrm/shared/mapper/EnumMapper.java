@@ -81,6 +81,7 @@ public class EnumMapper {
     }
 
     public AllowanceCalculationType mapAllowanceCalculationType(String value) {
+        log.warn("value : {}", value);
         if (value == null || value.trim().isEmpty()) {
             return null;
         }

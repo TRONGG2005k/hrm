@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -83,6 +84,7 @@ public class ExcelHelper {
 
     public AllowanceCalculationType getAllowanceCalculationType(Cell cell) {
         String value = getString(cell);
+        log.warn("value : {}", value);
         if (value == null)
             return null;
         return enumMapper.mapAllowanceCalculationType(value);
@@ -246,6 +248,50 @@ public class ExcelHelper {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public BigDecimal getBigDecimal(Cell cell) {
+        if (cell == null)
+            return null;
+
+        if (cell.getCellType() == CellType.NUMERIC) {
+            return BigDecimal.valueOf(cell.getNumericCellValue());
+        }
+
+        String value = getString(cell);
+        if (value == null)
+            return null;
+
+        try {
+            return new BigDecimal(value);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public Boolean getBoolean(Cell cell) {
+        if (cell == null) {
+            return null;
+        }
+
+        if (cell.getCellType() == CellType.BOOLEAN) {
+            return cell.getBooleanCellValue();
+        }
+
+        String value = getString(cell);
+        if (value == null) {
+            return null;
+        }
+
+        value = value.toLowerCase();
+        if (value.equals("true") || value.equals("1") || value.equals("yes") || value.equals("y")) {
+            return true;
+        }
+        if (value.equals("false") || value.equals("0") || value.equals("no") || value.equals("n")) {
+            return false;
+        }
+
+        return null;
     }
 
     // ================== VALIDATE ==================

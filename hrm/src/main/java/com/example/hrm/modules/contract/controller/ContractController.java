@@ -4,21 +4,27 @@ import com.example.hrm.modules.contract.dto.request.ContractRequest;
 import com.example.hrm.modules.contract.dto.request.ContractUpdateRequest;
 import com.example.hrm.modules.contract.dto.response.ContractListResponse;
 import com.example.hrm.modules.contract.dto.response.ContractResponse;
+import com.example.hrm.modules.contract.excel.ContractExcelService;
+import com.example.hrm.shared.ExcelResult;
 import com.example.hrm.shared.enums.ContractStatus;
 import com.example.hrm.modules.contract.service.ContractService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("${app.api-prefix}/contract")
 public class ContractController {
     private final ContractService contractService;
-
+    private final ContractExcelService contractExcelService;
     @PostMapping
     public ResponseEntity<ContractResponse> create(@Valid @RequestBody ContractRequest request){
         return ResponseEntity.status(HttpStatus.CREATED).body(contractService.create(request));
@@ -65,5 +71,19 @@ public class ContractController {
         return contractService.changeContractStatus(contractId, newStatus);
     }
 
+    @PostMapping("/import")
+    public ResponseEntity<ExcelResult> importContract(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(contractExcelService.importFile(file));
+    }
 
+    @GetMapping("/export")
+    public ResponseEntity<ByteArrayResource> exportContract() {
+        String filename = "contracts.xlsx";
+        ByteArrayResource file = contractExcelService.exportFile();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(file);
+    }
 }

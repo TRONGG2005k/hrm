@@ -1,6 +1,9 @@
 package com.example.hrm.modules.contract.repository;
 
 import com.example.hrm.modules.contract.entity.AllowanceRule;
+import com.example.hrm.modules.organization.entity.Position;
+import com.example.hrm.modules.organization.entity.SubDepartment;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,5 +23,8 @@ public interface AllowanceRuleRepository
             @Param("positionId") String positionId,
             @Param("deptId") String deptId
     );
+    @EntityGraph(attributePaths = {"position", "subDepartment", "allowance"})
+    List<AllowanceRule> findAllByActiveTrue();
+    boolean existsByAllowanceCodeAndPositionIdAndSubDepartmentIdAndActiveTrue(String code, String position, String subDepartment);
 }
 

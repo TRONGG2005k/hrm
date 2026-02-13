@@ -13,6 +13,8 @@ import com.example.hrm.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class AllowanceRuleService {
@@ -55,5 +57,8 @@ public class AllowanceRuleService {
         rule.setActive(true);
 
         return mapper.toResponse(repository.save(rule));
+    }
+    public List<AllowanceRule> getAll(){
+        return repository.findAllByActiveTrue();
     }
 }
