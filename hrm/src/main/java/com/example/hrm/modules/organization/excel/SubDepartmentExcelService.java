@@ -36,6 +36,7 @@ public class SubDepartmentExcelService {
     private final SubDepartmentService subDepartmentService;
     private final SubDepartmentExcelValidator validator;
     private final SubDepartmentExcelMapper mapper;
+    private final ExcelHelper excelHelper;
 
     public ExcelResult importFile(MultipartFile file) {
         List<SubDepartmentExcelDto> dtos = parseExcel(file);
@@ -135,9 +136,9 @@ public class SubDepartmentExcelService {
             if (row == null) continue;
 
             SubDepartmentExcelDto dto = new SubDepartmentExcelDto();
-            dto.setName(ExcelHelper.getString(row.getCell(0)));
-            dto.setDepartmentName(ExcelHelper.getString(row.getCell(1)));
-            dto.setDescription(ExcelHelper.getString(row.getCell(2)));
+            dto.setName(excelHelper.getString(row.getCell(0)));
+            dto.setDepartmentName(excelHelper.getString(row.getCell(1)));
+            dto.setDescription(excelHelper.getString(row.getCell(2)));
             dtos.add(dto);
         }
         return dtos;

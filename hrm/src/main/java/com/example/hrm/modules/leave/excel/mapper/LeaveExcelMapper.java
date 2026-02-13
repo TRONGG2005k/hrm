@@ -22,6 +22,7 @@ import java.util.List;
 public class LeaveExcelMapper {
 
     private final EmployeeRepository employeeRepository;
+    private final ExcelHelper excelHelper;
 
     public List<LeaveImportRequestExcelDto> toDto(Sheet sheet) {
         List<LeaveImportRequestExcelDto> dtos = new ArrayList<>();
@@ -31,11 +32,11 @@ public class LeaveExcelMapper {
             if (row == null) continue;
 
             LeaveImportRequestExcelDto dto = new LeaveImportRequestExcelDto();
-            dto.setEmployeeCode(ExcelHelper.getString(row.getCell(0)));
-            dto.setStartDate(ExcelHelper.getLocalDate(row.getCell(1)));
-            dto.setEndDate(ExcelHelper.getLocalDate(row.getCell(2)));
-            dto.setType(ExcelHelper.getLeaveType(row.getCell(3)));
-            dto.setReason(ExcelHelper.getString(row.getCell(4)));
+            dto.setEmployeeCode(excelHelper.getString(row.getCell(0)));
+            dto.setStartDate(excelHelper.getLocalDate(row.getCell(1)));
+            dto.setEndDate(excelHelper.getLocalDate(row.getCell(2)));
+            dto.setType(excelHelper.getLeaveType(row.getCell(3)));
+            dto.setReason(excelHelper.getString(row.getCell(4)));
             dtos.add(dto);
         }
         return dtos;
@@ -49,6 +50,7 @@ public class LeaveExcelMapper {
         leaveRequest.setTotalDays(LeaveUtil.calculateTotalDays(dto.getStartDate(), dto.getEndDate()));
         leaveRequest.setType(dto.getType());
         leaveRequest.setStatus(LeaveStatus.APPROVED);
+        leaveRequest.setStartDate(dto.getStartDate());
         leaveRequest.setReason(dto.getReason());
         leaveRequest.setEndDate(dto.getEndDate());
         leaveRequest.setEmployee(employee);

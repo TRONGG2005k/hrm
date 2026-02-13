@@ -13,11 +13,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DepartmentExcelValidator {
     // private final DepartmentRepository departmentRepository;
+    private final ExcelHelper excelHelper;
 
     public List<String>  valid(DepartmentExcelDto dto, int row){
         List<String> errorCode = new ArrayList<>();
 
-        if (ExcelHelper.isBlank(dto.getName())) {
+        if (excelHelper.isBlank(dto.getName())) {
             errorCode.add("dòng" + row +" tên ko được để trống");
         }
         return errorCode;

@@ -12,6 +12,8 @@ import com.example.hrm.shared.ExcelResult;
 import com.example.hrm.shared.exception.AppException;
 import com.example.hrm.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -19,12 +21,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class LeaveRequestExcelService {
 
     private final LeaveExcelValidator validator;
@@ -73,10 +79,55 @@ public class LeaveRequestExcelService {
             dtos.addAll(mapper.toDto(sheet));
 
         } catch (Exception e) {
+            log.error("Lỗi đọc file Excel: {}", e.getMessage());
             throw new RuntimeException("Lỗi đọc file Excel: " + e.getMessage(), e);
         }
         return dtos;
     }
 
+    public ByteArrayInputStream exportLeaveRequestsToExcel(String subDepartmentId) {
+        String[] LEAVE_EXCEL_HEADERS = {
+                "Mã nhân viên",
+                "Ngày bắt đầu",
+                "Ngày kết thúc",
+                "Loại nghỉ",
+                "Lý do"
+        };
+
+        List<LeaveRequest> leaveRequests = leaveRequestRepository.findByEmployee_SubDepartment_IdAndIsDeletedFalse(subDepartmentId);
+
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Leave Requests");
+
+            // Header
+            Row headerRow = sheet.createRow(0);
+            for (int col = 0; col < LEAVE_EXCEL_HEADERS.length; col++) {
+                org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(col);
+                cell.setCellValue(LEAVE_EXCEL_HEADERS[col]);
+            }
+
+            // Data
+            int rowIdx = 1;
+            for (LeaveRequest leaveRequest : leaveRequests) {
+                Row row = sheet.createRow(rowIdx++);
+
+                row.createCell(0).setCellValue(leaveRequest.getEmployee().getCode());
+                row.createCell(1).setCellValue(leaveRequest.getStartDate().toString());
+                row.createCell(2).setCellValue(leaveRequest.getEndDate().toString());
+                row.createCell(3).setCellValue(leaveRequest.getType().toString());
+                row.createCell(4).setCellValue(leaveRequest.getReason());
+            }
+
+            // Auto-size columns
+            for (int col = 0; col < LEAVE_EXCEL_HEADERS.length; col++) {
+                sheet.autoSizeColumn(col);
+            }
+
+            workbook.write(out);
+            return new ByteArrayInputStream(out.toByteArray());
+        } catch (IOException e) {
+            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR, 500, "Lỗi khi xuất file Excel: " + e.getMessage());
+        }
+    }
 
 }

@@ -33,6 +33,7 @@ public class EmployeeExcelService {
     private final EmployeeValidator employeeValidator;
     private final EmployeeExcelMapper employeeExcelMapper;
     private final EmployeeRepository employeeRepository;
+    private final ExcelHelper excelHelper;
 
     @Transactional
     public ExcelResult importEmployees(MultipartFile file) {
@@ -178,24 +179,24 @@ public class EmployeeExcelService {
             if (row == null) continue;
 
             EmployeeExcelImportDto dto = new EmployeeExcelImportDto();
-            dto.setCode(ExcelHelper.getString(row.getCell(0)));
-            dto.setFirstName(ExcelHelper.getString(row.getCell(1)));
-            dto.setLastName(ExcelHelper.getString(row.getCell(2)));
-            dto.setDateOfBirth(ExcelHelper.getLocalDate(row.getCell(3)));
-            dto.setGender(ExcelHelper.getString(row.getCell(4)));
-            dto.setEmail(ExcelHelper.getString(row.getCell(5)));
-            dto.setPhone(ExcelHelper.getString(row.getCell(6)));
-            dto.setStatus(ExcelHelper.getString(row.getCell(7)));
-            dto.setJoinDate(ExcelHelper.getLocalDate(row.getCell(8)));
-            dto.setShiftType(ExcelHelper.getShiftType(row.getCell(9)));
+            dto.setCode(excelHelper.getString(row.getCell(0)));
+            dto.setFirstName(excelHelper.getString(row.getCell(1)));
+            dto.setLastName(excelHelper.getString(row.getCell(2)));
+            dto.setDateOfBirth(excelHelper.getLocalDate(row.getCell(3)));
+            dto.setGender(excelHelper.getString(row.getCell(4)));
+            dto.setEmail(excelHelper.getString(row.getCell(5)));
+            dto.setPhone(excelHelper.getString(row.getCell(6)));
+            dto.setStatus(excelHelper.getString(row.getCell(7)));
+            dto.setJoinDate(excelHelper.getLocalDate(row.getCell(8)));
+            dto.setShiftType(excelHelper.getShiftType(row.getCell(9)));
 
-            dto.setStreet(ExcelHelper.getString(row.getCell(10)));
-            dto.setWard(ExcelHelper.getString(row.getCell(11)));
-            dto.setDistrict(ExcelHelper.getString(row.getCell(12)));
-            dto.setProvince(ExcelHelper.getString(row.getCell(13)));
+            dto.setStreet(excelHelper.getString(row.getCell(10)));
+            dto.setWard(excelHelper.getString(row.getCell(11)));
+            dto.setDistrict(excelHelper.getString(row.getCell(12)));
+            dto.setProvince(excelHelper.getString(row.getCell(13)));
 
-            dto.setDepartmentName(ExcelHelper.getString(row.getCell(14)));
-            dto.setPositionName(ExcelHelper.getString(row.getCell(15)));
+            dto.setDepartmentName(excelHelper.getString(row.getCell(14)));
+            dto.setPositionName(excelHelper.getString(row.getCell(15)));
 
             dtos.add(dto);
         }

@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, String> {
@@ -29,4 +30,6 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Stri
     boolean existsByEmployee_CodeAndStartDateLessThanEqualAndEndDateGreaterThanEqualAndIsDeletedFalse(
             String code, LocalDate start, LocalDate end
     );
+
+    List<LeaveRequest> findByEmployee_SubDepartment_IdAndIsDeletedFalse(String subDepartmentId);
 }

@@ -28,7 +28,8 @@ public class UserAccount {
     String username;
     String password;
 
-    @OneToOne(cascade = CascadeType.PERSIST)
+//    @OneToOne(cascade = CascadeType.PERSIST)
+    @OneToOne
     @JoinColumn(name = "employee_id", nullable = false)
     Employee employee;
 

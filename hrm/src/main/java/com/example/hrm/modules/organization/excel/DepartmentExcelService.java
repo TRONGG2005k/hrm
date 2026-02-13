@@ -33,6 +33,7 @@ public class DepartmentExcelService {
     private final DepartmentService departmentService;
     private final DepartmentExcelValidator validator;
     private final DepartmentExcelMapper mapper;
+    private final ExcelHelper excelHelper;
 
     public ExcelResult importFile(MultipartFile file) {
         List<DepartmentExcelDto> dtos = parseExcel(file);
@@ -118,8 +119,8 @@ public class DepartmentExcelService {
             if (row == null) continue;
 
             DepartmentExcelDto dto = new DepartmentExcelDto();
-            dto.setName(ExcelHelper.getString(row.getCell(0)));
-            dto.setDescription(ExcelHelper.getString(row.getCell(1)));
+            dto.setName(excelHelper.getString(row.getCell(0)));
+            dto.setDescription(excelHelper.getString(row.getCell(1)));
             dtos.add(dto);
         }
         return dtos;

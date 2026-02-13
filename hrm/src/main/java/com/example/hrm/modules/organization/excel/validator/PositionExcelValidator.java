@@ -14,12 +14,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PositionExcelValidator {
     private final PositionRepository positionRepository;
+    private final ExcelHelper excelHelper;
 
     public List<String> valid(PositionExcelDto dto, int row) {
         List<String> errors = new ArrayList<>();
 
         // Validate code
-        if (ExcelHelper.isBlank(dto.getCode())) {
+        if (excelHelper.isBlank(dto.getCode())) {
             errors.add("Dòng " + row + ": Mã chức vụ không được để trống");
         } else if (dto.getCode().length() > 50) {
             errors.add("Dòng " + row + ": Mã chức vụ không được vượt quá 50 ký tự");
@@ -32,7 +33,7 @@ public class PositionExcelValidator {
         }
 
         // Validate name
-        if (ExcelHelper.isBlank(dto.getName())) {
+        if (excelHelper.isBlank(dto.getName())) {
             errors.add("Dòng " + row + ": Tên chức vụ không được để trống");
         } else if (dto.getName().length() > 100) {
             errors.add("Dòng " + row + ": Tên chức vụ không được vượt quá 100 ký tự");

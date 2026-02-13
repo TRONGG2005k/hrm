@@ -4,13 +4,21 @@ import com.example.hrm.modules.leave.dto.request.LeaveRequestApprovalRequest;
 import com.example.hrm.modules.leave.dto.request.LeaveRequestCreateRequest;
 import com.example.hrm.modules.leave.dto.response.LeaveRequestDetailResponse;
 import com.example.hrm.modules.leave.dto.response.LeaveRequestListItemResponse;
+import com.example.hrm.modules.leave.excel.LeaveRequestExcelService;
 import com.example.hrm.modules.leave.service.LeaveRequestService;
+import com.example.hrm.shared.ExcelResult;
 import com.example.hrm.shared.enums.LeaveStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.ByteArrayInputStream;
 
 @RestController
 @RequestMapping("${app.api-prefix}/leave-requests")
@@ -18,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 public class LeaveRequestController {
 
     private final LeaveRequestService leaveRequestService;
+    private final LeaveRequestExcelService leaveRequestExcelService;
 
     /**
      * Tạo yêu cầu nghỉ phép mới
@@ -101,5 +110,35 @@ public class LeaveRequestController {
     ) {
         Page<LeaveRequestListItemResponse> response = leaveRequestService.getAllByStatus(page, size, status);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Xuất danh sách yêu cầu nghỉ phép ra file Excel theo phòng ban con
+     * @param subDepartmentId ID của phòng ban con
+     * @return File Excel chứa danh sách yêu cầu nghỉ phép
+     */
+    @GetMapping("/export")
+    public ResponseEntity<InputStreamResource> exportLeaveRequests(@RequestParam String subDepartmentId) {
+        ByteArrayInputStream in = leaveRequestExcelService.exportLeaveRequestsToExcel(subDepartmentId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attachment; filename=leave_requests.xlsx");
+
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(new InputStreamResource(in));
+    }
+
+    /**
+     * Import danh sách yêu cầu nghỉ phép từ file Excel
+     * @param file File Excel chứa danh sách yêu cầu nghỉ phép
+     * @return Kết quả import
+     */
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ExcelResult> importLeaveRequests(@RequestParam("file") MultipartFile file) {
+        ExcelResult result = leaveRequestExcelService.importExcel(file);
+        return ResponseEntity.ok(result);
     }
 }

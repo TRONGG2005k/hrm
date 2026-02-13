@@ -30,6 +30,7 @@ public class PositionExcelService {
     private final PositionService positionService;
     private final PositionExcelValidator validator;
     private final PositionExcelMapper mapper;
+    private final ExcelHelper excelHelper;
 
     public ExcelResult importFile(MultipartFile file) {
         List<PositionExcelDto> dtos = parseExcel(file);
@@ -119,16 +120,16 @@ public class PositionExcelService {
             if (row == null) continue;
 
             PositionExcelDto dto = new PositionExcelDto();
-            dto.setCode(ExcelHelper.getString(row.getCell(0)));
-            dto.setName(ExcelHelper.getString(row.getCell(1)));
-            dto.setDescription(ExcelHelper.getString(row.getCell(2)));
+            dto.setCode(excelHelper.getString(row.getCell(0)));
+            dto.setName(excelHelper.getString(row.getCell(1)));
+            dto.setDescription(excelHelper.getString(row.getCell(2)));
             // Handle boolean value from Excel
             Cell activeCell = row.getCell(3);
             if (activeCell != null) {
                 if (activeCell.getCellType() == CellType.BOOLEAN) {
                     dto.setActive(activeCell.getBooleanCellValue());
                 } else {
-                    String activeStr = ExcelHelper.getString(activeCell);
+                    String activeStr = excelHelper.getString(activeCell);
                     dto.setActive(activeStr != null && Boolean.parseBoolean(activeStr));
                 }
             }

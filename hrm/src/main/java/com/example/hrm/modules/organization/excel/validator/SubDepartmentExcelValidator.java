@@ -17,15 +17,16 @@ import java.util.List;
 public class SubDepartmentExcelValidator {
     private final DepartmentRepository departmentRepository;
     // private final SubDepartmentRepository subDepartmentRepository;
+    private final ExcelHelper excelHelper;
 
     public List<String> valid(SubDepartmentExcelDto dto, int row) {
         List<String> errors = new ArrayList<>();
 
-        if (ExcelHelper.isBlank(dto.getName())) {
+        if (excelHelper.isBlank(dto.getName())) {
             errors.add("Dòng " + row + ": tên sub-department không được để trống");
         }
 
-        if (ExcelHelper.isBlank(dto.getDepartmentName())) {
+        if (excelHelper.isBlank(dto.getDepartmentName())) {
             errors.add("Dòng " + row + ": departmentName không được để trống");
         } else {
             // Kiểm tra department có tồn tại không

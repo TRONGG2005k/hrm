@@ -21,71 +21,72 @@ public class EmployeeValidator {
     private final SubDepartmentRepository subDepartmentRepository;
     private final PositionRepository positionRepository;
     private final EmployeeRepository employeeRepository;
+    private final ExcelHelper excelHelper;
 
     public List<String> validateEmployee(EmployeeExcelImportDto dto, int rowNumber) {
         List<String> errors = new ArrayList<>();
 
         // Code
-        if (ExcelHelper.isBlank(dto.getCode())) {
+        if (excelHelper.isBlank(dto.getCode())) {
             errors.add(error(rowNumber, "Code không được để trống"));
         } else if (employeeRepository.existsByCodeAndIsDeletedFalse(dto.getCode())) {
             errors.add(error(rowNumber, "Mã nhân viên đã tồn tại: " + dto.getCode()));
         }
 
         // First name
-        if (ExcelHelper.isBlank(dto.getFirstName())) {
+        if (excelHelper.isBlank(dto.getFirstName())) {
             errors.add(error(rowNumber, "First name không được để trống"));
         }
 
         // Last name
-        if (ExcelHelper.isBlank(dto.getLastName())) {
+        if (excelHelper.isBlank(dto.getLastName())) {
             errors.add(error(rowNumber, "Last name không được để trống"));
         }
 
         // Email
-        if (ExcelHelper.isBlank(dto.getEmail())) {
+        if (excelHelper.isBlank(dto.getEmail())) {
             errors.add(error(rowNumber, "Email không được để trống"));
-        } else if (!ExcelHelper.isValidEmail(dto.getEmail())) {
+        } else if (!excelHelper.isValidEmail(dto.getEmail())) {
             errors.add(error(rowNumber, "Email không hợp lệ"));
         }
 
         // Phone
-        if (!ExcelHelper.isBlank(dto.getPhone()) && !ExcelHelper.isValidPhone(dto.getPhone())) {
+        if (!excelHelper.isBlank(dto.getPhone()) && !excelHelper.isValidPhone(dto.getPhone())) {
             errors.add(error(rowNumber, "Số điện thoại không hợp lệ"));
         }
 
         // Gender
-        if (ExcelHelper.isBlank(dto.getGender())) {
+        if (excelHelper.isBlank(dto.getGender())) {
             errors.add(error(rowNumber, "Gender không được để trống"));
-        } else if (!ExcelHelper.isValidEnum(Gender.class, dto.getGender())) {
+        } else if (!excelHelper.isValidEnum(Gender.class, dto.getGender())) {
             errors.add(error(rowNumber, "Gender không hợp lệ"));
         }
 
         // Status
-        if (!ExcelHelper.isBlank(dto.getStatus())
-                && !ExcelHelper.isValidEnum(EmployeeStatus.class, dto.getStatus())) {
+        if (!excelHelper.isBlank(dto.getStatus())
+                && !excelHelper.isValidEnum(EmployeeStatus.class, dto.getStatus())) {
             errors.add(error(rowNumber, "Status không hợp lệ"));
         }
 
         // Date of birth
-        if (dto.getDateOfBirth() != null && ExcelHelper.isFutureDate(dto.getDateOfBirth())) {
+        if (dto.getDateOfBirth() != null && excelHelper.isFutureDate(dto.getDateOfBirth())) {
             errors.add(error(rowNumber, "Ngày sinh không được lớn hơn ngày hiện tại"));
         }
 
         // Join date
-        if (dto.getJoinDate() != null && ExcelHelper.isFutureDate(dto.getJoinDate())) {
+        if (dto.getJoinDate() != null && excelHelper.isFutureDate(dto.getJoinDate())) {
             errors.add(error(rowNumber, "Ngày vào làm không được lớn hơn ngày hiện tại"));
         }
 
         // Department
-        if (ExcelHelper.isBlank(dto.getDepartmentName())) {
+        if (excelHelper.isBlank(dto.getDepartmentName())) {
             errors.add(error(rowNumber, "Tên phòng ban không được để trống"));
         } else if (!subDepartmentRepository.existsByNameAndIsDeletedFalse(dto.getDepartmentName())) {
             errors.add(error(rowNumber, "Không tồn tại phòng ban: " + dto.getDepartmentName()));
         }
 
         // Position
-        if (ExcelHelper.isBlank(dto.getPositionName())) {
+        if (excelHelper.isBlank(dto.getPositionName())) {
             errors.add(error(rowNumber, "Tên chức vụ không được để trống"));
         } else if (!positionRepository.existsByNameAndIsDeletedFalse(dto.getPositionName())) {
             errors.add(error(rowNumber, "Không tồn tại chức vụ: " + dto.getPositionName()));
@@ -100,4 +101,3 @@ public class EmployeeValidator {
         return "Dòng " + rowNumber + ": " + message;
     }
 }
-

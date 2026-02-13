@@ -247,6 +247,8 @@ public class EnumMapper {
     }
 
     public LeaveType mapLeaveType(String value) {
+        log.info("Raw value='{}', length={}", value, value.length());
+
         if (value == null || value.trim().isEmpty()) {
             return null;
         }
@@ -266,6 +268,7 @@ public class EnumMapper {
     }
 
     public OTType mapOTType(String value) {
+
         if (value == null || value.trim().isEmpty()) {
             return null;
         }

@@ -17,12 +17,13 @@ public class LeaveExcelValidator {
 
     private final EmployeeRepository employeeRepository;
     private final LeaveRequestRepository leaveRequestRepository;
+    private final ExcelHelper excelHelper;
 
     public List<String> validateLeave(LeaveImportRequestExcelDto dto, int rowNumber) {
         List<String> errors = new ArrayList<>();
 
         // ================= EMPLOYEE CODE =================
-        if (ExcelHelper.isBlank(dto.getEmployeeCode())) {
+        if (excelHelper.isBlank(dto.getEmployeeCode())) {
             errors.add(error(rowNumber, "Mã nhân viên không được để trống"));
         } else if (!employeeRepository.existsByCodeAndIsDeletedFalse(dto.getEmployeeCode())) {
             errors.add(error(rowNumber, "Không tồn tại nhân viên: " + dto.getEmployeeCode()));
@@ -44,13 +45,13 @@ public class LeaveExcelValidator {
                 errors.add(error(rowNumber, "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu"));
             }
 
-            if (ExcelHelper.isFutureDate(dto.getStartDate())) {
-                errors.add(error(rowNumber, "Ngày bắt đầu không được lớn hơn ngày hiện tại"));
-            }
+//            if (excelHelper.isFutureDate(dto.getStartDate())) {
+//                errors.add(error(rowNumber, "Ngày bắt đầu không được lớn hơn ngày hiện tại"));
+//            }
 
-            if (ExcelHelper.isFutureDate(dto.getEndDate())) {
-                errors.add(error(rowNumber, "Ngày kết thúc không được lớn hơn ngày hiện tại"));
-            }
+//            if (excelHelper.isFutureDate(dto.getEndDate())) {
+//                errors.add(error(rowNumber, "Ngày kết thúc không được lớn hơn ngày hiện tại"));
+//            }
         }
 
         // ================= LEAVE TYPE =================
@@ -59,7 +60,7 @@ public class LeaveExcelValidator {
         }
 
         // ================= DUPLICATE / OVERLAP CHECK =================
-        if (!ExcelHelper.isBlank(dto.getEmployeeCode())
+        if (!excelHelper.isBlank(dto.getEmployeeCode())
                 && dto.getStartDate() != null
                 && dto.getEndDate() != null) {
 
