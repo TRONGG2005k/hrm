@@ -58,7 +58,7 @@ public class AllowanceController {
         return excelService.importFile(file);
     }
 
-    @GetMapping("/export-template")
+    @GetMapping("/export")
     public ResponseEntity<InputStreamResource> exportTemplate() {
         ByteArrayInputStream in = excelService.exportData();
 

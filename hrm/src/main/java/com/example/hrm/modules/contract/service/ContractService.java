@@ -215,14 +215,12 @@ public class ContractService {
 
         var files = fileAttachmentRepository
                 .findByRefTypeAndRefIdAndIsDeletedFalse(
-                        RefType.EMPLOYEE.getValue(),
-                        contract.getEmployee().getId()
+                        RefType.CONTRACT.getValue(),
+                        contract.getId()
                 );
 
         var response = contractMapper.toResponse(contract);
-        response.getEmployee().setFileAttachmentResponses(
-                files.stream().map(fileAttachmentMapper::toResponse).toList()
-        );
+        response.setFileAttachmentResponses(files.stream().map(fileAttachmentMapper::toResponse).toList());
 
         return response;
     }

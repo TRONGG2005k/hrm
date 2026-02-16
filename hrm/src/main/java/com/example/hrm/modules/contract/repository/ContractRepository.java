@@ -22,6 +22,10 @@ public interface ContractRepository extends JpaRepository<Contract, String> {
     Optional<Contract> findByIdAndIsDeletedFalse(String id);
     boolean existsByEmployee_CodeAndCodeAndIsDeletedFalse(String employeecode, String contractCode);
     Page<Contract> findByIsDeletedFalseAndStatusNot(Pageable pageable, ContractStatus status);
+    Optional<Contract> findByEmployeeIdAndStatusAndIsDeletedFalse(
+            String employeeId,
+            ContractStatus status
+    );
 
     @Query("""
     SELECT new com.example.hrm.modules.contract.excel.dto.ContractExcelDto(

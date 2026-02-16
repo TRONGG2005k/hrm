@@ -1,6 +1,7 @@
 package com.example.hrm.modules.file.entity;
 
 
+import com.example.hrm.shared.enums.FileCategory;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -30,6 +31,10 @@ public class FileAttachment {
     private String refType;
 
     private String refId;
+
+    @Column(name = "category")
+    @Enumerated(EnumType.STRING)
+    private FileCategory category;
 
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

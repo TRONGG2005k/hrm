@@ -60,6 +60,50 @@ public class EnumMapper {
             }
         };
     }
+    public FileCategory mapFileCategory(String value) {
+
+        if (value == null || value.trim().isEmpty()) {
+            return FileCategory.OTHER;
+        }
+
+        String normalized = value
+                .trim()
+                .toLowerCase()
+                .replace("-", "_")
+                .replace(" ", "_");
+
+        return switch (normalized) {
+
+            // CONTRACT
+            case "contract", "hop_dong", "hopdong" ->
+                    FileCategory.CONTRACT;
+
+            // CV
+            case "cv", "resume", "so_yeu_ly_lich", "soyeulylich" ->
+                    FileCategory.CV;
+
+            // CERTIFICATE
+            case "certificate", "cert", "bang_cap", "bangcap", "chung_chi", "chungchi" ->
+                    FileCategory.CERTIFICATE;
+
+            // ID CARD
+            case "id_card", "cmnd", "cccd", "identity", "can_cuoc", "cancuoc" ->
+                    FileCategory.ID_CARD;
+
+            // AVATAR
+            case "avatar", "profile", "profile_picture", "anh_dai_dien", "anhdaidien" ->
+                    FileCategory.AVATAR;
+
+            // OTHER
+            case "other", "khac", "file_khac", "filekhac" ->
+                    FileCategory.OTHER;
+
+            default -> {
+                log.warn("Unknown file category value: {}", value);
+                yield FileCategory.OTHER;
+            }
+        };
+    }
 
     public AdjustmentType mapAdjustmentType(String value) {
         if (value == null || value.trim().isEmpty()) {

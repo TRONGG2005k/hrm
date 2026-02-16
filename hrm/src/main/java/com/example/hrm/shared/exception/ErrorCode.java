@@ -98,6 +98,7 @@ public enum ErrorCode {
     FILE_INVALID_TYPE("E16004", "Loại tệp không được hỗ trợ"),
     FILE_IS_EMPTY("E16005", "không có file nào tồn tại trong request"),
     HANDLING_FAILED_FILES("E16006", "xử lý file thất bại"),
+    FILE_ALREADY_EXISTS("E16007", "File đã tồn tại"),
 
     // Validation errors (20000-20999)
     VALIDATION_ERROR("E20001", "Dữ liệu đầu vào không hợp lệ"),

@@ -11,5 +11,11 @@ import java.util.List;
 @Repository
 public interface FileAttachmentRepository extends JpaRepository<FileAttachment, String> {
     Page<FileAttachment> findByIsDeletedFalse(Pageable pageable);
+    boolean existsByRefTypeAndRefIdAndFileNameAndIsDeletedFalse(
+            String refType,
+            String refId,
+            String fileName
+    );
+
     List<FileAttachment> findByRefTypeAndRefIdAndIsDeletedFalse(String refType, String refId);
 }
