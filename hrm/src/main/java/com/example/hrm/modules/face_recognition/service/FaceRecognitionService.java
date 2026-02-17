@@ -28,7 +28,6 @@ public class FaceRecognitionService {
     private final CallApiFaceRecognition callApiFaceRecognition;
     private final EmployeeRepository employeeRepository;
 
-
     public String registerFace(FaceUploadRequest request){
         try{
             List<String> base64Images = validateAndConvertImages(request.getFiles());
@@ -38,11 +37,35 @@ public class FaceRecognitionService {
 
             var employee = employeeRepository.findByIdAndIsDeletedFalse(request.getEmployeeId())
                     .orElseThrow(() ->  new AppException(ErrorCode.USER_NOT_FOUND, 404));
-            return callApiFaceRecognition.registerFace(employee.getId(), base64Images);
+            return callApiFaceRecognition.registerFace(employee.getCode(), base64Images);
         } catch (Exception e){
             throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR, 500);
         }
     }
+
+    // ================= REGISTER BATCH =================
+    public Object registerFaceBatch(MultipartFile file) {
+
+        try {
+
+            if (file == null || file.isEmpty()) {
+                throw new AppException(ErrorCode.FILE_IS_EMPTY, 400);
+            }
+
+            // gọi API Python
+            return callApiFaceRecognition.registerFaceBatch(
+                    file.getBytes(),
+                    file.getOriginalFilename()
+            );
+
+        } catch (IOException e) {
+
+            log.error("Register batch failed", e);
+
+            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR, 500);
+        }
+    }
+
 
     public RecognizeFaceResponse recognizeFace(MultipartFile file) {
         try {
@@ -65,7 +88,7 @@ public class FaceRecognitionService {
 
             log.warn("{debug}{}", response);
 
-            var employee = employeeRepository.findByIdAndIsDeletedFalse(response.getEmployeeId())
+            var employee = employeeRepository.findByCodeAndIsDeletedFalse(response.getEmployeeId())
                     .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND, 404));
 
 

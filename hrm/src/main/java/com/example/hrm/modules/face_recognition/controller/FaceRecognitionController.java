@@ -65,4 +65,15 @@ public class FaceRecognitionController {
                 faceRecognitionService.deleteFace(employeeId)
         );
     }
+
+    // ================= REGISTER BATCH =================
+    @PostMapping("/faces/batch")
+    public ResponseEntity<?> registerFaceBatch(
+            @RequestParam("file") MultipartFile file
+    ) {
+        return ResponseEntity.ok(
+                faceRecognitionService.registerFaceBatch(file)
+        );
+    }
+
 }

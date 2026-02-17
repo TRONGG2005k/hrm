@@ -1,5 +1,6 @@
 package com.example.hrm.modules.file.dto.response;
 
+import com.example.hrm.shared.enums.FileCategory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,6 +34,8 @@ public class FileAttachmentResponse {
     String refId;
 
     LocalDateTime createdAt;
+
+    FileCategory category;
 
     Boolean isDeleted;
 

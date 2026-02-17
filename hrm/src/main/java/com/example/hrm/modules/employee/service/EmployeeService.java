@@ -30,9 +30,6 @@ public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
     private final AddressRepository addressRepository;
-//     private final DistrictRepository districtRepository;
-//     private final ProvinceRepository provinceRepository;
-//     private final WardRepository wardRepository;
     private final FileAttachmentRepository fileAttachmentRepository;
     private final SubDepartmentRepository subDepartmentRepository;
     private final ContactRepository contactRepository;

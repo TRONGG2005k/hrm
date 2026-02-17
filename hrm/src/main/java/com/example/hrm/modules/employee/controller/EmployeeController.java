@@ -3,8 +3,10 @@ package com.example.hrm.modules.employee.controller;
 import com.example.hrm.modules.employee.dto.request.EmployeeRequest;
 import com.example.hrm.modules.employee.dto.response.EmployeeResponse;
 import com.example.hrm.modules.employee.service.EmployeeService;
+import com.example.hrm.modules.employee.service.EmployeeUploadService;
 import com.example.hrm.modules.employee.excel.EmployeeExcelService;
 import com.example.hrm.shared.ExcelResult;
+import com.example.hrm.shared.BulkUploadResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +27,7 @@ public class EmployeeController {
 
     private final EmployeeService employeeService;
     private final EmployeeExcelService employeeExcelService;
+    private final EmployeeUploadService employeeUploadService;
 
     /**
      * Lấy danh sách tất cả nhân viên (có phân trang)
@@ -112,6 +115,18 @@ public class EmployeeController {
     @PostMapping("/import-or-update")
     public ResponseEntity<ExcelResult> importOrUpdateEmployees(@RequestParam("file") MultipartFile file) {
         ExcelResult result = employeeExcelService.importOrUpdateEmployees(file);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Import file đính kèm cho nhân viên (file zip)
+     *
+     * @param file File Zip chứa tài liệu
+     * @return Kết quả import
+     */
+    @PostMapping("/import-files")
+    public ResponseEntity<BulkUploadResult> importEmployeeFiles(@RequestParam("file") MultipartFile file) {
+        BulkUploadResult result = employeeUploadService.importFile(file);
         return ResponseEntity.ok(result);
     }
 

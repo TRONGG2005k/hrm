@@ -2,9 +2,13 @@ package com.example.hrm.shared.call_api;
 
 import com.example.hrm.modules.face_recognition.dto.response.FaceRecognizeResponse;
 import com.example.hrm.shared.MessageResponse;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -22,6 +26,48 @@ public class CallApiFaceRecognition {
     private static final String RECOGNIZE_API = "http://127.0.0.1:8000/facial-recognition/face-recognition";
     private static final String UPDATE_API    = "http://127.0.0.1:8000/facial-recognition/update-face";
     private static final String DELETE_API    = "http://127.0.0.1:8000/facial-recognition/delete-face";
+    private static final String REGISTER_BATCH_API =
+            "http://127.0.0.1:8000/facial-recognition/register-face-batch";
+
+    // ================= REGISTER BATCH =================
+    public Map<String, Object> registerFaceBatch(byte[] zipBytes, String filename) {
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        // tạo resource từ byte[]
+        ByteArrayResource resource = new ByteArrayResource(zipBytes) {
+            @Override
+            public String getFilename() {
+                return filename;
+            }
+        };
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", resource);
+
+        HttpEntity<MultiValueMap<String, Object>> request =
+                new HttpEntity<>(body, headers);
+
+        try {
+
+            ResponseEntity<Map> response =
+                    restTemplate.exchange(
+                            REGISTER_BATCH_API,
+                            HttpMethod.POST,
+                            request,
+                            Map.class
+                    );
+
+            return response.getBody();
+
+        } catch (Exception e) {
+
+            throw new RuntimeException(
+                    "Gọi API register-face-batch thất bại: " + e.getMessage()
+            );
+        }
+    }
 
     // ================= REGISTER =================
     public String registerFace(String employeeId, List<String> imagesBase64) {
