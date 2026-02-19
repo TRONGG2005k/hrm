@@ -3,8 +3,6 @@ package com.example.hrm.modules.contract.excel.validator;
 import com.example.hrm.modules.contract.excel.dto.AllowanceExcelDTO;
 import com.example.hrm.modules.contract.repository.AllowanceRepository;
 import com.example.hrm.modules.contract.repository.AllowanceRuleRepository;
-import com.example.hrm.modules.organization.repository.PositionRepository;
-import com.example.hrm.modules.organization.repository.SubDepartmentRepository;
 import com.example.hrm.shared.excel.ExcelHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,8 +23,7 @@ public class AllowanceExcelValidator {
 
         if (excelHelper.isBlank(dto.getCode())) {
             err.add("Dòng " + rowNumber + ": Code không được để trống");
-        }
-        else if (allowanceRepository.existsByCodeAndActiveTrue(dto.getCode())) {
+        } else if (allowanceRepository.existsByCodeAndActiveTrue(dto.getCode())) {
             err.add("Dòng " + rowNumber + ": Code đã tồn tại");
         }
 
@@ -48,8 +45,7 @@ public class AllowanceExcelValidator {
                     .existsByAllowanceCodeAndPositionIdAndSubDepartmentIdAndActiveTrue(
                             dto.getCode(),
                             dto.getPosition().getId(),
-                            dto.getSubDepartment().getId()
-                    );
+                            dto.getSubDepartment().getId());
 
             if (exists) {
                 err.add("Dòng " + rowNumber + ": Rule đã tồn tại với Position và SubDepartment này");
@@ -66,7 +62,5 @@ public class AllowanceExcelValidator {
 
         return err;
     }
-
-
 
 }

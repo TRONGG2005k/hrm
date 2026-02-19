@@ -3,8 +3,6 @@ package com.example.hrm.modules.contract.excel.mapper;
 import com.example.hrm.modules.contract.dto.request.AllowanceRequest;
 import com.example.hrm.modules.contract.dto.request.AllowanceRuleRequest;
 import com.example.hrm.modules.contract.dto.response.AllowanceResponse;
-import com.example.hrm.modules.contract.entity.Allowance;
-import com.example.hrm.modules.contract.entity.AllowanceRule;
 import com.example.hrm.modules.contract.excel.dto.AllowanceExcelDTO;
 import com.example.hrm.modules.organization.entity.Position;
 import com.example.hrm.modules.organization.entity.SubDepartment;
@@ -29,6 +27,7 @@ public class AllowanceExcelMapper {
     private final ExcelHelper excelHelper;
     private final PositionRepository positionRepository;
     private final SubDepartmentRepository subDepartmentRepository;
+
     public List<AllowanceExcelDTO> toDto(Sheet sheet) {
 
         List<AllowanceExcelDTO> list = new ArrayList<>();
@@ -38,7 +37,8 @@ public class AllowanceExcelMapper {
 
             Row row = sheet.getRow(i);
 
-            if (row == null) continue;
+            if (row == null)
+                continue;
 
             AllowanceExcelDTO dto = new AllowanceExcelDTO();
 
@@ -79,8 +79,7 @@ public class AllowanceExcelMapper {
         return list;
     }
 
-
-    public AllowanceRequest toAllowanceRequest(AllowanceExcelDTO dto){
+    public AllowanceRequest toAllowanceRequest(AllowanceExcelDTO dto) {
         AllowanceRequest allowance = new AllowanceRequest();
         allowance.setCode(dto.getCode());
         allowance.setName(dto.getName());
@@ -88,11 +87,13 @@ public class AllowanceExcelMapper {
         return allowance;
     }
 
-    public AllowanceRuleRequest toAllowanceRuleRequest(AllowanceExcelDTO dto, AllowanceResponse allowance){
+    public AllowanceRuleRequest toAllowanceRuleRequest(AllowanceExcelDTO dto, AllowanceResponse allowance) {
         var p = positionRepository.findByCodeAndIsDeletedFalse(dto.getPositionCode())
-                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 4040, "Không tồn tại chức vụ: " + dto.getPositionCode()));
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 4040,
+                        "Không tồn tại chức vụ: " + dto.getPositionCode()));
         var s = subDepartmentRepository.findByNameAndIsDeletedFalse(dto.getSubDepartmentName())
-                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 4040, "Không tồn tại phòng ban: " + dto.getSubDepartmentName()));
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 4040,
+                        "Không tồn tại phòng ban: " + dto.getSubDepartmentName()));
         AllowanceRuleRequest allowanceRule = new AllowanceRuleRequest();
         allowanceRule.setAmount(dto.getAmount());
         allowanceRule.setAllowanceId(allowance.getId());

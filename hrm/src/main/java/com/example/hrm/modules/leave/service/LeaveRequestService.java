@@ -21,19 +21,12 @@ import com.example.hrm.shared.enums.LeaveType;
 import com.example.hrm.shared.exception.AppException;
 import com.example.hrm.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -49,14 +42,16 @@ public class LeaveRequestService {
     private final AttendanceRepository attendanceRepository;
     private final LeaveBalanceService leaveBalanceService;
 
-    public  LeaveRequestDetailResponse create(LeaveRequestCreateRequest request){
+    public LeaveRequestDetailResponse create(LeaveRequestCreateRequest request) {
 
         Employee employee = employeeRepository.findByIdAndIsDeletedFalse(request.getEmployeeId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
 
         // Check for overlapping approved leaves
-        if (leaveRequestRepository.existsOverlappingApprovedLeave(employee.getId(), request.getStartDate(), request.getEndDate(), LeaveStatus.APPROVED, "")) {
-            throw new AppException(ErrorCode.INVALID_STATE, 400, "Đã có đơn nghỉ phép được duyệt trong khoảng thời gian này");
+        if (leaveRequestRepository.existsOverlappingApprovedLeave(employee.getId(), request.getStartDate(),
+                request.getEndDate(), LeaveStatus.APPROVED, "")) {
+            throw new AppException(ErrorCode.INVALID_STATE, 400,
+                    "Đã có đơn nghỉ phép được duyệt trong khoảng thời gian này");
         }
 
         LeaveRequest leaveRequest = leaveRequestMapper.toEntity(request, employee);
@@ -66,17 +61,17 @@ public class LeaveRequestService {
         var response = leaveRequestMapper.toDetailResponse(leaveRequest);
         response.setFullName(employee.getLastName() + employee.getFirstName());
 
-        return  response;
+        return response;
     }
 
-    public LeaveRequestDetailResponse update(LeaveRequestCreateRequest request, String leaveId){
+    public LeaveRequestDetailResponse update(LeaveRequestCreateRequest request, String leaveId) {
 
         LeaveRequest leaveRequest = leaveRequestRepository.findByIdAndIsDeletedFalse(leaveId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404, "ko tìm thấy leave request với id"
-                + leaveId));
+                        + leaveId));
 
-        if(leaveRequest.getStatus() != LeaveStatus.PENDING){
-            throw  new AppException(ErrorCode.INVALID_TOKEN, 500 , "yêu cầu này đẵ được duyệt hoặc bị huỷ ko thể sửa");
+        if (leaveRequest.getStatus() != LeaveStatus.PENDING) {
+            throw new AppException(ErrorCode.INVALID_TOKEN, 500, "yêu cầu này đẵ được duyệt hoặc bị huỷ ko thể sửa");
         }
 
         String name = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -88,8 +83,10 @@ public class LeaveRequestService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
 
         // Check for overlapping approved leaves, excluding current request
-        if (leaveRequestRepository.existsOverlappingApprovedLeave(employee.getId(), request.getStartDate(), request.getEndDate(), LeaveStatus.APPROVED, leaveId)) {
-            throw new AppException(ErrorCode.INVALID_STATE, 400, "Đã có đơn nghỉ phép được duyệt trong khoảng thời gian này");
+        if (leaveRequestRepository.existsOverlappingApprovedLeave(employee.getId(), request.getStartDate(),
+                request.getEndDate(), LeaveStatus.APPROVED, leaveId)) {
+            throw new AppException(ErrorCode.INVALID_STATE, 400,
+                    "Đã có đơn nghỉ phép được duyệt trong khoảng thời gian này");
         }
 
         leaveRequest.setEmployee(employee);
@@ -103,14 +100,13 @@ public class LeaveRequestService {
 
         var response = leaveRequestMapper.toDetailResponse(leaveRequest);
         response.setFullName(employee.getLastName() + employee.getFirstName());
-        return  response;
+        return response;
     }
 
     @Transactional
     public LeaveRequestDetailResponse approveLeave(
             LeaveRequestApprovalRequest request,
-            String leaveId
-    ) {
+            String leaveId) {
         LeaveRequest leaveRequest = leaveRequestRepository
                 .findByIdAndIsDeletedFalse(leaveId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404,
@@ -141,8 +137,7 @@ public class LeaveRequestService {
             leaveBalanceService.deductLeave(
                     leaveRequest.getEmployee(),
                     leaveRequest.getStartDate(),
-                    leaveRequest.getEndDate()
-            );
+                    leaveRequest.getEndDate());
         }
 
         // 👉 Nếu được duyệt → tạo bản ghi chấm công
@@ -169,9 +164,7 @@ public class LeaveRequestService {
         return leaveRequestMapper.toDetailResponse(leaveRequest);
     }
 
-
-
-    public LeaveRequestDetailResponse getById(String leaveId){
+    public LeaveRequestDetailResponse getById(String leaveId) {
 
         LeaveRequest leaveRequest = leaveRequestRepository.findByIdAndIsDeletedFalse(leaveId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404, "ko tìm thấy leave request với id"
@@ -180,23 +173,24 @@ public class LeaveRequestService {
         return leaveRequestMapper.toDetailResponse(leaveRequest);
     }
 
-    public Page<LeaveRequestListItemResponse> getAll(int page, int size){
+    public Page<LeaveRequestListItemResponse> getAll(int page, int size) {
         var leaveList = leaveRequestRepository.findAllByIsDeletedFalse(PageRequest.of(page, size));
         return leaveList.map(leaveRequest -> {
             LeaveRequestListItemResponse response = leaveRequestMapper.toListItemResponse(leaveRequest);
-            response.setFullName(leaveRequest.getEmployee().getLastName() + " " + leaveRequest.getEmployee().getFirstName());
+            response.setFullName(
+                    leaveRequest.getEmployee().getLastName() + " " + leaveRequest.getEmployee().getFirstName());
             return response;
         });
     }
 
-    public Page<LeaveRequestListItemResponse> getAllByStatus(int page, int size, LeaveStatus status){
+    public Page<LeaveRequestListItemResponse> getAllByStatus(int page, int size, LeaveStatus status) {
         var leaveList = leaveRequestRepository.findAllByStatusAndIsDeletedFalse(PageRequest.of(page, size), status);
         return leaveList.map(leaveRequest -> {
             var response = leaveRequestMapper.toListItemResponse(leaveRequest);
-            response.setFullName(leaveRequest.getEmployee().getLastName() + " " + leaveRequest.getEmployee().getFirstName());
+            response.setFullName(
+                    leaveRequest.getEmployee().getLastName() + " " + leaveRequest.getEmployee().getFirstName());
             return response;
         });
     }
-
 
 }

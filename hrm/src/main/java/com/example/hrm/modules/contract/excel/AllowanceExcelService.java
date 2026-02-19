@@ -19,7 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -35,13 +34,13 @@ public class AllowanceExcelService {
     private final AllowanceService allowanceService;
     private final AllowanceRuleService allowanceRuleService;
 
-    public ExcelResult importFile(MultipartFile file){
+    public ExcelResult importFile(MultipartFile file) {
         List<AllowanceExcelDTO> dtos = parseExcel(file);
         int successCount = 0;
         int rowNumber = 2; // nếu dòng 1 là header
         Set<String> codeSet = new HashSet<>();
         List<String> errors = new ArrayList<>();
-        for (var dto : dtos){
+        for (var dto : dtos) {
             if (!codeSet.add(dto.getCode())) {
 
                 errors.add("Dòng " + rowNumber + ": Code bị trùng trong file");
@@ -67,7 +66,7 @@ public class AllowanceExcelService {
         return new ExcelResult(successCount, errors);
     }
 
-    private  List<AllowanceExcelDTO> parseExcel(MultipartFile file) {
+    private List<AllowanceExcelDTO> parseExcel(MultipartFile file) {
         List<AllowanceExcelDTO> dtos = new ArrayList<>();
 
         try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
@@ -85,7 +84,7 @@ public class AllowanceExcelService {
     public ByteArrayInputStream exportData() {
 
         try (Workbook workbook = new XSSFWorkbook();
-             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             Sheet sheet = workbook.createSheet("Allowance");
 
@@ -128,26 +127,21 @@ public class AllowanceExcelService {
                 row.createCell(0).setCellValue(allowance.getAllowance().getCode());
                 row.createCell(1).setCellValue(allowance.getAllowance().getName());
                 row.createCell(2).setCellValue(
-                        allowance.getAllowance().getDescription() == null ? "" : allowance.getAllowance().getDescription()
-                );
+                        allowance.getAllowance().getDescription() == null ? ""
+                                : allowance.getAllowance().getDescription());
                 row.createCell(3).setCellValue(allowance.getActive());
 
-
                 row.createCell(4).setCellValue(
-                        allowance.getPosition() != null ? allowance.getPosition().getCode() : ""
-                );
+                        allowance.getPosition() != null ? allowance.getPosition().getCode() : "");
 
                 row.createCell(5).setCellValue(
-                        allowance.getSubDepartment() != null ? allowance.getSubDepartment().getName() : ""
-                );
+                        allowance.getSubDepartment() != null ? allowance.getSubDepartment().getName() : "");
 
                 row.createCell(6).setCellValue(
-                        allowance.getAmount().doubleValue()
-                );
+                        allowance.getAmount().doubleValue());
 
                 row.createCell(7).setCellValue(
-                        allowance.getCalculationType().name()
-                );
+                        allowance.getCalculationType().name());
             }
 
             // autosize

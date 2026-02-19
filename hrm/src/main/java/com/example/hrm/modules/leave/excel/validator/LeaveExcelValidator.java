@@ -7,7 +7,6 @@ import com.example.hrm.shared.excel.ExcelHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,13 +44,15 @@ public class LeaveExcelValidator {
                 errors.add(error(rowNumber, "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu"));
             }
 
-//            if (excelHelper.isFutureDate(dto.getStartDate())) {
-//                errors.add(error(rowNumber, "Ngày bắt đầu không được lớn hơn ngày hiện tại"));
-//            }
+            // if (excelHelper.isFutureDate(dto.getStartDate())) {
+            // errors.add(error(rowNumber, "Ngày bắt đầu không được lớn hơn ngày hiện
+            // tại"));
+            // }
 
-//            if (excelHelper.isFutureDate(dto.getEndDate())) {
-//                errors.add(error(rowNumber, "Ngày kết thúc không được lớn hơn ngày hiện tại"));
-//            }
+            // if (excelHelper.isFutureDate(dto.getEndDate())) {
+            // errors.add(error(rowNumber, "Ngày kết thúc không được lớn hơn ngày hiện
+            // tại"));
+            // }
         }
 
         // ================= LEAVE TYPE =================
@@ -68,8 +69,7 @@ public class LeaveExcelValidator {
                     .existsByEmployee_CodeAndStartDateLessThanEqualAndEndDateGreaterThanEqualAndIsDeletedFalse(
                             dto.getEmployeeCode(),
                             dto.getEndDate(),
-                            dto.getStartDate()
-                    );
+                            dto.getStartDate());
 
             if (exists) {
                 errors.add(error(rowNumber, "Khoảng thời gian nghỉ bị trùng với dữ liệu đã tồn tại"));

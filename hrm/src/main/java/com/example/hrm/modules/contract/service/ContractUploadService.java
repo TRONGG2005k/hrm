@@ -6,7 +6,6 @@ import com.example.hrm.modules.employee.entity.Employee;
 import com.example.hrm.modules.employee.repository.EmployeeRepository;
 import com.example.hrm.modules.file.dto.request.FileUploadRequest;
 import com.example.hrm.modules.file.service.FileAttachmentService;
-import com.example.hrm.modules.file.service.FileUploadService;
 import com.example.hrm.modules.file.service.ZipExtractionService;
 import com.example.hrm.shared.BulkUploadResult;
 import com.example.hrm.shared.enums.ContractStatus;
@@ -31,9 +30,9 @@ public class ContractUploadService {
     public BulkUploadResult importFile(MultipartFile zip) {
 
         List<String> errorMessages = new ArrayList<>();
-        final int[] successCount = {0};
-        final int[] errorCount = {0};
-        final int[] totalCount = {0};
+        final int[] successCount = { 0 };
+        final int[] errorCount = { 0 };
+        final int[] totalCount = { 0 };
 
         try {
 
@@ -45,34 +44,29 @@ public class ContractUploadService {
 
                         try {
 
-                            Employee employee =
-                                    employeeRepository
-                                            .findByCodeAndIsDeletedFalse(employeeCode)
-                                            .orElse(null);
+                            Employee employee = employeeRepository
+                                    .findByCodeAndIsDeletedFalse(employeeCode)
+                                    .orElse(null);
 
                             if (employee == null) {
 
                                 errorMessages.add(
-                                        filename + ": không tìm thấy nhân viên"
-                                );
+                                        filename + ": không tìm thấy nhân viên");
 
                                 errorCount[0]++;
                                 return;
                             }
 
-                            Contract activeContract =
-                                    contractRepository
-                                            .findByEmployeeIdAndStatusAndIsDeletedFalse(
-                                                    employee.getId(),
-                                                    ContractStatus.ACTIVE
-                                            )
-                                            .orElse(null);
+                            Contract activeContract = contractRepository
+                                    .findByEmployeeIdAndStatusAndIsDeletedFalse(
+                                            employee.getId(),
+                                            ContractStatus.ACTIVE)
+                                    .orElse(null);
 
                             if (activeContract == null) {
 
                                 errorMessages.add(
-                                        filename + ": nhân viên không có hợp đồng ACTIVE"
-                                );
+                                        filename + ": nhân viên không có hợp đồng ACTIVE");
 
                                 errorCount[0]++;
                                 return;
@@ -87,21 +81,18 @@ public class ContractUploadService {
                                             .size(size)
                                             .inputStream(inputStream)
                                             .category(category)
-                                            .build()
-                            );
+                                            .build());
 
                             successCount[0]++;
 
                         } catch (Exception e) {
 
                             errorMessages.add(
-                                    filename + ": lỗi khi lưu file - " + e.getMessage()
-                            );
+                                    filename + ": lỗi khi lưu file - " + e.getMessage());
 
                             errorCount[0]++;
                         }
-                    }
-            );
+                    });
 
         } catch (IOException e) {
             throw new RuntimeException("Lỗi khi đọc file zip", e);
@@ -115,13 +106,12 @@ public class ContractUploadService {
                 .build();
     }
 
-    private String removeExtension(String filename) {
+    // private String removeExtension(String filename) {
 
-        int dotIndex = filename.lastIndexOf('.');
+    // int dotIndex = filename.lastIndexOf('.');
 
-        return (dotIndex > 0)
-                ? filename.substring(0, dotIndex)
-                : filename;
-    }
+    // return (dotIndex > 0)
+    // ? filename.substring(0, dotIndex)
+    // : filename;
+    // }
 }
-
