@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 // import org.springframework.transaction.annotation.Transactional;
@@ -59,6 +60,7 @@ public class PayrollService {
     private final ObjectMapper objectMapper;
 
 //    @Transactional
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public PayrollResponse create(PayrollRequest request) {
 
         var cycle = payrollCycleService.getActive();
@@ -78,6 +80,7 @@ public class PayrollService {
         return buildPayrollResponse(request, employee, attendanceList, salaryAdjustments, payrollDetail, payroll.getId(), PayrollStatus.DRAFT);
     }
 
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public List<PayrollListItemResponse> createForAllEmployees(int month, int year) {
 
         var employees = employeeRepository.findAllByIsDeletedFalse();
@@ -106,16 +109,19 @@ public class PayrollService {
         return results;
     }
 
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public Page<PayrollListItemResponse> getAll(int page, int size){
         var listResponse = payrollRepository.findByIsDeletedFalse(PageRequest.of(page, size));
         return listResponse.map(payrollResponseMapper::toListResponse);
     }
 
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public Page<PayrollListItemResponse> getAllByEmployeeId(String employeeId, int page, int size){
         var listResponse = payrollRepository.findByEmployeeIdAndIsDeletedFalse(employeeId, PageRequest.of(page, size));
         return listResponse.map(payrollResponseMapper::toListResponse);
     }
 
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public Page<PayrollListItemResponse> getAllByMouth(int page, int size, int month, int year){
 
 
@@ -125,6 +131,7 @@ public class PayrollService {
         return listResponse.map(payrollResponseMapper::toListResponse);
     }
 
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public PayrollResponse getById(String payrollId){
         Payroll payroll = payrollRepository.findByIdAndIsDeletedFalse(payrollId)
                 .orElseThrow(() ->new AppException(ErrorCode.PAYROLL_NOT_FOUND, 404));
@@ -145,6 +152,7 @@ public class PayrollService {
         return buildPayrollResponse(request, employee, attendanceList, salaryAdjustments, payrollDetail, payroll.getId(), payroll.getStatus());
     }
 
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public PayrollResponse getDetailByEmployee(String employeeId, int month, int year){
         Payroll payroll = payrollRepository.findByEmployeeIdAndMonthAndIsDeletedFalse(
                 employeeId, YearMonth.of(year, month)).orElseThrow(() ->new AppException(ErrorCode.PAYROLL_NOT_FOUND, 404));
@@ -163,6 +171,7 @@ public class PayrollService {
         return buildPayrollResponse(request, employee, attendanceList, salaryAdjustments, payrollDetail, payroll.getId(), payroll.getStatus());
     }
 
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public ApprovedPayrollListResponse salaryApproval(PayrollApprovalRequest request) throws JsonProcessingException {
 
         UserAccount user = userAccountRepository.findByUsernameAndIsDeletedFalse(
@@ -215,6 +224,7 @@ public class PayrollService {
         );
     }
 
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public PayrollListResponse getPayrollList(PayrollApprovalRequest request){
 
         String monthStr = String.format("%04d-%02d", request.getYear(), request.getMonth());

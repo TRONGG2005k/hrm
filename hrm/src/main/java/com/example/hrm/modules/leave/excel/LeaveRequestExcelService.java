@@ -17,6 +17,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,6 +40,7 @@ public class LeaveRequestExcelService {
     private final LeaveRequestRepository leaveRequestRepository;
     private final AttendanceService attendanceService;
 
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public ExcelResult importExcel(MultipartFile file){
         List<LeaveImportRequestExcelDto> dtos = parseExcel(file);
         int successCount = 0;
@@ -85,6 +87,7 @@ public class LeaveRequestExcelService {
         return dtos;
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public ByteArrayInputStream exportLeaveRequestsToExcel(String subDepartmentId) {
         String[] LEAVE_EXCEL_HEADERS = {
                 "Mã nhân viên",

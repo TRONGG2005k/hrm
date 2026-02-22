@@ -1,12 +1,14 @@
 package com.example.hrm.shared.configuration.filter;
 
 import com.example.hrm.modules.auth.service.JwtService;
+import com.example.hrm.shared.exception.AppException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -53,7 +56,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             List<GrantedAuthority> authorities = scope == null
                     ? List.of()
                     : Stream.of(scope.split(" "))
-                    .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
+                    .map(SimpleGrantedAuthority::new)
                     .collect(Collectors.toList());
 
             Authentication authentication = new UsernamePasswordAuthenticationToken(
@@ -64,14 +67,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            filterChain.doFilter(request, response);
 
-        } catch (Exception ex) {
-            log.warn("Access token invalid: {}", ex.getMessage());
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        } catch (AppException | ParseException ex) {
+            log.warn("Invalid token: {}", ex.getMessage());
             SecurityContextHolder.clearContext();
-
-            return;
+            throw new InsufficientAuthenticationException("Token invalid or expired");
         }
+        filterChain.doFilter(request, response);
+
     }
 }

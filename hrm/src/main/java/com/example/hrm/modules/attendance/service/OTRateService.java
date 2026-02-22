@@ -9,6 +9,7 @@ import com.example.hrm.shared.exception.ErrorCode;
 import com.example.hrm.modules.attendance.mapper.OTRateMapper;
 import com.example.hrm.modules.attendance.repository.OTRateRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -22,6 +23,7 @@ public class OTRateService {
     private final OTRateRepository otRateRepository;
     private final OTRateMapper otRateMapper;
 
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public OTRateResponse create(OTRateRequest request) {
 
         otRateRepository.findByDateAndTypeAndIsDeletedFalse(request.getDate(), request.getType())
@@ -33,6 +35,7 @@ public class OTRateService {
         return otRateMapper.toResponse(otRateRepository.save(otRate));
     }
 
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public OTRateResponse update(String id, OTRateRequest request) {
         OTRate otRate = otRateRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.OT_RATE_NOT_FOUND, 404));
@@ -43,6 +46,7 @@ public class OTRateService {
         return otRateMapper.toResponse(otRateRepository.save(otRate));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void delete(String id) {
         OTRate otRate = otRateRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.OT_RATE_NOT_FOUND, 404));
@@ -53,6 +57,7 @@ public class OTRateService {
         otRateRepository.save(otRate);
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public OTRateResponse getById(String id) {
         OTRate otRate = otRateRepository.findById(id)
                 .filter(e -> !e.getIsDeleted())
@@ -61,6 +66,7 @@ public class OTRateService {
         return otRateMapper.toResponse(otRate);
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public List<OTRateResponse> getAll() {
         return otRateRepository.findAllByIsDeletedFalse()
                 .stream()
@@ -68,6 +74,7 @@ public class OTRateService {
                 .toList();
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public OTRateResponse getByDateAndType(LocalDate date, OTType type) {
         OTRate otRate = otRateRepository
                 .findByDateAndTypeAndIsDeletedFalse(date, type)

@@ -23,6 +23,7 @@ import com.example.hrm.modules.contract.mapper.ContractMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +47,7 @@ public class ContractService {
      * Tạo Contract (pháp lý) + SalaryContract (snapshot lương)
      */
     @Transactional
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public ContractResponse create(ContractRequest request) {
 
         // 1. Lấy employee
@@ -114,6 +116,7 @@ public class ContractService {
      * Update Contract + tạo SalaryContract mới nếu có thay đổi lương
      */
     @Transactional
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public ContractResponse update(String id, ContractUpdateRequest request) {
 
         Contract contract = contractRepository.findByIdAndIsDeletedFalse(id)
@@ -178,6 +181,7 @@ public class ContractService {
 
     /* ========================= QUERY ========================= */
 
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public ContractResponse getById(String id) {
 
         Contract contract = contractRepository.findByIdAndIsDeletedFalse(id)
@@ -186,18 +190,22 @@ public class ContractService {
         return buildResponse(contract);
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public Page<ContractListResponse> getAllContractActive(int page, int size) {
         return contractRepository
                 .findByIsDeletedFalseAndStatus(PageRequest.of(page, size), ContractStatus.ACTIVE)
                 .map(contractMapper::toListResponse);
     }
 
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public Page<ContractListResponse> getAllContractNotActive(int page, int size) {
         return contractRepository
                 .findByIsDeletedFalseAndStatusNot(PageRequest.of(page, size), ContractStatus.ACTIVE)
                 .map(contractMapper::toListResponse);
     }
 
+    @Transactional
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public ContractResponse changeContractStatus(String id, ContractStatus status) {
 
         Contract contract = contractRepository.findByIdAndIsDeletedFalse(id)
@@ -224,6 +232,8 @@ public class ContractService {
 
         return response;
     }
+
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public List<ContractExcelDto> getAllForExcel() {
         return contractRepository.findAllForExcel();
     }

@@ -2,6 +2,7 @@ package com.example.hrm.shared.call_api;
 
 import com.example.hrm.modules.face_recognition.dto.response.FaceRecognizeResponse;
 import com.example.hrm.shared.MessageResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+@Slf4j
 @Service
 public class CallApiFaceRecognition {
 
@@ -105,7 +107,7 @@ public class CallApiFaceRecognition {
         try {
             ResponseEntity<FaceRecognizeResponse> response =
                     restTemplate.postForEntity(RECOGNIZE_API, request, FaceRecognizeResponse.class);
-
+            log.warn("response {}", response.getBody());
             return response.getBody();
         } catch (Exception e) {
             throw new RuntimeException("Gọi API face-recognition thất bại: " + e.getMessage());

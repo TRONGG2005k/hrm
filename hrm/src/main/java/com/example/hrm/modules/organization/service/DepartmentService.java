@@ -10,6 +10,7 @@ import com.example.hrm.modules.organization.repository.DepartmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ public class DepartmentService {
     private final DepartmentRepository departmentRepository;
 
     @Transactional
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public DepartmentResponse createDepartment(DepartmentRequest request) {
         Department department = Department.builder()
                 .name(request.getName())
@@ -32,12 +34,14 @@ public class DepartmentService {
     }
 
     @Transactional
+    @PreAuthorize("isAuthenticated()")
     public Page<DepartmentResponse> getAllDepartments(Pageable pageable) {
         return departmentRepository.findByIsDeletedFalse(pageable)
                 .map(this::toResponse);
     }
 
     @Transactional
+    @PreAuthorize("isAuthenticated()")
     public DepartmentResponse getDepartmentById(String id) {
         var department = departmentRepository.findByIdWithSubDepartments(id)
                 .orElseThrow(() -> new AppException(ErrorCode.DEPARTMENT_NOT_FOUND, 404));
@@ -59,6 +63,7 @@ public class DepartmentService {
 
 
     @Transactional
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public DepartmentResponse updateDepartment(String id, DepartmentRequest request) {
 
         if (departmentRepository.existsByNameAndIsDeletedFalseAndIdNot(request.getName(), id)) {
@@ -76,6 +81,7 @@ public class DepartmentService {
 
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteDepartment(String id) {
         Department department = departmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Department not found"));

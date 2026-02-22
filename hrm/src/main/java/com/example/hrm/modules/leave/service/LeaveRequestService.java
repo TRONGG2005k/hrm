@@ -23,6 +23,7 @@ import com.example.hrm.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +43,7 @@ public class LeaveRequestService {
     private final AttendanceRepository attendanceRepository;
     private final LeaveBalanceService leaveBalanceService;
 
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'ADMIN')")
     public LeaveRequestDetailResponse create(LeaveRequestCreateRequest request) {
 
         Employee employee = employeeRepository.findByIdAndIsDeletedFalse(request.getEmployeeId())
@@ -51,7 +53,7 @@ public class LeaveRequestService {
         if (leaveRequestRepository.existsOverlappingApprovedLeave(employee.getId(), request.getStartDate(),
                 request.getEndDate(), LeaveStatus.APPROVED, "")) {
             throw new AppException(ErrorCode.INVALID_STATE, 400,
-                    "Đã có đơn nghỉ phép được duyệt trong khoảng thời gian này");
+                    "Đã có đơn nghỉ phép được duyệt trong khoảng thờigian này");
         }
 
         LeaveRequest leaveRequest = leaveRequestMapper.toEntity(request, employee);
@@ -64,6 +66,7 @@ public class LeaveRequestService {
         return response;
     }
 
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'ADMIN')")
     public LeaveRequestDetailResponse update(LeaveRequestCreateRequest request, String leaveId) {
 
         LeaveRequest leaveRequest = leaveRequestRepository.findByIdAndIsDeletedFalse(leaveId)
@@ -86,7 +89,7 @@ public class LeaveRequestService {
         if (leaveRequestRepository.existsOverlappingApprovedLeave(employee.getId(), request.getStartDate(),
                 request.getEndDate(), LeaveStatus.APPROVED, leaveId)) {
             throw new AppException(ErrorCode.INVALID_STATE, 400,
-                    "Đã có đơn nghỉ phép được duyệt trong khoảng thời gian này");
+                    "Đã có đơn nghỉ phép được duyệt trong khoảng thờigian này");
         }
 
         leaveRequest.setEmployee(employee);
@@ -104,6 +107,7 @@ public class LeaveRequestService {
     }
 
     @Transactional
+    @PreAuthorize("hasAnyRole('MANAGER', 'HR_MANAGER', 'ADMIN')")
     public LeaveRequestDetailResponse approveLeave(
             LeaveRequestApprovalRequest request,
             String leaveId) {
@@ -164,6 +168,7 @@ public class LeaveRequestService {
         return leaveRequestMapper.toDetailResponse(leaveRequest);
     }
 
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public LeaveRequestDetailResponse getById(String leaveId) {
 
         LeaveRequest leaveRequest = leaveRequestRepository.findByIdAndIsDeletedFalse(leaveId)
@@ -173,6 +178,7 @@ public class LeaveRequestService {
         return leaveRequestMapper.toDetailResponse(leaveRequest);
     }
 
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public Page<LeaveRequestListItemResponse> getAll(int page, int size) {
         var leaveList = leaveRequestRepository.findAllByIsDeletedFalse(PageRequest.of(page, size));
         return leaveList.map(leaveRequest -> {
@@ -183,6 +189,7 @@ public class LeaveRequestService {
         });
     }
 
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public Page<LeaveRequestListItemResponse> getAllByStatus(int page, int size, LeaveStatus status) {
         var leaveList = leaveRequestRepository.findAllByStatusAndIsDeletedFalse(PageRequest.of(page, size), status);
         return leaveList.map(leaveRequest -> {

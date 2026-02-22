@@ -9,6 +9,7 @@ import com.example.hrm.modules.user.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -18,23 +19,27 @@ public class RoleService {
     private final RoleRepository roleRepository;
     private final RoleMapper roleMapper;
 
+    @PreAuthorize("hasRole('ADMIN')")
     public RoleResponse create(RoleRequest request) {
         var role = roleMapper.toEntity(request);
         roleRepository.save(role);
         return roleMapper.toResponse(role);
     }
 
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public Page<RoleResponse> getAll(int page, int size) {
         var roles = roleRepository.findByIsDeletedFalse(PageRequest.of(page, size));
         return roles.map(roleMapper::toResponse);
     }
 
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public RoleResponse getById(String id) {
         var role = roleRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND, 404));
         return roleMapper.toResponse(role);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public RoleResponse update(String id, RoleRequest request) {
         var role = roleRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND, 404));
@@ -46,6 +51,7 @@ public class RoleService {
         return roleMapper.toResponse(role);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void delete(String id) {
         var role = roleRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND, 404));

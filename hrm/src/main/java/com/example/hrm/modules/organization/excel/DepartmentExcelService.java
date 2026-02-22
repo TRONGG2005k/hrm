@@ -16,6 +16,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,6 +36,7 @@ public class DepartmentExcelService {
     private final DepartmentExcelMapper mapper;
     private final ExcelHelper excelHelper;
 
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public ExcelResult importFile(MultipartFile file) {
         List<DepartmentExcelDto> dtos = parseExcel(file);
 
@@ -77,6 +79,7 @@ public class DepartmentExcelService {
         return new ExcelResult(successCount, errors);
     }
 
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public void exportFile(OutputStream outputStream) throws IOException {
         List<Department> departmentList = departmentRepository.findByIsDeletedFalse();
         Workbook workbook = new XSSFWorkbook();

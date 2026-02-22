@@ -10,12 +10,12 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.ByteArrayResource;
-
 import java.io.ByteArrayOutputStream;
 import com.example.hrm.shared.ExcelResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,6 +30,7 @@ public class ContractExcelService {
     private final ContractExcelValidator validator;
     private final ContractService contractService;
 
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public ExcelResult importFile(MultipartFile file){
         List<ContractExcelDto> dtos = parseExcel(file);
         int successCount = 0;
@@ -52,6 +53,7 @@ public class ContractExcelService {
         return new ExcelResult(successCount, errors);
     }
 
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public ByteArrayResource exportFile() {
 
         try (Workbook workbook = new XSSFWorkbook()) {

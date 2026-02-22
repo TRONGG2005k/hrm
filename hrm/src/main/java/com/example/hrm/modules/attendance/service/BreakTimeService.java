@@ -15,6 +15,7 @@ import com.example.hrm.modules.employee.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -60,6 +61,7 @@ public class BreakTimeService {
                 );
     }
 
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public List<String> updateBreakForSubDepartment(BreakTimeBatchRequest request) {
         // Lấy tất cả nhân viên trong phòng ban
         List<Employee> employees = employeeRepository.findBySubDepartmentId(request.getSubDepartmentId());
@@ -97,6 +99,7 @@ public class BreakTimeService {
     }
 
     // Tạo break mới
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public BreakTimeResponse createBreak(BreakTimeRequest request) {
         Attendance attendance = attendanceRepository.findById(request.getAttendanceId())
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404));
@@ -112,6 +115,7 @@ public class BreakTimeService {
     }
 
     // Cập nhật break
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public BreakTimeResponse updateBreak(String id, BreakTimeRequest request) {
         BreakTime breakTime = breakTimeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404));
@@ -125,6 +129,7 @@ public class BreakTimeService {
     }
 
     // Xóa break
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public void deleteBreak(String id) {
         BreakTime breakTime = breakTimeRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404));
@@ -132,6 +137,7 @@ public class BreakTimeService {
     }
 
     // Lấy break theo attendance (paging)
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public Page<BreakTimeResponse> getBreaksByAttendance(String attendanceId, Pageable pageable) {
         Attendance attendance = attendanceRepository.findById(attendanceId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, 404));

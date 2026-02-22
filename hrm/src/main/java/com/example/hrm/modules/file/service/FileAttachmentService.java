@@ -8,6 +8,7 @@ import com.example.hrm.shared.exception.ErrorCode;
 import com.example.hrm.modules.file.repository.FileAttachmentRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,6 +31,7 @@ public class FileAttachmentService {
          * @param description mô tả file (optional)
          * @return FileAttachment vừa lưu
          */
+        @PreAuthorize("hasAnyRole('MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
         public FileAttachment uploadFile(MultipartFile file, String refType, String refId, String description) {
                 // 1. Lưu file lên filesystem
                 String savedFileName = fileUploadService.uploadFile(file);
@@ -51,6 +53,7 @@ public class FileAttachmentService {
                 return fileAttachmentRepository.save(attachment);
         }
 
+        @PreAuthorize("hasAnyRole('MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
         public FileAttachment uploadFile(FileUploadRequest request) {
 
                 validateDuplicate(
@@ -82,6 +85,7 @@ public class FileAttachmentService {
         /**
          * Xóa file cả trên filesystem và DB
          */
+        @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
         public void deleteFile(String fileId) {
                 FileAttachment attachment = fileAttachmentRepository.findById(fileId)
                                 .orElseThrow(() -> new AppException(ErrorCode.FILE_NOT_FOUND, 404,

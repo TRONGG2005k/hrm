@@ -51,7 +51,7 @@ public class PayrollController {
     ) {
         // Sau này có thể tạo service getPayrollByEmployeeAndMonth
 
-        Page<PayrollListItemResponse> response = payrollService.getAll(page, size); // Tạm thời dùng create, về sau dùng get
+        Page<PayrollListItemResponse> response = payrollService.getAll(page, size); // Tạm thờidùng create, về sau dùng get
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     /**
@@ -68,7 +68,7 @@ public class PayrollController {
     ) {
         // Sau này có thể tạo service getPayrollByEmployeeAndMonth
         PayrollRequest request = new PayrollRequest(employeeId, month, year);
-        PayrollResponse response = payrollService.getDetailByEmployee(employeeId, month, year); // Tạm thời dùng create, về sau dùng get
+        PayrollResponse response = payrollService.getDetailByEmployee(employeeId, month, year); // Tạm thờidùng create, về sau dùng get
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

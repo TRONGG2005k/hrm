@@ -8,6 +8,7 @@ import com.example.hrm.modules.file.service.ZipExtractionService;
 import com.example.hrm.shared.BulkUploadResult;
 import com.example.hrm.shared.enums.RefType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +24,7 @@ public class EmployeeUploadService {
     private final FileAttachmentService fileAttachmentService;
     private final ZipExtractionService zipExtractionService;
 
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public  BulkUploadResult importFile(MultipartFile file){
 
         List<String> errorMessages = new ArrayList<>();

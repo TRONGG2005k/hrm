@@ -19,6 +19,7 @@ import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,8 +39,8 @@ public class UserAccountService {
     private final EmailService emailService;
 
     @Transactional
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public UserAccountResponse createAuto(String employeeId) throws JOSEException {
-
         if (userAccountRepository.existsByEmployeeIdAndIsDeletedFalse(employeeId)) {
             throw new AppException(ErrorCode.USER_ACCOUNT_ALREADY_EXISTS, 409);
         }
@@ -79,7 +80,8 @@ public class UserAccountService {
         return response;
     }
 
-
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public UserAccountResponse createManual(UserAccountRequest request){
         var user = userAccountMapper.toEntity(request);
         var employee = employeeRepository
@@ -100,6 +102,7 @@ public class UserAccountService {
         return response;
     }
 
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public Page<UserAccountResponse> getAll(int page, int size){
         var accounts = userAccountRepository.findByIsDeletedFalseAndStatus(PageRequest.of(page, size), UserStatus.ACTIVE);
         return accounts.map(item -> {
@@ -110,6 +113,7 @@ public class UserAccountService {
         });
     }
 
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR_MANAGER', 'ADMIN')")
     public UserAccountResponse getById(String id) {
         var user = userAccountRepository.findByIdAndIsDeletedFalseAndStatus(id, UserStatus.ACTIVE)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
@@ -121,6 +125,7 @@ public class UserAccountService {
         return response;
     }
 
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR_MANAGER', 'ADMIN')")
     public UserAccountResponse update(String id, UserAccountRequest request) {
         var user = userAccountRepository.findByIdAndIsDeletedFalseAndStatus(id, UserStatus.ACTIVE)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
@@ -149,6 +154,7 @@ public class UserAccountService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public void delete(String id) {
         var user = userAccountRepository.findByIdAndIsDeletedFalseAndStatus(id, UserStatus.ACTIVE)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404));
@@ -158,7 +164,6 @@ public class UserAccountService {
 
         userAccountRepository.save(user);
     }
-
 
 
 }

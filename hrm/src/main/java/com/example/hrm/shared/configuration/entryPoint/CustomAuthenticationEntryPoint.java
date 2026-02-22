@@ -17,11 +17,18 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
             HttpServletRequest request,
             HttpServletResponse response,
             AuthenticationException authException
-    ) throws IOException, ServletException {
+    ) throws IOException {
 
-        // Thay vì 401, trả về 403
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        response.getWriter().write("Access to the resource is prohibited");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+
+        response.getWriter().write("""
+            {
+              "code": 401,
+              "error": "UNAUTHORIZED",
+              "message": "Authentication required or token invalid"
+            }
+        """);
     }
 }
 

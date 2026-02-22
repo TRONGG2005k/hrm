@@ -14,6 +14,7 @@ import com.example.hrm.modules.organization.repository.SubDepartmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 
@@ -26,6 +27,7 @@ public class SubDepartmentService {
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
 
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public SubDepartmentResponse createSubDepartment(SubDepartmentRequest request) {
         Department department = departmentRepository.findById(request.getDepartmentId())
                 .orElseThrow(() -> new RuntimeException("Department not found"));
@@ -40,16 +42,19 @@ public class SubDepartmentService {
         return toResponse(subDepartment);
     }
 
+    @PreAuthorize("isAuthenticated()")
     public Page<SubDepartmentResponse> getAllSubDepartments(Pageable pageable) {
         return subDepartmentRepository.findByIsDeletedFalse(pageable)
                 .map(this::toResponse);
     }
 
+    @PreAuthorize("isAuthenticated()")
     public Page<SubDepartmentResponse> getSubDepartmentsByDepartment(String departmentId, Pageable pageable) {
         return subDepartmentRepository.findByDepartmentIdAndIsDeletedFalse(departmentId, pageable)
                 .map(this::toResponse);
     }
 
+    @PreAuthorize("isAuthenticated()")
     public SubDepartmentResponseDetail getSubDepartmentById(String id) {
 
         var subDepartment = subDepartmentRepository.findById(id)
@@ -65,6 +70,7 @@ public class SubDepartmentService {
                 .build();
     }
 
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public SubDepartmentResponse updateSubDepartment(String id, SubDepartmentRequest request) {
         SubDepartment subDepartment = subDepartmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("SubDepartment not found"));
@@ -80,6 +86,7 @@ public class SubDepartmentService {
         return toResponse(subDepartment);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteSubDepartment(String id) {
         SubDepartment subDepartment = subDepartmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("SubDepartment not found"));

@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -37,12 +38,14 @@ public class AttendanceService {
 //     private final EmployeeRepository employeeRepository;
     private final LeaveBalanceRepository leaveBalanceRepository;
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public Page<AttendanceListResponse> getAll(int page, int size) {
         return attendanceRepository
                 .findByIsDeletedFalse(PageRequest.of(page, size))
                 .map(this::mapToListResponse);
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public Page<AttendanceListResponse> getAllBySubDepartment(
             int page, int size, String subDepartmentId
     ) {
@@ -51,6 +54,7 @@ public class AttendanceService {
                 .map(this::mapToListResponse);
     }
 
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public AttendanceDetailResponse getDetail(String attendanceId) {
 
         Attendance attendance = attendanceRepository
@@ -288,6 +292,5 @@ public class AttendanceService {
             }
         }
     }
-
 
 }

@@ -99,7 +99,8 @@ public class FaceRecognitionService {
                     .build();
 
         } catch (Exception e) {
-            throw new RuntimeException("Xử lý recognizeFace thất bại: " + e.getMessage(), e);
+            log.warn("fail {}", e.getMessage());
+            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR, 500, "Xử lý recognizeFace thất bại: " + e.getMessage());
         }
     }
 

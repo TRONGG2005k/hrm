@@ -19,6 +19,8 @@ public enum ErrorCode {
     USER_UNAUTHORIZED("E2005", "Người dùng không có quyền thực hiện hành động này"),
     INVALID_USERNAME_OR_PASSWORD("E2006", "invalid user name or password"),
     USER_NOT_ACTIVE("E2008", "tài khoản không được kích hoạt hoặc sai tên và mật khẩu"),
+    UNAUTHORIZED("E2009", "Chưa đăng nhập hoặc phiên làm việc đã hết hạn"),
+    FORBIDDEN("E2010", "Bạn không có quyền thực hiện thao tác này"),
 
     // Department errors (3000-3999)
     DEPARTMENT_NOT_FOUND("E3001", "Phòng ban không tìm thấy"),

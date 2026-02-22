@@ -9,6 +9,7 @@ import com.example.hrm.shared.enums.RefType;
 import com.example.hrm.modules.employee.mapper.ContactMapper;
 import com.example.hrm.modules.file.mapper.FileAttachmentMapper;
 import com.example.hrm.modules.employee.repository.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import com.example.hrm.modules.employee.mapper.EmployeeMapper;
 import jakarta.transaction.Transactional;
@@ -37,11 +38,13 @@ public class EmployeeService {
     private final PositionRepository positionRepository;
 
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public Page<EmployeeResponse> getAllEmployees(int page, int size) {
         var employeePage = employeeRepository.findByIsDeletedFalse(PageRequest.of(page, size));
         return employeePage.map(employeeMapper::toResponse);
     }
 
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public EmployeeResponse getEmployeeById(String id) {
         var employee = employeeRepository.findEmployeeWithFiles(id)
                 .orElseThrow(
@@ -61,6 +64,7 @@ public class EmployeeService {
     }
 
     @Transactional
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public EmployeeResponse createEmployee(EmployeeRequest request) {
 
         Employee employee = employeeMapper.toEntity(request);
@@ -86,6 +90,7 @@ public class EmployeeService {
 
 
     @Transactional
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public EmployeeResponse updateEmployee(String id, EmployeeRequest request) {
 
         Employee employee = employeeRepository.findByIdAndIsDeletedFalse(id)
@@ -120,6 +125,7 @@ public class EmployeeService {
 
 
     @Transactional
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public void deleteEmployee(String id) {
         var employee = employeeRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(

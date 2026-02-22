@@ -16,14 +16,18 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, String> {
-    @EntityGraph(attributePaths = {"address", "subDepartment"})
+    @EntityGraph(attributePaths = { "address", "subDepartment" })
     Page<Employee> findByIsDeletedFalse(Pageable pageable);
 
-    @EntityGraph(attributePaths = {"address", "subDepartment"})
+    @EntityGraph(attributePaths = { "address", "subDepartment", "position", "contracts" })
     List<Employee> findAllByIsDeletedFalse();
+
     Optional<Employee> findByIdAndIsDeletedFalse(String id);
+
     boolean existsByCodeAndIsDeletedFalse(String codee);
+
     Optional<Employee> findByCodeAndIsDeletedFalse(String id);
+
     @Query("""
                 SELECT e FROM Employee e
                 LEFT JOIN FETCH e.subDepartment sd

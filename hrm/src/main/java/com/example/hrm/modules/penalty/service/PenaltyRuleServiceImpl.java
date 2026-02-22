@@ -1,4 +1,5 @@
 package com.example.hrm.modules.penalty.service;
+
 import com.example.hrm.modules.penalty.dto.request.PenaltyRuleRequest;
 import com.example.hrm.modules.penalty.dto.response.PenaltyRuleResponse;
 import com.example.hrm.modules.penalty.entity.PenaltyRule;
@@ -7,6 +8,7 @@ import com.example.hrm.shared.exception.ErrorCode;
 import com.example.hrm.modules.penalty.mapper.PenaltyRuleMapper;
 import com.example.hrm.modules.penalty.repository.PenaltyRuleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,6 +22,7 @@ public class PenaltyRuleServiceImpl implements PenaltyRuleService {
     private final PenaltyRuleMapper penaltyRuleMapper;
 
     @Override
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public PenaltyRuleResponse create(PenaltyRuleRequest request) {
         PenaltyRule penaltyRule = penaltyRuleMapper.toEntity(request);
 
@@ -35,6 +38,7 @@ public class PenaltyRuleServiceImpl implements PenaltyRuleService {
 
 
     @Override
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public PenaltyRuleResponse update(String id, PenaltyRuleRequest request) {
         PenaltyRule penaltyRule = penaltyRuleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PENALTY_RULE_NOT_FOUND, 404));
@@ -46,6 +50,7 @@ public class PenaltyRuleServiceImpl implements PenaltyRuleService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public void delete(String id) {
         PenaltyRule penaltyRule = penaltyRuleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PENALTY_RULE_NOT_FOUND, 404));
@@ -54,6 +59,7 @@ public class PenaltyRuleServiceImpl implements PenaltyRuleService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public PenaltyRuleResponse getById(String id) {
         PenaltyRule penaltyRule = penaltyRuleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PENALTY_RULE_NOT_FOUND, 404));
@@ -62,6 +68,7 @@ public class PenaltyRuleServiceImpl implements PenaltyRuleService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public List<PenaltyRuleResponse> getAll() {
         return penaltyRuleRepository.findAll()
                 .stream()
@@ -70,6 +77,7 @@ public class PenaltyRuleServiceImpl implements PenaltyRuleService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public List<PenaltyRuleResponse> getAllActive() {
         return penaltyRuleRepository.findAllByActiveTrueOrderByPriorityAsc()
                 .stream()

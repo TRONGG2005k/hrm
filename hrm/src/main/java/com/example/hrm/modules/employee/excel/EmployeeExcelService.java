@@ -14,6 +14,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,6 +37,7 @@ public class EmployeeExcelService {
     private final ExcelHelper excelHelper;
 
     @Transactional
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public ExcelResult importEmployees(MultipartFile file) {
 
 
@@ -69,6 +71,8 @@ public class EmployeeExcelService {
         return new ExcelResult(successCount, errors);
     }
 
+    @Transactional
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public ExcelResult importOrUpdateEmployees(MultipartFile file) {
         List<EmployeeExcelImportDto> dtos = parseExcel(file);
 
@@ -114,6 +118,7 @@ public class EmployeeExcelService {
         return new ExcelResult(successCount, errors);
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public void export(OutputStream outputStream) throws IOException {
 
         List<Employee> employees = employeeRepository.findAllByIsDeletedFalse();

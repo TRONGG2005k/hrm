@@ -11,6 +11,7 @@ import com.example.hrm.shared.BulkUploadResult;
 import com.example.hrm.shared.enums.ContractStatus;
 import com.example.hrm.shared.enums.RefType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,6 +28,7 @@ public class ContractUploadService {
     private final ContractRepository contractRepository;
     private final EmployeeRepository employeeRepository;
 
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public BulkUploadResult importFile(MultipartFile zip) {
 
         List<String> errorMessages = new ArrayList<>();

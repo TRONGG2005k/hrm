@@ -17,22 +17,30 @@ import java.util.Optional;
 @Repository
 public interface PayrollRepository extends JpaRepository<Payroll, String> {
     Page<Payroll> findByIsDeletedFalse(Pageable pageable);
+
     Page<Payroll> findByIsDeletedFalse(Pageable pageable, YearMonth month);
+
     Optional<Payroll> findByIdAndIsDeletedFalse(String id);
+
     Page<Payroll> findByEmployeeIdAndIsDeletedFalse(String employeeId, Pageable pageable);
+
     Optional<Payroll> findByEmployeeIdAndMonthAndIsDeletedFalse(String employeeId, YearMonth month);
+
     boolean existsByEmployeeIdAndMonthAndIsDeletedFalse(String employeeId, YearMonth month);
-    List<Payroll> findAllByMonthAndStatusAndIsDeletedFalse(YearMonth month, PayrollStatus status);
+
+    @Query("SELECT p FROM Payroll p JOIN FETCH p.employee WHERE p.month = :month AND p.status = :status AND p.isDeleted = false")
+    List<Payroll> findAllByMonthAndStatusAndIsDeletedFalse(@Param("month") YearMonth month,
+            @Param("status") PayrollStatus status);
+
     @Query("""
-        SELECT COALESCE(SUM(p.totalSalary), 0)
-        FROM Payroll p
-        WHERE p.month = :month
-          AND p.status = :status
-          AND p.isDeleted = false
-    """)
+                SELECT COALESCE(SUM(p.totalSalary), 0)
+                FROM Payroll p
+                WHERE p.month = :month
+                  AND p.status = :status
+                  AND p.isDeleted = false
+            """)
     Optional<BigDecimal> sumTotalSalaryByMonthAndStatusAndIsDeletedFalse(
             @Param("month") String month,
-            @Param("status") PayrollStatus status
-    );
+            @Param("status") PayrollStatus status);
 
 }

@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,6 +33,7 @@ public class PositionExcelService {
     private final PositionExcelMapper mapper;
     private final ExcelHelper excelHelper;
 
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
     public ExcelResult importFile(MultipartFile file) {
         List<PositionExcelDto> dtos = parseExcel(file);
 
@@ -76,6 +78,7 @@ public class PositionExcelService {
         return new ExcelResult(successCount, errors);
     }
 
+    @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public void exportFile(OutputStream outputStream) throws IOException {
         List<Position> positionList = positionRepository.findAllByIsDeletedFalseAndActiveTrue();
         Workbook workbook = new XSSFWorkbook();
