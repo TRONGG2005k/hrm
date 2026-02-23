@@ -160,7 +160,7 @@ public class AttendanceService {
                 .otRate(otRate)
                 .otType(otType)
 
-                .status(status)
+                .status(attendance.getStatus())
                 .build();
     }
 
@@ -168,6 +168,23 @@ public class AttendanceService {
 
     private AttendanceListResponse mapToListResponse(Attendance attendance) {
 
+        if (attendance.getStatus() == AttendanceStatus.LEAVE
+                || attendance.getStatus() == AttendanceStatus.LEAVE_UNPAID) {
+
+            return AttendanceListResponse.builder()
+                    .id(attendance.getId())
+                    .employeeCode(attendance.getEmployee().getCode())
+                    .checkInTime(null)
+                    .checkOutTime(null)
+                    .lateMinutes(0)
+                    .earlyLeaveMinutes(0)
+                    .evaluation(attendance.getEvaluation())
+                    .otMinutes(0)
+                    .otRate(0)
+                    .workDate(attendance.getWorkDate())
+                    .status(attendance.getStatus())
+                    .build();
+        }
         LocalDateTime checkIn = attendance.getCheckInTime();
         LocalDateTime checkOut = attendance.getCheckOutTime();
 
@@ -210,6 +227,7 @@ public class AttendanceService {
         }
 
         return AttendanceListResponse.builder()
+                .id(attendance.getId())
                 .employeeCode(attendance.getEmployee().getCode())
                 .checkInTime(checkIn)
                 .checkOutTime(checkOut)
@@ -217,8 +235,9 @@ public class AttendanceService {
                 .earlyLeaveMinutes(earlyLeaveMinutes)
                 .otMinutes(otMinutes)
                 .otRate(otRate)
+                .evaluation(attendance.getEvaluation())
                 .workDate(attendance.getWorkDate())
-                .status(status)
+                .status(attendance.getStatus())
                 .build();
     }
 

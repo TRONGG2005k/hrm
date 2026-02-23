@@ -4,12 +4,16 @@ package com.example.hrm.modules.payroll.controller;
 import com.example.hrm.modules.payroll.dto.request.PayrollApprovalRequest;
 import com.example.hrm.modules.payroll.dto.request.PayrollRequest;
 import com.example.hrm.modules.payroll.dto.response.*;
+import com.example.hrm.modules.payroll.excel.PayrollExcelService;
 import com.example.hrm.modules.payroll.service.PayrollService;
 import com.example.hrm.shared.enums.PayrollStatus;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +27,7 @@ import java.util.List;
 public class PayrollController {
 
     private final PayrollService payrollService;
+    private final PayrollExcelService payrollExcelService;
 
     /**
      * Tạo và tính lương cho một nhân viên trong kỳ nhất định
@@ -130,6 +135,92 @@ public class PayrollController {
     ) {
         PayrollResponse response = payrollService.getById(payrollId);
         return ResponseEntity.ok(response);
+    }
+
+    // ==================== EXPORT EXCEL ====================
+
+    /**
+     * Export tất cả bảng lương ra Excel
+     * GET /api/payroll/export
+     */
+    @GetMapping("/export")
+    public ResponseEntity<ByteArrayResource> exportAllPayrolls() {
+        ByteArrayResource resource = payrollExcelService.exportAllPayrolls();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=payrolls.xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentLength(resource.contentLength())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+
+    /**
+     * Export bảng lương theo tháng ra Excel
+     * GET /api/payroll/export/month?month=1&year=2024
+     */
+    @GetMapping("/export/month")
+    public ResponseEntity<ByteArrayResource> exportPayrollsByMonth(
+            @RequestParam Integer month,
+            @RequestParam Integer year
+    ) {
+        ByteArrayResource resource = payrollExcelService.exportPayrollsByMonth(month, year);
+
+        String filename = String.format("payroll_%02d_%d.xlsx", month, year);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentLength(resource.contentLength())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+
+    /**
+     * Export bảng lương theo tháng và trạng thái ra Excel
+     * GET /api/payroll/export/month-status?month=1&year=2024&status=APPROVED
+     */
+    @GetMapping("/export/month-status")
+    public ResponseEntity<ByteArrayResource> exportPayrollsByMonthAndStatus(
+            @RequestParam Integer month,
+            @RequestParam Integer year,
+            @RequestParam PayrollStatus status
+    ) {
+        ByteArrayResource resource = payrollExcelService.exportPayrollsByMonthAndStatus(month, year, status);
+
+        String filename = String.format("payroll_%02d_%d_%s.xlsx", month, year, status.name());
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentLength(resource.contentLength())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+
+    /**
+     * Export bảng lương theo nhân viên ra Excel
+     * GET /api/payroll/export/employee/{employeeId}
+     */
+    @GetMapping("/export/employee/{employeeId}")
+    public ResponseEntity<ByteArrayResource> exportPayrollsByEmployee(
+            @PathVariable String employeeId
+    ) {
+        ByteArrayResource resource = payrollExcelService.exportPayrollsByEmployee(employeeId);
+
+        String filename = String.format("payroll_employee_%s.xlsx", employeeId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentLength(resource.contentLength())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
     }
 
 }

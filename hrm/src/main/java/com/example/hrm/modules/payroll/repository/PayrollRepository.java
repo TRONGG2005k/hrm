@@ -18,7 +18,10 @@ import java.util.Optional;
 public interface PayrollRepository extends JpaRepository<Payroll, String> {
     Page<Payroll> findByIsDeletedFalse(Pageable pageable);
 
-    Page<Payroll> findByIsDeletedFalse(Pageable pageable, YearMonth month);
+    Page<Payroll> findByIsDeletedFalseAndMonth(
+            YearMonth month,
+            Pageable pageable
+    );
 
     Optional<Payroll> findByIdAndIsDeletedFalse(String id);
 
@@ -31,6 +34,15 @@ public interface PayrollRepository extends JpaRepository<Payroll, String> {
     @Query("SELECT p FROM Payroll p JOIN FETCH p.employee WHERE p.month = :month AND p.status = :status AND p.isDeleted = false")
     List<Payroll> findAllByMonthAndStatusAndIsDeletedFalse(@Param("month") YearMonth month,
             @Param("status") PayrollStatus status);
+
+    @Query("SELECT p FROM Payroll p JOIN FETCH p.employee WHERE p.month = :month AND p.isDeleted = false")
+    List<Payroll> findAllByMonthAndIsDeletedFalse(@Param("month") YearMonth month);
+
+    @Query("SELECT p FROM Payroll p JOIN FETCH p.employee WHERE p.employee.id = :employeeId AND p.isDeleted = false")
+    List<Payroll> findByEmployeeIdAndIsDeletedFalse(@Param("employeeId") String employeeId);
+
+    @Query("SELECT p FROM Payroll p JOIN FETCH p.employee WHERE p.isDeleted = false")
+    List<Payroll> findAllByIsDeletedFalse();
 
     @Query("""
                 SELECT COALESCE(SUM(p.totalSalary), 0)

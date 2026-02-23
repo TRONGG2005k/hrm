@@ -102,6 +102,7 @@ public class SubDepartmentService {
         return SubDepartmentResponse.builder()
                 .id(subDepartment.getId())
                 .departmentId(subDepartment.getDepartment().getId())
+                .departmentName(subDepartment.getDepartment().getName())
                 .name(subDepartment.getName())
                 .description(subDepartment.getDescription())
                 .createdAt(subDepartment.getCreatedAt())

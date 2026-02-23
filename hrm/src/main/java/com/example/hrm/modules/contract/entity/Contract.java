@@ -66,6 +66,13 @@ public class Contract {
     @Builder.Default
     private List<FileAttachment> files = new ArrayList<>();
 
+    @OneToMany(
+            mappedBy = "contract",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @Builder.Default
+    private List<SalaryContract> salaryContracts = new ArrayList<>();
     @Builder.Default
     @Column(nullable = false)
     Boolean isDeleted = false;

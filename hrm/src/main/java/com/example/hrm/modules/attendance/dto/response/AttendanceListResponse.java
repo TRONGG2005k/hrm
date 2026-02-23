@@ -1,5 +1,7 @@
 package com.example.hrm.modules.attendance.dto.response;
 
+import com.example.hrm.shared.enums.AttendanceEvaluation;
+import com.example.hrm.shared.enums.AttendanceStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -9,6 +11,8 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 public class AttendanceListResponse {
+    private String id;
+
     private String employeeCode;
     private LocalDate workDate;
 
@@ -20,6 +24,6 @@ public class AttendanceListResponse {
 
     private long otMinutes;
     private double otRate;
-
-    private Object status;
+    private AttendanceEvaluation evaluation;
+    private AttendanceStatus status;
 }

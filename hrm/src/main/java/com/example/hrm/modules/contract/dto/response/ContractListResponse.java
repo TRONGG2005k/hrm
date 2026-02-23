@@ -3,6 +3,7 @@ package com.example.hrm.modules.contract.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Getter
@@ -18,7 +19,7 @@ public class ContractListResponse {
     String status;
     LocalDate startDate;
     LocalDate endDate;
-
+    BigDecimal baseSalary;
     String employeeId;
     String employeeCode;
     String employeeName;

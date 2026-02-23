@@ -5,13 +5,13 @@ spring:
 
 
 ---
-
+server:
+  port: ${SERVER_PORT:8081}
 spring:
   config:
     activate:
       on-profile: dev
-  server:
-    port: ${SERVER_PORT:8081}
+
   # jackson:
   #   default-property-inclusion: non_null
   datasource:
@@ -53,7 +53,7 @@ app:
     signerKeyAccess: ${SIGNER_KEY_ACCESS_DEV:1TjXchw5FloESb63Kc+DFhTARvpWL4jUGCwfGWxuG5SIf/1y/LgJxHnMqaF6A/ij}
     signerKeyRefresh: ${SIGNER_KEY_REFRESH_DEV:cbd90562e6d653c6779c233efcb3288b2342c62cfddd8c4ba67eca36d79d2b38}
     signerKeyActivation: ${SIGNER_KEY_ACTIVATION_DEV:7c7f1375fdc9f16e2b2143cc9eddb315c0837118de48551baeeb0d62feca745b}
-    valid-duration: ${JWT_ACCESS_DURATION:900}       # access token (s)
+    valid-duration: ${JWT_ACCESS_DURATION:2592000}       # access token (s)
     refreshable-duration: ${JWT_REFRESH_DURATION:2592000}    # refresh token (s)
     activation-duration: ${JWT_ACTIVATION_DURATION:900}         # activation token (15 phút)
   mail:
@@ -69,12 +69,13 @@ face-recognition:
     register-batch: ${FACE_RECOGNITION_REGISTER_BATCH_API:/facial-recognition/register-face-batch}
 
 ---
+server:
+  port: ${SERVER_PORT:8443}
 spring:
   config:
     activate:
       on-profile: pro
-  server:
-    port: ${SERVER_PORT:8443}
+
   # jackson:
   #   default-property-inclusion: non_null
   datasource:

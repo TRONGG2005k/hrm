@@ -44,11 +44,14 @@ public class SecurityConfiguration {
                         // All other requests need authentication
                         .anyRequest().authenticated()
                 )
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(customAuthenticationEntryPoint) // Chặn chưa login
                         .accessDeniedHandler(accessDeniedHandler)
-                );
+                )
+               ;
+
 
         return http.build();
     }

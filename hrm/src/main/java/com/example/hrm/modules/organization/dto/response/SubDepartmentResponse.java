@@ -20,6 +20,8 @@ public class SubDepartmentResponse {
 
     String departmentId;
 
+    String departmentName;
+
     String name;
 
     String description;

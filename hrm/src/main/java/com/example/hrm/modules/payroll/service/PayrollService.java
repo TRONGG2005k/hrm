@@ -125,9 +125,12 @@ public class PayrollService {
     public Page<PayrollListItemResponse> getAllByMouth(int page, int size, int month, int year){
 
 
-        var listResponse = payrollRepository.findByIsDeletedFalse(
-                PageRequest.of(page, size),
-                YearMonth.of(year, month));
+        var listResponse = payrollRepository
+                .findByIsDeletedFalseAndMonth(
+                        YearMonth.of(year, month),
+                        PageRequest.of(page, size)
+                );
+
         return listResponse.map(payrollResponseMapper::toListResponse);
     }
 
@@ -276,7 +279,7 @@ public class PayrollService {
 
         if (employee.getContracts() == null || employee.getContracts().isEmpty()) {
             throw new AppException(ErrorCode.CONTRACT_NOT_FOUND, 404,
-                    "Nhân viên chưa có hợp đồng nào");
+                    employee.getCode() + " Nhân viên chưa có hợp đồng nào");
         }
 
         var contract = employee.getContracts().getFirst();

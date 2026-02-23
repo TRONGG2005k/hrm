@@ -96,6 +96,9 @@ public class DepartmentService {
                 .id(department.getId())
                 .name(department.getName())
                 .description(department.getDescription())
+                .subDepartmentResponses(department.getSubDepartments().stream().map(
+                        subDepartmentMapper::toResponse
+                ).collect(Collectors.toSet()))
                 .createdAt(department.getCreatedAt())
                 .updatedAt(department.getUpdatedAt())
                 .isDeleted(department.getIsDeleted())

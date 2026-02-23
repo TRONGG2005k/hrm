@@ -3,6 +3,7 @@ package com.example.hrm.modules.payroll.mapper;
 import com.example.hrm.modules.attendance.dto.response.AttendanceSummaryResponse;
 import com.example.hrm.modules.attendance.entity.Attendance;
 import com.example.hrm.modules.attendance.entity.AttendanceOTRate;
+import com.example.hrm.modules.contract.dto.response.AllowanceSummary;
 import com.example.hrm.modules.contract.entity.SalaryAdjustment;
 import com.example.hrm.modules.contract.mapper.SalaryAdjustmentMapper;
 import com.example.hrm.modules.employee.entity.Employee;
@@ -10,6 +11,7 @@ import com.example.hrm.modules.payroll.dto.request.PayrollRequest;
 import com.example.hrm.modules.payroll.dto.response.*;
 import com.example.hrm.modules.payroll.entity.Payroll;
 import com.example.hrm.shared.enums.AdjustmentType;
+import com.example.hrm.shared.enums.AllowanceCalculationType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -140,6 +142,15 @@ public class PayrollResponseMapper {
     }
 
     public PayrollListItemResponse toListResponse(PayrollResponse item){
+        BigDecimal totalAllowance = BigDecimal.ZERO;
+        for (
+                Map.Entry<AllowanceCalculationType, AllowanceSummary> entry
+                :
+                item.getEarnings().getAllowances().entrySet()
+        ) {
+            totalAllowance = totalAllowance.add((entry.getValue().amount()));
+        }
+
         return new PayrollListItemResponse(
                 item.getPayrollId(),
                 item.getEmployee().getEmployeeId(),
@@ -148,6 +159,8 @@ public class PayrollResponseMapper {
                 item.getPeriod(),
                 item.getEarnings().getBaseSalaryTotal(),
                 item.getSummary().getNetSalary(),
+                totalAllowance,
+                item.getSummary().getTotalDeductions(),
                 item.getStatus(),
                 item.getMetadata().getCalculatedAt()
         );
@@ -165,6 +178,8 @@ public class PayrollResponseMapper {
                 periodResponse,
                 item.getBaseSalary(),
                 item.getTotalSalary(),
+                item.getAllowance(),
+                item.getPenalty(),
                 item.getStatus(),
                 item.getCreatedAt()
         );

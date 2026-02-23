@@ -13,6 +13,8 @@ public record PayrollListItemResponse(
         PeriodResponse period,
         BigDecimal baseSalary,
         BigDecimal totalSalary,
+        BigDecimal totalAllowance,
+        BigDecimal totalDeductions,
         PayrollStatus status,
         LocalDateTime calculatedAt
 ) {}

@@ -194,7 +194,17 @@ public class ContractService {
     public Page<ContractListResponse> getAllContractActive(int page, int size) {
         return contractRepository
                 .findByIsDeletedFalseAndStatus(PageRequest.of(page, size), ContractStatus.ACTIVE)
-                .map(contractMapper::toListResponse);
+                .map(c -> {
+
+                    var response = contractMapper.toListResponse(c);
+                    response.setEmployeeCode(c.getEmployee().getCode());
+                    response.setEmployeeName(c.getEmployee().getFirstName() + " " + c.getEmployee().getLastName());
+                    response.setContractCode(c.getCode());
+                    response.setContractType(c.getType().name());
+                    response.setEmployeeId(c.getEmployee().getId());
+                    response.setBaseSalary(c.getSalaryContracts().getFirst().getBaseSalary());
+                    return response;
+                });
     }
 
     @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
