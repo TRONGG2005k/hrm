@@ -267,12 +267,19 @@ public class PayrollService {
 
     private SalaryContract getSalaryContract(Employee employee) {
         // Kiểm tra employee có contracts không
+
+        if ("admin".equalsIgnoreCase(employee.getCode())) {
+            return SalaryContract.builder()
+                    .baseSalary(BigDecimal.ZERO)
+                    .build();
+        }
+
         if (employee.getContracts() == null || employee.getContracts().isEmpty()) {
             throw new AppException(ErrorCode.CONTRACT_NOT_FOUND, 404,
                     "Nhân viên chưa có hợp đồng nào");
         }
 
-        var contract = employee.getContracts().get(0);
+        var contract = employee.getContracts().getFirst();
         if (contract == null) {
             throw new AppException(ErrorCode.CONTRACT_NOT_FOUND, 404,
                     "Hợp đồng không hợp lệ");

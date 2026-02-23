@@ -43,6 +43,11 @@ public class JwtService {
 
     private static final String ISSUER = "myapp.com";
 
+    @Value("${app.cookie.secure}")
+    private boolean cookieSecure;
+
+    @Value("${app.cookie.same-site}")
+    private String sameSite;
     /* ================= GENERATE ================= */
 
     public String generateAccessToken(UserAccount user) throws JOSEException {
@@ -68,10 +73,10 @@ public class JwtService {
     public ResponseCookie createRefreshCookie(String refreshToken) {
         return ResponseCookie.from("refresh_token", refreshToken)
                 .httpOnly(true)
-                .secure(false) // true nếu HTTPS
+                .secure(cookieSecure)
                 .path("/")
-                .maxAge(30 * 24 * 60 * 60) // 30 ngày
-                .sameSite("Lax")
+                .maxAge(refreshExp) // dùng refreshExp luôn cho đồng bộ
+                .sameSite(sameSite)
                 .build();
     }
 

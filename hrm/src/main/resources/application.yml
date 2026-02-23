@@ -2,8 +2,7 @@ spring:
   profiles:
     active: dev
 
-server:
-  port: 8081
+
 
 ---
 
@@ -11,45 +10,124 @@ spring:
   config:
     activate:
       on-profile: dev
+  server:
+    port: ${SERVER_PORT:8081}
   # jackson:
   #   default-property-inclusion: non_null
   datasource:
-    url: jdbc:mysql://localhost:3306/hrm_db
-    username: root
-    password: 123456
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:jdbc:mysql://localhost:3306/hrm_db}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
   redis:
     host: ${SPRING_REDIS_HOST:localhost}
     port: ${SPRING_REDIS_PORT:6379}
     password: ${SPRING_REDIS_PASSWORD:mypassword}
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: false
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
   servlet:
     multipart:
-      max-file-size: 50MB
-      max-request-size: 50MB
+      max-file-size: ${UPLOAD_MAX_FILE_SIZE:50MB}
+      max-request-size: ${UPLOAD_MAX_REQUEST_SIZE:50MB}
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: tn0964755528@gmail.com
-    password: ${GMAIL_APP_PASSWORD:gepsbijlpiurntvs}
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:tn0964755528@gmail.com}
+    password: ${MAIL_PASSWORD:gepsbijlpiurntvs}
     protocol: smtp
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
+
 app:
+  cookie:
+    secure: false
+    same-site: Lax
   upload:
-    dir: ./uploads
-    max-size: 52428800 
-  api-prefix: /api/v1
+    dir: ${UPLOAD_DIR:./uploads}
+    max-size: ${UPLOAD_MAX_SIZE:52428800}
+  api-prefix: ${API_PREFIX:/api/v1}
   jwt:
     signerKeyAccess: ${SIGNER_KEY_ACCESS_DEV:1TjXchw5FloESb63Kc+DFhTARvpWL4jUGCwfGWxuG5SIf/1y/LgJxHnMqaF6A/ij}
     signerKeyRefresh: ${SIGNER_KEY_REFRESH_DEV:cbd90562e6d653c6779c233efcb3288b2342c62cfddd8c4ba67eca36d79d2b38}
     signerKeyActivation: ${SIGNER_KEY_ACTIVATION_DEV:7c7f1375fdc9f16e2b2143cc9eddb315c0837118de48551baeeb0d62feca745b}
-    valid-duration: 900       # access token (s)
-    refreshable-duration: 2592000    # refresh token (s)
-    activation-duration: 900         # activation token (15 phút)
+    valid-duration: ${JWT_ACCESS_DURATION:900}       # access token (s)
+    refreshable-duration: ${JWT_REFRESH_DURATION:2592000}    # refresh token (s)
+    activation-duration: ${JWT_ACTIVATION_DURATION:900}         # activation token (15 phút)
   mail:
-    baseUrl: http://localhost:5173/active-account
+    baseUrl: ${MAIL_BASE_URL:http://localhost:5173/active-account}
+
+face-recognition:
+  base-url: ${FACE_RECOGNITION_BASE_URL:http://127.0.0.1:8000}
+  endpoints:
+    register: ${FACE_RECOGNITION_REGISTER_API:/facial-recognition/register-face}
+    recognize: ${FACE_RECOGNITION_RECOGNIZE_API:/facial-recognition/face-recognition}
+    update: ${FACE_RECOGNITION_UPDATE_API:/facial-recognition/update-face}
+    delete: ${FACE_RECOGNITION_DELETE_API:/facial-recognition/delete-face}
+    register-batch: ${FACE_RECOGNITION_REGISTER_BATCH_API:/facial-recognition/register-face-batch}
+
+---
+spring:
+  config:
+    activate:
+      on-profile: pro
+  server:
+    port: ${SERVER_PORT:8443}
+  # jackson:
+  #   default-property-inclusion: non_null
+  datasource:
+    url: jdbc:mysql://2iMchjBKLaDT6d1.root:h5TimlkTOUWLcFJ7@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/hrm_db
+    username: ${DB_USERNAME:2iMchjBKLaDT6d1.root}
+    password: ${DB_PASSWORD:h5TimlkTOUWLcFJ7}
+    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+
+  redis:
+    host: ${SPRING_REDIS_HOST:redis-11881.crce178.ap-east-1-1.ec2.cloud.redislabs.com}
+    port: ${SPRING_REDIS_PORT:11881}
+    password: ${SPRING_REDIS_PASSWORD:JCMjZDjohtR5Jt81x1GyiHFHtQy4Y5pJ}
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
+  servlet:
+    multipart:
+      max-file-size: ${UPLOAD_MAX_FILE_SIZE:50MB}
+      max-request-size: ${UPLOAD_MAX_REQUEST_SIZE:50MB}
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:tn0964755528@gmail.com}
+    password: ${MAIL_PASSWORD:gepsbijlpiurntvs}
+    protocol: smtp
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+app:
+  cookie:
+    secure: true
+    same-site: None
+  upload:
+    dir: ${UPLOAD_DIR:./uploads}
+    max-size: ${UPLOAD_MAX_SIZE:52428800}
+  api-prefix: ${API_PREFIX:/api/v1}
+  jwt:
+    signerKeyAccess: ${SIGNER_KEY_ACCESS_DEV:1TjXchw5FloESb63Kc+DFhTARvpWL4jUGCwfGWxuG5SIf/1y/LgJxHnMqaF6A/ij}
+    signerKeyRefresh: ${SIGNER_KEY_REFRESH_DEV:cbd90562e6d653c6779c233efcb3288b2342c62cfddd8c4ba67eca36d79d2b38}
+    signerKeyActivation: ${SIGNER_KEY_ACTIVATION_DEV:7c7f1375fdc9f16e2b2143cc9eddb315c0837118de48551baeeb0d62feca745b}
+    valid-duration: ${JWT_ACCESS_DURATION:900}       # access token (s)
+    refreshable-duration: ${JWT_REFRESH_DURATION:2592000}    # refresh token (s)
+    activation-duration: ${JWT_ACTIVATION_DURATION:900}         # activation token (15 phút)
+  mail:
+    baseUrl: ${MAIL_BASE_URL:http://localhost:5173/active-account}
+
+face-recognition:
+  base-url: ${FACE_RECOGNITION_BASE_URL:http://127.0.0.1:8000}
+  endpoints:
+    register: ${FACE_RECOGNITION_REGISTER_API:/facial-recognition/register-face}
+    recognize: ${FACE_RECOGNITION_RECOGNIZE_API:/facial-recognition/face-recognition}
+    update: ${FACE_RECOGNITION_UPDATE_API:/facial-recognition/update-face}
+    delete: ${FACE_RECOGNITION_DELETE_API:/facial-recognition/delete-face}
+    register-batch: ${FACE_RECOGNITION_REGISTER_BATCH_API:/facial-recognition/register-face-batch}

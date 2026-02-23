@@ -3,6 +3,7 @@ package com.example.hrm.shared.call_api;
 import com.example.hrm.modules.face_recognition.dto.response.FaceRecognizeResponse;
 import com.example.hrm.shared.MessageResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -20,16 +21,47 @@ public class CallApiFaceRecognition {
 
     private final RestTemplate restTemplate;
 
+    @Value("${face-recognition.base-url:http://127.0.0.1:8000}")
+    private String baseUrl;
+
+    @Value("${face-recognition.endpoints.register:/facial-recognition/register-face}")
+    private String registerEndpoint;
+
+    @Value("${face-recognition.endpoints.recognize:/facial-recognition/face-recognition}")
+    private String recognizeEndpoint;
+
+    @Value("${face-recognition.endpoints.update:/facial-recognition/update-face}")
+    private String updateEndpoint;
+
+    @Value("${face-recognition.endpoints.delete:/facial-recognition/delete-face}")
+    private String deleteEndpoint;
+
+    @Value("${face-recognition.endpoints.register-batch:/facial-recognition/register-face-batch}")
+    private String registerBatchEndpoint;
+
     public CallApiFaceRecognition(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
-    private static final String REGISTER_API  = "http://127.0.0.1:8000/facial-recognition/register-face";
-    private static final String RECOGNIZE_API = "http://127.0.0.1:8000/facial-recognition/face-recognition";
-    private static final String UPDATE_API    = "http://127.0.0.1:8000/facial-recognition/update-face";
-    private static final String DELETE_API    = "http://127.0.0.1:8000/facial-recognition/delete-face";
-    private static final String REGISTER_BATCH_API =
-            "http://127.0.0.1:8000/facial-recognition/register-face-batch";
+    private String getRegisterApi() {
+        return baseUrl + registerEndpoint;
+    }
+
+    private String getRecognizeApi() {
+        return baseUrl + recognizeEndpoint;
+    }
+
+    private String getUpdateApi() {
+        return baseUrl + updateEndpoint;
+    }
+
+    private String getDeleteApi() {
+        return baseUrl + deleteEndpoint;
+    }
+
+    private String getRegisterBatchApi() {
+        return baseUrl + registerBatchEndpoint;
+    }
 
     // ================= REGISTER BATCH =================
     public Map<String, Object> registerFaceBatch(byte[] zipBytes, String filename) {
@@ -55,7 +87,7 @@ public class CallApiFaceRecognition {
 
             ResponseEntity<Map> response =
                     restTemplate.exchange(
-                            REGISTER_BATCH_API,
+                            getRegisterBatchApi(),
                             HttpMethod.POST,
                             request,
                             Map.class
@@ -85,7 +117,7 @@ public class CallApiFaceRecognition {
 
         try {
             ResponseEntity<MessageResponse> response =
-                    restTemplate.postForEntity(REGISTER_API, request, MessageResponse.class);
+                    restTemplate.postForEntity(getRegisterApi(), request, MessageResponse.class);
 
             return Objects.requireNonNull(response.getBody()).getMessage();
         } catch (Exception e) {
@@ -106,7 +138,7 @@ public class CallApiFaceRecognition {
 
         try {
             ResponseEntity<FaceRecognizeResponse> response =
-                    restTemplate.postForEntity(RECOGNIZE_API, request, FaceRecognizeResponse.class);
+                    restTemplate.postForEntity(getRecognizeApi(), request, FaceRecognizeResponse.class);
             log.warn("response {}", response.getBody());
             return response.getBody();
         } catch (Exception e) {
@@ -129,7 +161,7 @@ public class CallApiFaceRecognition {
         try {
             ResponseEntity<MessageResponse> response =
                     restTemplate.exchange(
-                            UPDATE_API,
+                            getUpdateApi(),
                             HttpMethod.PUT,
                             request,
                             MessageResponse.class
@@ -155,7 +187,7 @@ public class CallApiFaceRecognition {
         try {
             ResponseEntity<MessageResponse> response =
                     restTemplate.exchange(
-                            DELETE_API,
+                            getDeleteApi(),
                             HttpMethod.DELETE,
                             request,
                             MessageResponse.class
