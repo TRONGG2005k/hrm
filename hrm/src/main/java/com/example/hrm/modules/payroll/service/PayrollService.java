@@ -204,6 +204,12 @@ public class PayrollService {
         payrollRepository.saveAll(payrollList);
 
         // Lưu lịch sử duyệt
+
+        List<PayrollListItemResponse> dtoList =
+                payrollList.stream()
+                        .map(payrollResponseMapper::toListResponse)
+                        .toList();
+
         PayrollApprovalHistory history = PayrollApprovalHistory.builder()
                 .month(request.getMonth())
                 .year(request.getYear())
@@ -213,7 +219,7 @@ public class PayrollService {
                         : PayrollApprovalStatus.REJECTED)
                 .comment(request.getComment())
                 .approvedBy(user.getEmployee()) // hoặc từ context
-                .payrollSnapshot(objectMapper.writeValueAsString(payrollList))
+                .payrollSnapshot(objectMapper.writeValueAsString(dtoList))
                 .build();
 
         payrollApprovalHistoryRepository.save(history);

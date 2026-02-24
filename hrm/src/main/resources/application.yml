@@ -79,10 +79,18 @@ spring:
   # jackson:
   #   default-property-inclusion: non_null
   datasource:
-    url: jdbc:mysql://2iMchjBKLaDT6d1.root:h5TimlkTOUWLcFJ7@gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/hrm_db
+    url: jdbc:mysql://gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/hrm_db?sslMode=REQUIRED&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:2iMchjBKLaDT6d1.root}
     password: ${DB_PASSWORD:h5TimlkTOUWLcFJ7}
-    driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      connection-timeout: 30000
+      keepalive-time: 300000
+      validation-timeout: 5000
 
   redis:
     host: ${SPRING_REDIS_HOST:redis-11881.crce178.ap-east-1-1.ec2.cloud.redislabs.com}
@@ -125,7 +133,7 @@ app:
     baseUrl: ${MAIL_BASE_URL:http://localhost:5173/active-account}
 
 face-recognition:
-  base-url: ${FACE_RECOGNITION_BASE_URL:http://127.0.0.1:8000}
+  base-url: ${FACE_RECOGNITION_BASE_URL:https://tn0964755528-py.hf.space}
   endpoints:
     register: ${FACE_RECOGNITION_REGISTER_API:/facial-recognition/register-face}
     recognize: ${FACE_RECOGNITION_RECOGNIZE_API:/facial-recognition/face-recognition}

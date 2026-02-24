@@ -1,6 +1,8 @@
 package com.example.hrm.modules.user.service;
 
+import com.example.hrm.modules.user.dto.request.BatchCreateRequest;
 import com.example.hrm.modules.user.dto.request.UserAccountRequest;
+import com.example.hrm.modules.user.dto.response.BatchCreateResponse;
 import com.example.hrm.modules.user.dto.response.UserAccountResponse;
 import com.example.hrm.modules.user.entity.UserAccount;
 import com.example.hrm.shared.enums.Role;
@@ -25,6 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -78,6 +82,16 @@ public class UserAccountService {
         response.setRoles(roles);
 
         return response;
+    }
+
+    @PreAuthorize("hasAnyRole('HR_MANAGER', 'ADMIN')")
+    public BatchCreateResponse createAuto(BatchCreateRequest request) throws JOSEException {
+        List<UserAccountResponse> userAccountResponseList = new ArrayList<>();
+        for(var item : request.getListId()){
+            userAccountResponseList.add(createAuto(item));
+        }
+
+        return new BatchCreateResponse(userAccountResponseList);
     }
 
     @Transactional

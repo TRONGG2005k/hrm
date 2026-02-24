@@ -36,7 +36,7 @@ public class EmployeeExcelService {
     private final EmployeeRepository employeeRepository;
     private final ExcelHelper excelHelper;
 
-    @Transactional
+//    @Transactional
     @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public ExcelResult importEmployees(MultipartFile file) {
 
@@ -60,7 +60,7 @@ public class EmployeeExcelService {
                 employeeRepository.save(employee); // lưu từng dòng
                 successCount++;
             } catch (DataIntegrityViolationException ex) {
-                errors.add("Dòng " + rowNumber + ": Mã nhân viên đã tồn tại trong DB");
+                errors.add("Dòng " + rowNumber + ": Mã nhân viên đã tồn tại trong DB: " + ex.getMessage());
             } catch (Exception ex) {
                 errors.add("Dòng " + rowNumber + ": Lỗi hệ thống khi lưu dữ liệu");
             }
@@ -71,7 +71,7 @@ public class EmployeeExcelService {
         return new ExcelResult(successCount, errors);
     }
 
-    @Transactional
+//    @Transactional
     @PreAuthorize("hasAnyRole('HR_STAFF', 'HR_MANAGER', 'ADMIN')")
     public ExcelResult importOrUpdateEmployees(MultipartFile file) {
         List<EmployeeExcelImportDto> dtos = parseExcel(file);

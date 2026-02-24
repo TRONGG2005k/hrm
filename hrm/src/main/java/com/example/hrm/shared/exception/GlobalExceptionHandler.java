@@ -1,6 +1,7 @@
 package com.example.hrm.shared.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -15,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -176,10 +178,10 @@ public class GlobalExceptionHandler {
                 .status(500)
                 .error(ErrorCode.INTERNAL_SERVER_ERROR.getCode())
                 .message(ErrorCode.INTERNAL_SERVER_ERROR.getMessage())
-                .details("Lỗi máy chủ nội bộ")
+                .details("Lỗi máy chủ nội bộ error:" + ex.getMessage())
                 .path(request.getDescription(false).replace("uri=", ""))
                 .build();
-
+        log.error("Lỗi máy chủ nội bộ:{}", ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
