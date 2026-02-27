@@ -1,6 +1,7 @@
 package com.example.hrm.modules.user.service;
 
 import com.example.hrm.modules.user.dto.request.BatchCreateRequest;
+import com.example.hrm.modules.user.dto.request.ChangeRole;
 import com.example.hrm.modules.user.dto.request.UserAccountRequest;
 import com.example.hrm.modules.user.dto.response.BatchCreateResponse;
 import com.example.hrm.modules.user.dto.response.UserAccountResponse;
@@ -19,9 +20,12 @@ import com.example.hrm.shared.service.EmailService;
 import com.nimbusds.jose.JOSEException;
 // import com.example.hrm.modules.user.entity.Role;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserAccountService {
     private final UserAccountRepository userAccountRepository;
@@ -165,6 +170,59 @@ public class UserAccountService {
         response.setRoles(roles);
 
         return response;
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN','HR_MANAGER')")
+    public UserAccountResponse changeRole(ChangeRole request, String id){
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        UserAccount currentUser = userAccountRepository.findByUsernameAndIsDeletedFalse(authentication.getName())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, 404)) ;
+
+        var user = userAccountRepository
+                .findByIdAndIsDeletedFalseAndStatus(id, UserStatus.ACTIVE)
+                .orElseThrow(() ->
+                        new AppException(ErrorCode.USER_NOT_FOUND, 404));
+
+        log.info("AUTH = {}", authentication.getAuthorities());
+        // ❌ không đổi role chính mình
+        if(currentUser.getId().equals(user.getId())){
+            throw new AppException(ErrorCode.PERMISSION_DENIED,403,
+                    "Không thể thay đổi role của chính mình");
+        }
+
+        boolean currentIsAdmin =
+                currentUser.getRoles()
+                        .stream()
+                        .anyMatch(r ->
+                                r.getName().equals(Role.ROLE_ADMIN.name()));
+
+        for (var item : request.getChangeRole().entrySet()) {
+
+            var role = roleRepository
+                    .findByIdAndIsDeletedFalse(item.getKey())
+                    .orElseThrow(() ->
+                            new AppException(ErrorCode.ROLE_NOT_FOUND,404));
+
+            // ❌ chỉ ADMIN mới gán ADMIN
+            if(role.getName().equals(Role.ROLE_ADMIN.name())
+                    && !currentIsAdmin){
+                throw new AppException(ErrorCode.PERMISSION_DENIED,
+                        403,
+                        "Bạn không có quyền gán ADMIN");
+            }
+
+            if(item.getValue()){
+                user.getRoles().add(role);
+            }else{
+                user.getRoles().remove(role);
+            }
+        }
+
+        return userAccountMapper
+                .toResponse(userAccountRepository.save(user));
     }
 
     @Transactional

@@ -32,7 +32,7 @@ public class AuthController {
         if (request == null || request.getUsername() == null || request.getPassword() == null) {
             throw new AppException(ErrorCode.INVALID_INPUT, 400, "Username và password không được để trống");
         }
-
+        log.warn(" System.out.println(\"LOGIN HIT\");");
         var response = authService.login(request);
 
         if (response == null || response.getRefreshToken() == null) {

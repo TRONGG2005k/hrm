@@ -29,6 +29,7 @@ import com.example.hrm.shared.exception.ErrorCode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -42,6 +43,7 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class PayrollService {
@@ -145,7 +147,7 @@ public class PayrollService {
         var cycle = payrollCycleService.getActive();
         var period = calculatePeriod(cycle, request.getYear(), request.getMonth());
 
-        var employee = getEmployee(payroll.getId());
+        var employee = getEmployee(payroll.getEmployee().getId());
         var salaryContract = getSalaryContract(employee);
         var attendanceList = getAttendanceList(employee, period);
         var salaryAdjustments = getSalaryAdjustments(employee, period);
@@ -264,6 +266,7 @@ public class PayrollService {
     }
 
     private Employee getEmployee(String employeeId) {
+        log.warn("employeeid: {}", employeeId);
         return employeeRepository.findByIdAndIsDeletedFalse(employeeId)
                 .orElseThrow(() -> new AppException(ErrorCode.EMPLOYEE_NOT_FOUND, 404));
     }

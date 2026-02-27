@@ -1,6 +1,7 @@
 package com.example.hrm.modules.user.controller;
 
 import com.example.hrm.modules.user.dto.request.BatchCreateRequest;
+import com.example.hrm.modules.user.dto.request.ChangeRole;
 import com.example.hrm.modules.user.dto.request.UserAccountRequest;
 import com.example.hrm.modules.user.dto.response.BatchCreateResponse;
 import com.example.hrm.modules.user.dto.response.UserAccountResponse;
@@ -74,5 +75,14 @@ public class UserAccountController {
     ) {
         userAccountService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/change-role")
+    public ResponseEntity<UserAccountResponse> changeRole(
+            @PathVariable String id,
+            @Valid @RequestBody ChangeRole request
+    ) {
+        var response = userAccountService.changeRole(request, id);
+        return ResponseEntity.ok(response);
     }
 }
