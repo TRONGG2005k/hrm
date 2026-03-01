@@ -1,443 +1,370 @@
 # 🏢 HRM Attendance Backend API
 
+> A scalable, secure backend service for the Human Resource Management Attendance System - powering employee management, attendance tracking, and facial recognition integration.
+
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-green.svg)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-21-blue.svg)](https://www.oracle.com/java/)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-orange.svg)](https://www.mysql.com/)
 [![Redis](https://img.shields.io/badge/Redis-7.0-red.svg)](https://redis.io/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
-> **Production-ready Backend API for Human Resource Management & Attendance System**  
-> Part of a distributed HRM ecosystem with AI-powered face recognition capabilities.
+[![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg)](https://www.docker.com/)
 
 ---
 
 ## 📋 Table of Contents
 
-1. [Project Overview](#-project-overview)
-2. [Backend Architecture](#-backend-architecture)
-3. [Technology Stack](#-technology-stack)
-4. [Project Structure](#-project-structure)
-5. [Authentication & Authorization Flow](#-authentication--authorization-flow)
-6. [API Security Design](#-api-security-design)
-7. [Database Design Overview](#-database-design-overview)
-8. [Redis Usage](#-redis-usage)
-9. [External Service Integration](#-external-service-integration)
-10. [Environment Variables](#-environment-variables)
-11. [Running Locally](#-running-locally)
-12. [API Endpoint Examples](#-api-endpoint-examples)
-13. [Deployment Overview](#-deployment-overview)
-14. [Error Handling Strategy](#-error-handling-strategy)
-15. [Future Improvements](#-future-improvements)
-16. [Author](#-author)
+- [Project Overview](#-project-overview)
+- [Backend Architecture](#-backend-architecture)
+- [Technology Stack](#-technology-stack)
+- [Key Features](#-key-features)
+- [Authentication Flow](#-authentication-flow-jwt--refresh-token)
+- [Redis Usage Explanation](#-redis-usage-explanation-token-storage-only)
+- [API Structure](#-api-structure)
+- [Integration with Face Recognition Service](#-integration-with-face-recognition-service)
+- [Deployment Overview](#-deployment-overview)
+- [How to Run Locally](#-how-to-run-locally-docker)
+- [Environment Variables](#-environment-variables)
+- [Future Improvements](#-future-improvements)
+- [Author](#-author)
 
 ---
 
 ## 🎯 Project Overview
 
-The **HRM Attendance Backend API** serves as the core backend service for a comprehensive Human Resource Management system. It provides RESTful endpoints for managing employees, contracts, attendance records, payroll processing, and leave management. The system features AI-powered face recognition for contactless attendance tracking.
+The **HRM Attendance Backend API** is the core backend component of a distributed Human Resource Management Attendance System. This microservice handles employee data management, attendance record processing, secure authentication, and seamless integration with a Python-based Face Recognition microservice for biometric attendance tracking.
 
-### Key Capabilities
+Built with enterprise-grade security and scalability in mind, this service supports multi-role authorization, stateless JWT authentication with refresh token rotation, and robust data persistence for mission-critical HR operations.
 
-| Feature | Description |
-|---------|-------------|
-| 🔐 **Authentication** | JWT-based stateless authentication with access & refresh tokens |
-| 👤 **Employee Management** | CRUD operations, bulk import/export via Excel |
-| 📅 **Attendance Tracking** | Face recognition check-in/out with real-time processing |
-| 💰 **Payroll Processing** | Automated salary calculation with adjustments & allowances |
-| 🏖️ **Leave Management** | Request workflow with approval chains |
-| 🏢 **Organization Structure** | Department & position hierarchy management |
-| 📊 **Reporting** | Excel export capabilities across modules |
+### 🏗️ System Context
+
+```
+┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
+│   Web Client    │────▶│   HRM Backend API    │────▶│   MySQL         │
+│   (React/Vue)   │◀────│   (This Service)     │     │   (Primary DB)  │
+└─────────────────┘     └──────────────────────┘     └─────────────────┘
+                                 │
+                                 │ HTTP/REST
+                                 ▼
+                        ┌──────────────────────┐
+                        │  Face Recognition    │
+                        │  Microservice        │
+                        │  (Python/FastAPI)    │
+                        └──────────────────────┘
+```
 
 ---
 
-## 🏗️ Backend Architecture
+## 🏛️ Backend Architecture
+
+The service follows a **modular monolith** architecture with clear domain boundaries, ensuring maintainability and future scalability.
+
+### Architectural Principles
+
+| Principle | Implementation |
+|-----------|----------------|
+| **Stateless Design** | JWT-based authentication, no server-side sessions |
+| **Layered Architecture** | Controller → Service → Repository pattern |
+| **Domain-Driven Modules** | Organized by business capability (employee, attendance, payroll, etc.) |
+| **Dependency Injection** | Spring IoC container for loose coupling |
+| **DTO Pattern** | MapStruct for entity-to-DTO mapping |
+| **Security First** | Spring Security with role-based access control |
+
+### Module Structure
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              CLIENT LAYER                                    │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────────┐  │
-│  │  React Web App  │  │  Android Mobile │  │  Face Recognition Service   │  │
-│  │   (Admin Panel) │  │    (Employee)   │  │      (Python/FastAPI)       │  │
-│  └────────┬────────┘  └────────┬────────┘  └─────────────────────────────┘  │
-└───────────┼────────────────────┼────────────────────────────────────────────┘
-            │                    │
-            └────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────────────────────────┐
-│                           API GATEWAY LAYER                                  │
-│                      HTTPS / Reverse Proxy (Nginx)                           │
-└──────────────────────┬──────────────────────────────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────────────────────────┐
-│                         APPLICATION LAYER                                    │
-│                    Spring Boot 3.4.1 (Java 21)                               │
-│  ┌─────────────────────────────────────────────────────────────────────┐     │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌────────────┐  │     │
-│  │  │ Controllers │──│  Services   │──│ Repositories│──│   Entities │  │     │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘  └────────────┘  │     │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                  │     │
-│  │  │    DTOs     │  │   Mappers   │  │   Security  │                  │     │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘                  │     │
-│  └─────────────────────────────────────────────────────────────────────┘     │
-└──────────────────────┬──────────────────────────────────────────────────────┘
-                       │
-        ┌──────────────┼──────────────┐
-        │              │              │
-┌───────▼──────┐ ┌────▼─────┐ ┌──────▼──────┐
-│   MySQL      │ │  Redis   │ │  SMTP       │
-│  (Primary DB)│ │ (Cache & │ │  (Email)    │
-│              │ │ Sessions)│ │             │
-└──────────────┘ └──────────┘ └─────────────┘
+modules/
+├── attendance/          # Attendance records, check-in/out, reports
+├── auth/               # Authentication & authorization logic
+├── contract/           # Employee contracts & agreements
+├── employee/           # Employee master data management
+├── face_recognition/   # Face registration & recognition coordination
+├── file/               # Document upload & management
+├── leave/              # Leave requests, approvals & balances
+├── organization/       # Departments, positions, org structure
+├── payroll/            # Salary calculation & payslip generation
+├── penalty/            # Attendance penalties & deductions
+└── user/               # User account management
 ```
-
-### Architectural Patterns
-
-- **Layered Architecture**: Clear separation between Controller → Service → Repository layers
-- **Domain-Driven Design**: Business logic organized by functional modules
-- **Stateless Services**: All services are stateless, enabling horizontal scaling
-- **DTO Pattern**: Data transfer objects for API contracts
-- **Mapper Pattern**: MapStruct for entity-DTO conversions
 
 ---
 
 ## 🛠️ Technology Stack
 
 ### Core Framework
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Spring Boot** | 3.4.1 | Application framework |
+| **Spring Security** | 6.x | Authentication & authorization |
+| **Spring Data JPA** | 3.4.x | Data persistence layer |
+| **Spring Data Redis** | 3.4.x | Token storage |
+| **Java** | 21 | Programming language |
 
-| Component | Technology | Version | Purpose |
-|-----------|------------|---------|---------|
-| Framework | Spring Boot | 3.4.1 | Application foundation |
-| Language | Java | 21 | Primary language |
-| Security | Spring Security | 6.x | Authentication & authorization |
-| Data Access | Spring Data JPA | 3.4.x | Database abstraction |
-| Validation | Jakarta Validation | 3.x | Input validation |
-| Scheduling | Spring Scheduler | 3.4.x | Cron jobs & background tasks |
+### Data Layer
+| Technology | Purpose |
+|------------|---------|
+| **MySQL 8.0** | Primary relational database |
+| **Redis** | Refresh token storage with TTL |
+| **HikariCP** | High-performance connection pooling |
 
-### Security & Authentication
+### Security & Auth
+| Technology | Purpose |
+|------------|---------|
+| **Nimbus JOSE JWT** | JWT token generation & validation |
+| **BCrypt** | Password encryption |
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| JWT Library | Nimbus JOSE+JWT | Token generation & verification |
-| Password Hashing | BCrypt | Secure password storage |
-| Token Storage | Redis | Refresh token management |
-
-### Data Storage
-
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Primary Database | MySQL 8.0 | Persistent data storage |
-| Connection Pool | HikariCP | High-performance connection pooling |
-| Cache & Sessions | Redis | Distributed caching & token store |
-| ORM | Hibernate 6.x | JPA implementation |
-
-### Integration & Utilities
-
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| HTTP Client | Apache HttpClient 5 | External API calls |
-| Excel Processing | Apache POI | Import/Export functionality |
-| Email | Spring Mail | SMTP email notifications |
-| Image Processing | Thumbnailator | Image resizing & optimization |
-| Mapping | MapStruct 1.6.0 | Entity-DTO mapping |
-| Build Tool | Maven | Dependency management |
+### Utilities
+| Technology | Purpose |
+|------------|---------|
+| **MapStruct** | Object mapping (Entity ↔ DTO) |
+| **Lombok** | Boilerplate code reduction |
+| **Apache POI** | Excel import/export for bulk operations |
+| **Thumbnailator** | Image processing for face photos |
+| **Jakarta Mail** | Email notifications |
 
 ---
 
-## 📁 Project Structure
+## ✨ Key Features
 
-```
-hrm-attendance-backend/
-├── src/main/java/com/example/hrm/
-│   ├── HrmApplication.java              # Application entry point
-│   ├── modules/                         # Domain modules
-│   │   ├── auth/                        # Authentication & authorization
-│   │   │   ├── controller/              # Auth endpoints (login, refresh, logout)
-│   │   │   ├── dto/                     # Auth request/response DTOs
-│   │   │   └── service/                 # JWT & auth business logic
-│   │   ├── user/                        # User account management
-│   │   ├── employee/                    # Employee CRUD & face registration
-│   │   ├── attendance/                  # Check-in/out & attendance records
-│   │   ├── contract/                    # Employment contracts
-│   │   ├── payroll/                     # Salary calculation & processing
-│   │   ├── leave/                       # Leave requests & balances
-│   │   ├── organization/                # Departments & positions
-│   │   ├── penalty/                     # Violation rules & penalties
-│   │   ├── file/                        # File attachment handling
-│   │   └── face_recognition/            # Face recognition integration
-│   └── shared/                          # Cross-cutting concerns
-│       ├── configuration/               # Spring configurations
-│       │   ├── SecurityConfiguration.java
-│       │   ├── RedisConfig.java
-│       │   └── filter/                  # JWT filter
-│       ├── exception/                   # Global exception handling
-│       ├── enums/                       # Domain enumerations
-│       ├── call_api/                    # External API clients
-│       ├── excel/                       # Excel utilities
-│       └── security/                    # Security utilities
-├── src/main/resources/
-│   └── application.yml                  # Environment configurations
-├── Dockerfile                           # Multi-stage Docker build
-├── docker-compose.yml                   # Local development stack
-└── pom.xml                              # Maven dependencies
-```
+### 👥 Employee Management
+- Complete employee lifecycle management (onboarding to offboarding)
+- Document attachment support
+- Bulk import/export via Excel
+- Employee photo management for facial recognition
 
-### Module Breakdown
+### ⏰ Attendance Tracking
+- Check-in/out record management
+- Integration with Face Recognition microservice for biometric verification
+- Attendance status evaluation (Present, Absent, Late, Early Leave)
+- Overtime calculation
 
-| Module | APIs | Description |
-|--------|------|-------------|
-| `auth` | 5 | Login, logout, token refresh, account activation |
-| `user` | 11 | User accounts, roles & permissions |
-| `employee` | 30 | Employee management, face registration, locations |
-| `contract` | 25 | Contracts, salary agreements, allowances |
-| `organization` | 19 | Departments, sub-departments, positions |
-| `attendance` | 16 | Check-in/out, break times, OT rates |
-| `leave` | 9 | Leave requests, approvals, balance tracking |
-| `payroll` | 13 | Salary calculation, payroll cycles |
-| `penalty` | 6 | Penalty rules & violation tracking |
-| `file` | 3 | File upload/download management |
+### 🔐 Authentication & Authorization
+- Stateless JWT authentication
+- Dual token mechanism (Access Token + Refresh Token)
+- Role-based access control (RBAC) with Spring Security
+- Secure logout with token revocation
+- Account activation via email
+
+### 📊 Payroll & Compensation
+- Automated payroll calculation
+- Penalty deduction processing
+- Payslip generation with Excel export
+- Payroll approval workflow
+
+### 🏖️ Leave Management
+- Leave request submission & approval workflow
+- Leave balance tracking
+- Multiple leave types support
+- Automatic leave accrual
+
+### 🏢 Organization Structure
+- Department management
+- Position hierarchy
+- Organizational reporting lines
 
 ---
 
-## 🔐 Authentication & Authorization Flow
+## 🔐 Authentication Flow (JWT + Refresh Token)
 
-### Token Architecture
+The system implements a secure dual-token authentication mechanism to balance security and user experience.
 
-The system implements a **dual-token authentication strategy**:
+### Token Specifications
+
+| Token Type | Storage | Lifetime | Purpose |
+|------------|---------|----------|---------|
+| **Access Token** | Client Memory | 15 minutes | API authorization (short-lived) |
+| **Refresh Token** | HTTP-only Cookie | 30 days | Token renewal (long-lived, stored in Redis) |
+
+### Authentication Sequence
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     TOKEN LIFECYCLE                              │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│   ┌──────────────┐         ┌──────────────┐                     │
-│   │ Access Token │         │ Refresh Token│                     │
-│   ├──────────────┤         ├──────────────┤                     │
-│   │ TTL: 15 min  │         │ TTL: 30 days │                     │
-│   │ Storage:     │         │ Storage:     │                     │
-│   │   Header     │         │   HttpOnly   │                     │
-│   │   (Bearer)   │         │   Cookie     │                     │
-│   └──────────────┘         └──────────────┘                     │
-│          │                          │                           │
-│          ▼                          ▼                           │
-│   ┌──────────────┐         ┌──────────────┐                     │
-│   │  API Access  │         │ Redis Store  │                     │
-│   │  Authorization│        │ (Token Set)  │                     │
-│   └──────────────┘         └──────────────┘                     │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────┐                                    ┌─────────────┐     ┌────────┐
+│ Client  │                                    │ HRM Backend │     │ Redis  │
+└────┬────┘                                    └──────┬──────┘     └───┬────┘
+     │                                                │                │
+     │ POST /api/v1/auth/login                        │                │
+     │ { username, password }                         │                │
+     │───────────────────────────────────────────────▶│                │
+     │                                                │                │
+     │                                                │ Verify credentials
+     │                                                │ Generate tokens
+     │                                                │                │
+     │                                                │ Store refresh  │
+     │                                                │ token with TTL │
+     │                                                │───────────────▶│
+     │                                                │                │
+     │ 200 OK { accessToken }                         │                │
+     │ Set-Cookie: refreshToken=...                   │                │
+     │◀───────────────────────────────────────────────│                │
+     │                                                │                │
+     │─────────────────────────────────────────────────────────────────▶│
+     │ API calls with Authorization: Bearer {accessToken}               │
+     │                                                │                │
+     │◀─────────────────────────────────────────────────────────────────│
+     │ 200 OK (protected resource)                    │                │
+     │                                                │                │
+     │ [After 15 min - Access Token Expired]          │                │
+     │                                                │                │
+     │ POST /api/v1/auth/refresh                      │                │
+     │ Cookie: refreshToken=...                       │                │
+     │───────────────────────────────────────────────▶│                │
+     │                                                │ Validate       │
+     │                                                │ from Redis     │
+     │                                                │◀───────────────│
+     │                                                │                │
+     │ 200 OK { accessToken }                         │                │
+     │◀───────────────────────────────────────────────│                │
 ```
 
-### Authentication Flow
+### Logout & Token Revocation
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant API as HRM API
-    participant Redis
-    participant MySQL
-
-    %% Login
-    Client->>API: POST /auth/login (username, password)
-    API->>MySQL: Validate credentials
-    MySQL-->>API: User data + roles
-    API->>API: Generate Access Token (15 min)
-    API->>Redis: Store Refresh Token (30 days)
-    API-->>Client: Access Token (Body) + Refresh Token (HttpOnly Cookie)
-
-    %% API Request
-    Client->>API: Request with Authorization: Bearer {access_token}
-    API->>API: Validate JWT signature & expiration
-    API->>API: Extract roles from token claims
-    API-->>Client: Protected resource
-
-    %% Token Refresh
-    Client->>API: POST /auth/refresh (cookie: refresh_token)
-    API->>Redis: Validate refresh token exists
-    Redis-->>API: Token valid
-    API->>API: Generate new token pair
-    API->>Redis: Replace old refresh token
-    API-->>Client: New Access Token + New Refresh Cookie
-
-    %% Logout
-    Client->>API: DELETE /auth/logout
-    API->>Redis: Delete refresh token
-    API-->>Client: Clear cookie response
-```
-
-### Authorization Model
-
-| Role | Permissions |
-|------|-------------|
-| `ADMIN` | Full system access |
-| `HR_MANAGER` | Employee, contract, payroll management |
-| `HR_STAFF` | Employee data entry, attendance records |
-| `MANAGER` | Team leave approvals, attendance viewing |
-| `EMPLOYEE` | Self-service: profile, leaves, attendance |
+- **Single Device Logout**: Revokes the specific refresh token
+- **Global Logout**: Revokes all refresh tokens for the user across all devices
 
 ---
 
-## 🛡️ API Security Design
+## 🔴 Redis Usage Explanation (Token Storage ONLY)
 
-### Security Measures
+> ⚠️ **Important Clarification**: Redis is used **exclusively** for refresh token storage and token validation. It is **NOT** used for data caching.
 
-| Layer | Implementation |
-|-------|----------------|
-| **Transport** | HTTPS enforced in production |
-| **CORS** | Configured for specific origins |
-| **CSRF** | Disabled for stateless JWT design |
-| **Authentication** | JWT Bearer tokens |
-| **Authorization** | Method-level @PreAuthorize annotations |
-| **Input Validation** | Jakarta Validation on all DTOs |
-| **Password Security** | BCrypt hashing (strength 10) |
-| **Token Storage** | HttpOnly, Secure, SameSite cookies |
+### Purpose
 
-### Public vs Protected Endpoints
+Redis serves as a high-availability token storage layer for:
+
+1. **Refresh Token Persistence**: Storing active refresh tokens with automatic expiration (TTL)
+2. **Token Revocation**: Enabling secure logout by deleting tokens from storage
+3. **Multi-device Session Management**: Tracking all active sessions per user
+
+### Redis Data Structure
 
 ```java
-// Public endpoints (no authentication required)
-POST   /api/v1/auth/login
-POST   /api/v1/auth/refresh
-POST   /api/v1/auth/activate
-POST   /api/v1/employees/faces/recognize
-POST   /api/v1/attendance/scan
-GET    /hello
-
-// Protected endpoints (authentication required)
-All other endpoints require valid JWT in Authorization header
-
-// Admin-only endpoints
-/api/v1/dev/**
+@RedisHash("refreshToken")
+public class RefreshToken {
+    @Id
+    private String jwtID;       // Unique token identifier
+    @Indexed
+    private String username;    // For querying all user tokens
+    @TimeToLive
+    private Long ttl;           // Auto-expiration (30 days)
+}
 ```
 
-### Security Headers
+### Why Redis for Token Storage?
 
-```yaml
-# Implemented via Spring Security
-X-Content-Type-Options: nosniff
-X-Frame-Options: DENY
-X-XSS-Protection: 1; mode=block
-Strict-Transport-Security: max-age=31536000; includeSubDomains
-```
+| Advantage | Benefit |
+|-----------|---------|
+| **TTL Support** | Automatic token expiration without cleanup jobs |
+| **Fast Lookups** | O(1) token validation for high-throughput APIs |
+| **Indexed Queries** | Efficient retrieval of all tokens by username |
+| **Persistence** | Survives application restarts (configurable) |
+| **Cluster Support** | Scalable for distributed deployments |
+
+### What is NOT Stored in Redis
+
+❌ Employee data  
+❌ Attendance records  
+❌ Payroll calculations  
+❌ Session state  
+❌ API response data  
+
+> All business data is persisted in **MySQL** as the single source of truth.
 
 ---
 
-## 🗄️ Database Design Overview
+## 🌐 API Structure
 
-### Entity Relationship Overview
-
+### Base URL
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│    Employee     │────▶│  UserAccount    │────▶│      Role       │
-│   (Central)     │     │  (Auth)         │     │  (Permissions)  │
-└────────┬────────┘     └─────────────────┘     └─────────────────┘
-         │
-         │     ┌─────────────────┐     ┌─────────────────┐
-         ├────▶│    Contract     │────▶│ SalaryContract  │
-         │     └─────────────────┘     └─────────────────┘
-         │
-         │     ┌─────────────────┐     ┌─────────────────┐
-         ├────▶│   Attendance    │◀────│    BreakTime    │
-         │     └─────────────────┘     └─────────────────┘
-         │
-         │     ┌─────────────────┐     ┌─────────────────┐
-         ├────▶│  LeaveRequest   │────▶│  LeaveBalance   │
-         │     └─────────────────┘     └─────────────────┘
-         │
-         │     ┌─────────────────┐
-         └────▶│     Payroll     │
-               └─────────────────┘
-
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Department    │◀────│ SubDepartment   │◀────│   Position      │
-│  (Organization) │     │  (Organization) │     │  (Organization) │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
+/api/v1
 ```
 
-### Key Tables
+### API Categories
 
-| Table | Purpose | Key Fields |
-|-------|---------|------------|
-| `employees` | Core employee data | id, employee_code, full_name, email, status |
-| `user_accounts` | Login credentials | username, password_hash, status, employee_id |
-| `roles` | Permission groups | name, permissions (JSON) |
-| `contracts` | Employment agreements | employee_id, start_date, end_date, status |
-| `salary_contracts` | Salary details | contract_id, base_salary, effective_date |
-| `attendance` | Daily attendance records | employee_id, date, check_in, check_out, status |
-| `leave_requests` | Leave applications | employee_id, start_date, end_date, type, status |
-| `payroll` | Monthly salary records | employee_id, month, gross_salary, net_salary |
-| `departments` | Organization units | name, code, manager_id |
-| `face_data` | Face recognition refs | employee_id, face_vector_id (external) |
+| Module | Base Path | Description |
+|--------|-----------|-------------|
+| Authentication | `/api/v1/auth/**` | Login, logout, token refresh, account activation |
+| Employee | `/api/v1/employees/**` | Employee CRUD operations |
+| Attendance | `/api/v1/attendance/**` | Attendance records & reports |
+| Attendance Scan | `/api/v1/attendance-scan/**` | Face recognition check-in/out |
+| Leave | `/api/v1/leaves/**` | Leave requests & approvals |
+| Payroll | `/api/v1/payrolls/**` | Payroll processing |
+| Contract | `/api/v1/contracts/**` | Employee contracts |
+| Organization | `/api/v1/departments/**` | Org structure |
+| File | `/api/v1/files/**` | Document uploads |
 
-### Database Configuration
+### Authentication Endpoints
 
-```yaml
-# HikariCP Connection Pool
-maximum-pool-size: 10
-minimum-idle: 5
-idle-timeout: 300000
-max-lifetime: 1200000
-connection-timeout: 30000
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/api/v1/auth/login` | User login | ❌ |
+| POST | `/api/v1/auth/logout` | Single device logout | ✅ |
+| POST | `/api/v1/auth/logout-all` | Global logout | ✅ |
+| POST | `/api/v1/auth/refresh` | Refresh access token | ❌ (cookie) |
+| POST | `/api/v1/auth/active-account` | Activate account | ❌ |
+
+### Response Format
+
+```json
+{
+  "code": 1000,
+  "message": "Success",
+  "data": { ... }
+}
 ```
 
----
+### Error Format
 
-## ⚡ Redis Usage
-
-### Redis Data Model
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      REDIS KEY PATTERNS                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  # Refresh Token Storage                                         │
-│  refreshToken:{jwtId} → username                                 │
-│  TTL: 30 days                                                    │
-│                                                                  │
-│  # User Token Index (for logout all)                             │
-│  user:{username}:tokens → Set<jwtId>                             │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Redis Operations
-
-| Operation | Key Pattern | Description |
-|-----------|-------------|-------------|
-| Store Token | `refreshToken:{jti}` | Store refresh token with TTL |
-| Validate Token | `GET refreshToken:{jti}` | Check token existence |
-| Index Token | `SADD user:{username}:tokens {jti}` | Add to user's token set |
-| Revoke Token | `DEL refreshToken:{jti}` | Single token revocation |
-| Revoke All | `DEL user:{username}:tokens` + iterate | Logout all devices |
-
-### Configuration
-
-```java
-@Bean
-public RedisTemplate<String, String> redisTemplate(
-    RedisConnectionFactory factory) {
-    RedisTemplate<String, String> template = new RedisTemplate<>();
-    template.setConnectionFactory(factory);
-    template.setKeySerializer(new StringRedisSerializer());
-    template.setValueSerializer(new StringRedisSerializer());
-    return template;
+```json
+{
+  "code": 1001,
+  "message": "Invalid credentials"
 }
 ```
 
 ---
 
-## 🔌 External Service Integration
+## 🎭 Integration with Face Recognition Service
 
-### Face Recognition Microservice
+The backend orchestrates communication with a dedicated Python-based Face Recognition microservice for biometric attendance processing.
 
-The system integrates with an external Python-based face recognition service for AI-powered attendance verification.
+### Architecture
 
-#### Service Configuration
+```
+┌─────────────────┐     HTTP/REST      ┌─────────────────────────┐
+│   HRM Backend   │◄──────────────────►│  Face Recognition       │
+│   (This API)    │                    │  Microservice (Python)  │
+└────────┬────────┘                    └─────────────────────────┘
+         │
+         │ 1. Register employee face
+         │ POST /facial-recognition/register-face
+         │ { employeeId, faceImage }
+         │
+         │ 2. Register multiple faces (batch)
+         │ POST /facial-recognition/register-face-batch
+         │
+         │ 3. Recognize face for attendance
+         │ POST /facial-recognition/face-recognition
+         │ { faceImage } → { employeeId, confidence }
+         │
+         │ 4. Update face data
+         │ POST /facial-recognition/update-face
+         │
+         │ 5. Delete face data
+         │ POST /facial-recognition/delete-face
+```
+
+### Attendance Flow with Face Recognition
+
+1. **Employee stands before camera**
+2. **Frontend captures face image**
+3. **Backend forwards image to Face Recognition service**
+4. **Service returns identified employee ID + confidence score**
+5. **Backend validates and creates attendance record**
+6. **Response returned to frontend with check-in/out status**
+
+### Configuration
 
 ```yaml
 face-recognition:
-  base-url: ${FACE_RECOGNITION_BASE_URL}
+  base-url: ${FACE_RECOGNITION_BASE_URL:http://127.0.0.1:8000}
   endpoints:
     register: /facial-recognition/register-face
     recognize: /facial-recognition/face-recognition
@@ -446,484 +373,218 @@ face-recognition:
     register-batch: /facial-recognition/register-face-batch
 ```
 
-#### API Operations
-
-| Operation | Endpoint | Description |
-|-----------|----------|-------------|
-| Register | `POST /register-face` | Enroll employee face vectors |
-| Recognize | `POST /face-recognition` | Identify employee from image |
-| Update | `PUT /update-face` | Update face data |
-| Delete | `DELETE /delete-face` | Remove face data |
-| Batch Register | `POST /register-face-batch` | Bulk enrollment via ZIP |
-
-#### Integration Flow
-
-```
-┌──────────────┐      ┌──────────────────┐      ┌─────────────────────┐
-│   Employee   │      │   HRM Backend    │      │  Face Recognition   │
-│   Device     │─────▶│   (This API)     │─────▶│  Service (Python)   │
-└──────────────┘      └──────────────────┘      └─────────────────────┘
-       │                      │                           │
-       │  1. Upload image     │                           │
-       │─────────────────────▶│                           │
-       │                      │  2. Forward image         │
-       │                      │──────────────────────────▶│
-       │                      │                           │
-       │                      │  3. Return employee_id    │
-       │                      │◀──────────────────────────│
-       │                      │                           │
-       │                      │  4. Record attendance     │
-       │                      │  5. Return result         │
-       │◀─────────────────────│                           │
-```
-
 ---
 
-## 🔧 Environment Variables
-
-### Required Environment Variables
-
-```bash
-# ==========================================
-# SERVER CONFIGURATION
-# ==========================================
-SERVER_PORT=8080
-SPRING_PROFILES_ACTIVE=dev
-
-# ==========================================
-# DATABASE CONFIGURATION
-# ==========================================
-DB_URL=jdbc:mysql://localhost:3306/hrm_db
-DB_USERNAME=root
-DB_PASSWORD=your_secure_password
-DB_DRIVER=com.mysql.cj.jdbc.Driver
-DB_POOL_MAX_SIZE=10
-DB_POOL_MIN_IDLE=5
-DB_POOL_IDLE_TIMEOUT=300000
-DB_POOL_MAX_LIFETIME=1200000
-DB_POOL_CONNECTION_TIMEOUT=30000
-
-# ==========================================
-# REDIS CONFIGURATION
-# ==========================================
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
-
-# ==========================================
-# JWT CONFIGURATION
-# ==========================================
-# HS512 keys (min 512 bits / 64 bytes)
-JWT_SIGNER_KEY_ACCESS=your-secure-access-key-min-64-chars-long
-JWT_SIGNER_KEY_REFRESH=your-secure-refresh-key-min-64-chars-long
-JWT_SIGNER_KEY_ACTIVATION=your-secure-activation-key-min-64-chars-long
-JWT_ACCESS_DURATION=900        # 15 minutes
-JWT_REFRESH_DURATION=2592000   # 30 days
-JWT_ACTIVATION_DURATION=900    # 15 minutes
-
-# ==========================================
-# EMAIL CONFIGURATION
-# ==========================================
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=your-email@gmail.com
-MAIL_PASSWORD=your-app-password
-MAIL_SMTP_AUTH=true
-MAIL_SMTP_STARTTLS_ENABLE=true
-MAIL_BASE_URL=http://localhost:5173/active-account
-
-# ==========================================
-# FILE UPLOAD CONFIGURATION
-# ==========================================
-UPLOAD_DIR=./uploads
-UPLOAD_MAX_FILE_SIZE=50MB
-UPLOAD_MAX_REQUEST_SIZE=50MB
-
-# ==========================================
-# SECURITY CONFIGURATION
-# ==========================================
-COOKIE_SECURE=false        # true for HTTPS
-COOKIE_SAME_SITE=Lax       # None for cross-domain
-
-# ==========================================
-# FACE RECOGNITION SERVICE
-# ==========================================
-FACE_RECOGNITION_BASE_URL=http://localhost:8000
-FACE_RECOGNITION_REGISTER_API=/facial-recognition/register-face
-FACE_RECOGNITION_RECOGNIZE_API=/facial-recognition/face-recognition
-FACE_RECOGNITION_UPDATE_API=/facial-recognition/update-face
-FACE_RECOGNITION_DELETE_API=/facial-recognition/delete-face
-FACE_RECOGNITION_REGISTER_BATCH_API=/facial-recognition/register-face-batch
-```
-
-### Profile-Specific Configurations
-
-| Profile | Use Case | Database | Redis |
-|---------|----------|----------|-------|
-| `dev` | Local development | Local MySQL | Local Redis |
-| `pro` | Production | TiDB Cloud | Redis Cloud |
-
----
-
-## 🚀 Running Locally
-
-### Prerequisites
-
-- Java 21 (JDK)
-- Maven 3.8+
-- MySQL 8.0
-- Redis 7.0
-- Docker & Docker Compose (optional)
-
-### Option 1: Using Docker Compose (Recommended)
-
-```bash
-# Clone the repository
-git clone https://github.com/TRONGG2005k/hrm.git
-cd hrm
-
-# Create .env file from template
-copy .env.example .env
-# Edit .env with your configurations
-
-# Start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f app
-
-# Stop services
-docker-compose down
-```
-
-### Option 2: Manual Setup
-
-```bash
-# 1. Start MySQL
-docker run -d \
-  --name hrm-mysql \
-  -e MYSQL_ROOT_PASSWORD=123456 \
-  -e MYSQL_DATABASE=hrm_db \
-  -p 3306:3306 \
-  mysql:8.0
-
-# 2. Start Redis
-docker run -d \
-  --name hrm-redis \
-  -p 6379:6379 \
-  redis:7-alpine
-
-# 3. Build the application
-./mvnw clean package -DskipTests
-
-# 4. Run the application
-java -jar target/hrm-0.0.1-SNAPSHOT.jar
-
-# Or using Maven
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-```
-
-### Verify Installation
-
-```bash
-# Health check
-curl http://localhost:8080/hello
-
-# Expected response:
-# "Hello from HRM API"
-```
-
----
-
-## 📡 API Endpoint Examples
-
-### Authentication
-
-```bash
-# Login
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "admin",
-    "password": "password123"
-  }'
-
-# Response:
-# {
-#   "accessToken": "eyJhbGciOiJIUzUxMiJ9...",
-#   "roles": ["ADMIN"]
-# }
-# Set-Cookie: refresh_token=eyJhbGciOiJIUzUxMiJ9...; HttpOnly; Secure; SameSite=None
-
-# Refresh Token
-curl -X POST http://localhost:8080/api/v1/auth/refresh \
-  -H "Cookie: refresh_token=eyJhbGciOiJIUzUxMiJ9..."
-
-# Logout
-curl -X DELETE http://localhost:8080/api/v1/auth/logout \
-  -H "Cookie: refresh_token=eyJhbGciOiJIUzUxMiJ9..."
-```
-
-### Employee Management
-
-```bash
-# Create Employee
-curl -X POST http://localhost:8080/api/v1/employees \
-  -H "Authorization: Bearer {access_token}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "employeeCode": "EMP001",
-    "fullName": "John Doe",
-    "email": "john.doe@company.com",
-    "departmentId": 1,
-    "positionId": 1
-  }'
-
-# List Employees (Paginated)
-curl "http://localhost:8080/api/v1/employees?page=0&size=20" \
-  -H "Authorization: Bearer {access_token}"
-
-# Import Employees from Excel
-curl -X POST http://localhost:8080/api/v1/employees/import \
-  -H "Authorization: Bearer {access_token}" \
-  -F "file=@employees.xlsx"
-```
-
-### Attendance
-
-```bash
-# Face Recognition Check-in/Out (Public endpoint)
-curl -X POST http://localhost:8080/api/v1/attendance/scan \
-  -F "file=@face_image.jpg"
-
-# Get Attendance Records
-curl "http://localhost:8080/api/v1/attendance?date=2024-01-15" \
-  -H "Authorization: Bearer {access_token}"
-```
-
-### Face Recognition
-
-```bash
-# Register Face (Base64 images)
-curl -X POST http://localhost:8080/api/v1/employees/EMP001/faces \
-  -H "Authorization: Bearer {access_token}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "images": ["base64encodedstring1", "base64encodedstring2"]
-  }'
-
-# Batch Register (ZIP file)
-curl -X POST http://localhost:8080/api/v1/employees/faces/batch \
-  -H "Authorization: Bearer {access_token}" \
-  -F "file=@employee_faces.zip"
-```
-
-### Payroll
-
-```bash
-# Generate Payroll for All
-curl -X POST http://localhost:8080/api/v1/payroll \
-  -H "Authorization: Bearer {access_token}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "month": "2024-01",
-    "payrollCycleId": 1
-  }'
-
-# Get Employee Payroll
-curl "http://localhost:8080/api/v1/payroll/EMP001?month=2024-01" \
-  -H "Authorization: Bearer {access_token}"
-```
-
----
-
-## 🌐 Deployment Overview
+## 🚀 Deployment Overview
 
 ### Production Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              AWS CLOUD                                       │
-│                                                                              │
-│  ┌──────────────────────────────────────────────────────────────────────┐   │
-│  │                         VPC                                          │   │
-│  │                                                                      │   │
-│  │   ┌─────────────┐      ┌─────────────┐      ┌─────────────┐         │   │
-│  │   │   Route 53  │─────▶│ CloudFront  │─────▶│    ALB      │         │   │
-│  │   │   (DNS)     │      │   (CDN)     │      │  (HTTPS)    │         │   │
-│  │   └─────────────┘      └─────────────┘      └──────┬──────┘         │   │
-│  │                                                    │                │   │
-│  │   ┌────────────────────────────────────────────────┼────────────┐   │   │
-│  │   │            EC2 Auto Scaling Group              │            │   │   │
-│  │   │                                                ▼            │   │   │
-│  │   │   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐     │   │   │
-│  │   │   │  HRM API    │    │  HRM API    │    │  HRM API    │     │   │   │
-│  │   │   │  Instance 1 │    │  Instance 2 │    │  Instance N │     │   │   │
-│  │   │   └──────┬──────┘    └──────┬──────┘    └──────┬──────┘     │   │   │
-│  │   └──────────┼──────────────────┼──────────────────┼────────────┘   │   │
-│  │              │                  │                  │                │   │
-│  │              ▼                  ▼                  ▼                │   │
-│  │   ┌─────────────────────────────────────────────────────────────┐  │   │
-│  │   │              TiDB Cloud (MySQL Compatible)                   │  │   │
-│  │   │                   (Primary Database)                         │  │   │
-│  │   └─────────────────────────────────────────────────────────────┘  │   │
-│  │                                                                     │   │
-│  │   ┌─────────────────────────────────────────────────────────────┐  │   │
-│  │   │              Redis Cloud (ElastiCache)                       │  │   │
-│  │   │            (Session & Cache Storage)                         │  │   │
-│  │   └─────────────────────────────────────────────────────────────┘  │   │
-│  │                                                                     │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                           AWS EC2                                │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                      Nginx (Reverse Proxy)               │   │
+│  │                   SSL/TLS Termination                    │   │
+│  └─────────────────────────┬───────────────────────────────┘   │
+│                            │                                     │
+│                            ▼                                     │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              Docker Compose Stack                        │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │   │
+│  │  │  HRM Backend │  │    Redis     │  │  (MySQL)     │  │   │
+│  │  │   (Docker)   │  │   (Docker)   │  │  (TiDB Cloud)│  │   │
+│  │  │   Port 8081  │  │   Port 6379  │  │              │  │   │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘  │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Deployment Steps
+### Infrastructure Components
 
-1. **Build Docker Image**
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Cloud Provider** | AWS EC2 (Linux) | Compute infrastructure |
+| **Reverse Proxy** | Nginx | Load balancing, SSL termination, static file serving |
+| **SSL/TLS** | Let's Encrypt / AWS ACM | HTTPS encryption |
+| **Containerization** | Docker + Docker Compose | Service orchestration |
+| **Database** | TiDB Cloud (MySQL-compatible) | Managed distributed database |
+| **Token Storage** | Redis Cloud | Managed Redis instance |
+
+### Security Measures
+
+- ✅ HTTPS-only API access
+- ✅ HTTP-only cookies for refresh tokens
+- ✅ Secure cookie flags (Secure, SameSite)
+- ✅ Non-root Docker containers
+- ✅ Environment variable secrets management
+- ✅ CORS configuration for specific origins
+
+---
+
+## 🐳 How to Run Locally (Docker)
+
+### Prerequisites
+
+- [Docker](https://www.docker.com/get-started) 20.10+
+- [Docker Compose](https://docs.docker.com/compose/install/) 2.0+
+
+### Quick Start
+
+1. **Clone the repository**
    ```bash
-   docker build -t hrm-api:latest .
+   git clone https://github.com/your-org/hrm-backend.git
+   cd hrm-backend
    ```
 
-2. **Push to Container Registry**
+2. **Create environment file**
    ```bash
-   docker tag hrm-api:latest your-registry/hrm-api:latest
-   docker push your-registry/hrm-api:latest
+   cp .env.example .env
+   # Edit .env with your configuration
    ```
 
-3. **Deploy on EC2**
+3. **Start services with Docker Compose**
    ```bash
-   # SSH to EC2 instance
-   ssh -i key.pem ec2-user@your-ec2-ip
+   docker-compose up -d
+   ```
+
+4. **Verify services are running**
+   ```bash
+   # Health check
+   curl http://localhost:8081/api/v1/hello
    
-   # Pull and run
-   docker pull your-registry/hrm-api:latest
-   docker run -d \
-     --name hrm-api \
-     --env-file .env \
-     -p 8080:8080 \
-     your-registry/hrm-api:latest
+   # Check logs
+   docker-compose logs -f app
    ```
 
-4. **Configure Nginx Reverse Proxy**
-   ```nginx
-   server {
-       listen 443 ssl http2;
-       server_name api.hrm.yourdomain.com;
-       
-       ssl_certificate /path/to/cert.pem;
-       ssl_certificate_key /path/to/key.pem;
-       
-       location / {
-           proxy_pass http://localhost:8080;
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-           proxy_set_header X-Forwarded-Proto $scheme;
-       }
-   }
+### Local Development Setup
+
+For development without Docker:
+
+1. **Prerequisites**
+   - Java 21 JDK
+   - MySQL 8.0
+   - Redis 7.0
+   - Maven 3.9+
+
+2. **Database setup**
+   ```sql
+   CREATE DATABASE hrm_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
+
+3. **Configure application**
+   Set environment variables or update `application.yml` with your local settings.
+
+4. **Run the application**
+   ```bash
+   cd hrm
+   ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+   ```
+
+5. **Access API documentation**
+   - Base URL: `http://localhost:8080`
+   - Health Check: `http://localhost:8080/api/v1/hello`
 
 ---
 
-## ⚠️ Error Handling Strategy
+## ⚙️ Environment Variables
 
-### Error Response Format
+### Database Configuration
 
-```json
-{
-  "timestamp": "2024-01-15T10:30:00",
-  "status": 400,
-  "error": "E1002",
-  "message": "Employee code already exists",
-  "details": "Employee code EMP001 is already in use",
-  "path": "/api/v1/employees",
-  "validationErrors": {
-    "employeeCode": "Employee code already exists"
-  }
-}
-```
+| Variable | Description | Default (Dev) |
+|----------|-------------|---------------|
+| `DB_URL` | MySQL JDBC URL | `jdbc:mysql://localhost:3306/hrm_db` |
+| `DB_USERNAME` | Database username | `root` |
+| `DB_PASSWORD` | Database password | `123456` |
+| `DB_DRIVER` | JDBC driver class | `com.mysql.cj.jdbc.Driver` |
+| `DB_POOL_MAX_SIZE` | Connection pool max size | `10` |
+| `DB_POOL_MIN_IDLE` | Connection pool min idle | `5` |
 
-### Error Code Ranges
+### Redis Configuration
 
-| Range | Category |
-|-------|----------|
-| E1000-E1999 | Employee errors |
-| E2000-E2999 | User account errors |
-| E3000-E3999 | Department errors |
-| E4000-E4999 | Sub-department errors |
-| E5000-E5999 | Contract errors |
-| E6000-E6999 | Salary contract errors |
-| E7000-E7999 | Attendance errors |
-| E8000-E8999 | Leave errors |
-| E9000-E9999 | Payroll errors |
-| E20000-E20999 | Validation errors |
-| E40000-E40999 | Server errors |
-| E60000-E60999 | Token errors |
+| Variable | Description | Default (Dev) |
+|----------|-------------|---------------|
+| `REDIS_HOST` | Redis server host | `localhost` |
+| `REDIS_PORT` | Redis server port | `6379` |
+| `REDIS_PASSWORD` | Redis password | *(empty)* |
 
-### Exception Handling Layers
+### JWT Configuration
 
-```
-┌─────────────────────────────────────────┐
-│   GlobalExceptionHandler                │
-│   (@RestControllerAdvice)               │
-│                                         │
-│   - AppException (Business logic)       │
-│   - ValidationException (Input)         │
-│   - AccessDeniedException (Security)    │
-│   - Exception (Fallback)                │
-└─────────────────────────────────────────┘
-                    │
-                    ▼
-┌─────────────────────────────────────────┐
-│   Standardized ErrorResponse            │
-│   (JSON with timestamp, code, message)  │
-└─────────────────────────────────────────┘
-```
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `JWT_SIGNER_KEY_ACCESS` | Secret key for access tokens | *(required)* |
+| `JWT_SIGNER_KEY_REFRESH` | Secret key for refresh tokens | *(required)* |
+| `JWT_SIGNER_KEY_ACTIVATION` | Secret key for activation tokens | *(required)* |
+| `JWT_ACCESS_DURATION` | Access token lifetime (seconds) | `900` (15 min) |
+| `JWT_REFRESH_DURATION` | Refresh token lifetime (seconds) | `2592000` (30 days) |
+
+### Application Settings
+
+| Variable | Description | Default (Dev) |
+|----------|-------------|---------------|
+| `SERVER_PORT` | Application port | `8080` |
+| `SPRING_PROFILES_ACTIVE` | Active Spring profile | `pro` |
+| `API_PREFIX` | API base path prefix | `/api/v1` |
+| `UPLOAD_DIR` | File upload directory | `./uploads` |
+| `UPLOAD_MAX_FILE_SIZE` | Max upload file size | `50MB` |
+
+### Email Configuration
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MAIL_HOST` | SMTP server host | `smtp.gmail.com` |
+| `MAIL_PORT` | SMTP server port | `587` |
+| `MAIL_USERNAME` | SMTP username | *(required)* |
+| `MAIL_PASSWORD` | SMTP password | *(required)* |
+| `MAIL_BASE_URL` | Account activation base URL | `http://localhost:5173/active-account` |
+
+### Face Recognition Service
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `FACE_RECOGNITION_BASE_URL` | Face recognition API base URL | `http://127.0.0.1:8000` |
 
 ---
 
-## 🚀 Future Improvements
+## 🔮 Future Improvements
 
-### Planned Enhancements
+### Short-term
+- [ ] OpenAPI/Swagger documentation integration
+- [ ] Rate limiting for API endpoints
+- [ ] Request/Response logging middleware
+- [ ] Enhanced audit logging for compliance
 
-| Priority | Feature | Description |
-|----------|---------|-------------|
-| 🔴 High | API Documentation | OpenAPI 3.0 / Swagger UI integration |
-| 🔴 High | Rate Limiting | Bucket4j for API throttling |
-| 🔴 High | Audit Logging | Entity change tracking |
-| 🟡 Medium | WebSocket | Real-time attendance notifications |
-| 🟡 Medium | Elasticsearch | Full-text search for employees |
-| 🟡 Medium | Metrics | Micrometer + Prometheus monitoring |
-| 🟢 Low | Multi-tenancy | SaaS support for multiple companies |
-| 🟢 Low | GraphQL | Alternative API layer |
+### Mid-term
+- [ ] API versioning strategy (v1, v2)
+- [ ] Event-driven architecture with message queue
+- [ ] Microservices decomposition
+- [ ] Distributed tracing with OpenTelemetry
+- [ ] Prometheus metrics & Grafana dashboards
 
-### Technical Debt
-
-- [ ] Increase unit test coverage to >80%
-- [ ] Implement integration tests with TestContainers
-- [ ] Add database migration tool (Flyway/Liquibase)
-- [ ] Centralize configuration with Spring Cloud Config
-- [ ] Implement distributed tracing with Sleuth + Zipkin
+### Long-term
+- [ ] Multi-tenancy support for SaaS model
+- [ ] Advanced analytics & reporting engine
+- [ ] Mobile push notification service
+- [ ] Integration with external HR systems (SAP, Workday)
+- [ ] AI-powered attendance anomaly detection
 
 ---
 
 ## 👤 Author
 
-**HRM Development Team**
+**Your Name**
 
+
+- 💻 GitHub: [TRONGG2005k](https://github.com/TRONGG2005k/hrm)
 - 📧 Email: tn0961350951@gmail.com
-- 🌐 Website: https://hrm-db.duckdns.org/
-- 💻 GitHub: [TRONGG2005k/hrm](https://github.com/TRONGG2005k/hrm)
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is proprietary software. All rights reserved.
 
 ---
 
-<div align="center">
-  <sub>Built with ❤️ by the HRM Team</sub>
-</div>
+<p align="center">
+  <sub>Built with ❤️ for efficient workforce management</sub>
+</p>
