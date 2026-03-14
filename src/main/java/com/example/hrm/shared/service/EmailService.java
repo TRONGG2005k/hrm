@@ -29,7 +29,7 @@ public class EmailService {
                 + "<p>Nhấn vào link bên dưới để kích hoạt tài khoản và đổi mật khẩu:</p>"
                 + "<a href=\"" + link + "\">Kích hoạt tài khoản</a>"
                 + "<p>Link có hiệu lực 15 phút.</p>";
-
+        System.out.println("Gửi email kích hoạt đến: " + user.getEmployee().getEmail());
         sendEmail(user.getEmployee().getEmail(), subject, body);
     }
 
@@ -38,7 +38,6 @@ public class EmailService {
         String body = "<h3>Mail test thành công 🎉</h3>";
         sendEmail(to, subject, body);
     }
-
 
     private void sendEmail(String to, String subject, String body) {
         try {
