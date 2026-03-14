@@ -23,6 +23,7 @@ public class AttendanceController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
+        System.out.println();
         return attendanceService.getAll(page, size);
     }
 
