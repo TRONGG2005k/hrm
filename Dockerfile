@@ -46,4 +46,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
  CMD wget --no-verbose --tries=1 --spider http://localhost:8081/api/v1/hello || exit 1
 
-ENTRYPOINT ["java","-Duser.timezone=Asia/Ho_Chi_Minh","-jar","app.jar"]
+ENTRYPOINT ["java","-Xms256m","-Xmx512m","-Duser.timezone=Asia/Ho_Chi_Minh","-jar","app.jar"]
