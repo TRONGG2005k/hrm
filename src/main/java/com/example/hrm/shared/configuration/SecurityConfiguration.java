@@ -38,7 +38,7 @@ public class SecurityConfiguration {
                                 "/api/v1/auth/activate",
                                 "/api/v1/employees/faces/recognize",
                                 "/api/v1/attendance/scan",
-                                "/hello").permitAll()
+                                "/api/v1/hello").permitAll()
                         // Dev endpoints - chỉ ADMIN hoặc dev profile
                         .requestMatchers("/api/v1/dev/**").hasRole("ADMIN")
                         // All other requests need authentication
