@@ -36,6 +36,26 @@ spring:
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
     show-sql: ${JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        format_sql: true
+        # OPTIMIZATION: Disabled statistics - adds overhead for every query
+        generate_statistics: false
+        jdbc:
+          batch_size: 50
+          fetch_size: 50
+          order_inserts: true
+          order_updates: true
+          batch_versioned_data: true
+        default_batch_fetch_size: 20
+        max_fetch_depth: 2
+        # OPTIMIZATION: Disabled second-level cache - misconfigured, causes issues
+        # Re-enable only when properly configured with Caffeine/Redis
+        cache:
+          use_query_cache: false
+          use_second_level_cache: false
+          # region:
+          #   factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
 
   servlet:
     multipart:
@@ -51,6 +71,17 @@ spring:
     properties:
       mail.smtp.auth: ${MAIL_SMTP_AUTH:true}
       mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: OFF
+        type:
+          descriptor:
+            sql:
+              BasicBinder: OFF
+        stat: DEBUG
 
 app:
   cookie:
@@ -75,7 +106,7 @@ app:
     baseUrl: ${MAIL_BASE_URL:http://localhost:5173/active-account}
 
 face-recognition:
-  base-url: ${FACE_RECOGNITION_BASE_URL:http://127.0.0.1:8000}
+  base-url: ${FACE_RECOGNITION_BASE_URL:https://tn0964755528-py.hf.space}
   endpoints:
     register: ${FACE_RECOGNITION_REGISTER_API:/facial-recognition/register-face}
     recognize: ${FACE_RECOGNITION_RECOGNIZE_API:/facial-recognition/face-recognition}
@@ -93,9 +124,9 @@ spring:
       on-profile: pro
 
   datasource:
-    url: ${DB_URL:jdbc:mysql://gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/hrm_db?sslMode=REQUIRED&connectionTimeZone=UTC&allowPublicKeyRetrieval=true}
-    username: ${DB_USERNAME:2iMchjBKLaDT6d1.root}
-    password: ${DB_PASSWORD:h5TimlkTOUWLcFJ7}
+    url: ${DB_URL:jdbc:mysql://qTLGRkWX8GxjMTN.root:sR4oCbRK10qEhcIj@gateway01.us-east-1.prod.aws.tidbcloud.com:4000/hrm_db?sslMode=REQUIRED&serverTimezone=Asia/Ho_Chi_Minh&allowPublicKeyRetrieval=true&cachePrepStmts=true&prepStmtCacheSize=250&prepStmtCacheSqlLimit=2048&useServerPrepStmts=true}
+    username: ${DB_USERNAME:qTLGRkWX8GxjMTN.root}
+    password: ${DB_PASSWORD:sR4oCbRK10qEhcIj}
     driver-class-name: ${DB_DRIVER:com.mysql.cj.jdbc.Driver}
     hikari:
       maximum-pool-size: ${DB_POOL_MAX_SIZE:5}
@@ -117,6 +148,27 @@ spring:
       jdbc:
         time_zone: Asia/Ho_Chi_Minh
     show-sql: ${JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        format_sql: true
+        # OPTIMIZATION: Disabled statistics - adds overhead for every query
+        generate_statistics: false
+        jdbc:
+          batch_size: 50
+          fetch_size: 50
+          order_inserts: true
+          order_updates: true
+          batch_versioned_data: true
+        default_batch_fetch_size: 20
+        max_fetch_depth: 2
+        # OPTIMIZATION: Disabled second-level cache - misconfigured, causes issues
+        # Re-enable only when properly configured with Caffeine/Redis
+        cache:
+          use_query_cache: false
+          use_second_level_cache: false
+          # region:
+          #   factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+
   jackson:
     time-zone: Asia/Ho_Chi_Minh
 
@@ -134,6 +186,17 @@ spring:
     properties:
       mail.smtp.auth: ${MAIL_SMTP_AUTH:true}
       mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS_ENABLE:true}
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: OFF
+        type:
+          descriptor:
+            sql:
+              BasicBinder: OFF
+        stat: DEBUG
 
 app:
   cookie:
@@ -158,7 +221,7 @@ app:
     baseUrl: ${MAIL_BASE_URL:}
 
 face-recognition:
-  base-url: ${FACE_RECOGNITION_BASE_URL:}
+  base-url: ${FACE_RECOGNITION_BASE_URL:https://tn0964755528-py.hf.space}
   endpoints:
     register: ${FACE_RECOGNITION_REGISTER_API:/facial-recognition/register-face}
     recognize: ${FACE_RECOGNITION_RECOGNIZE_API:/facial-recognition/face-recognition}
